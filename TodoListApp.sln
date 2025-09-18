@@ -13,7 +13,49 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		user-stories.md = user-stories.md
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TodoListApp.WebApp", "TodoListApp.WebApp\TodoListApp.WebApp.csproj", "{95D0BC3F-710A-4921-9B87-9DDA4E3D423E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TodoListApp.WebApi", "TodoListApp.WebApi\TodoListApp.WebApi.csproj", "{747018B7-B713-4BDF-9CFD-49D9D9E24446}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TodoListApp.WebApi.Models", "TodoListApp.WebApi.Models\TodoListApp.WebApi.Models.csproj", "{446F972B-AAF8-4424-A55B-01FA49D0EA4B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TodoListApp.Services", "TodoListApp.Services\TodoListApp.Services.csproj", "{FDD9240D-6D71-40B3-B7A0-240E469B3DAE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TodoListApp.Services.WebApi", "TodoListApp.Services.WebApi\TodoListApp.Services.WebApi.csproj", "{538FDBC3-A9D8-4D49-88F9-D6AF395E6758}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TodoListApp.Services.Database", "TodoListApp.Services.Database\TodoListApp.Services.Database.csproj", "{CDF3BABC-5849-4513-BC8A-64821EE5F954}"
+EndProject
 Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{95D0BC3F-710A-4921-9B87-9DDA4E3D423E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{95D0BC3F-710A-4921-9B87-9DDA4E3D423E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{95D0BC3F-710A-4921-9B87-9DDA4E3D423E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{95D0BC3F-710A-4921-9B87-9DDA4E3D423E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{747018B7-B713-4BDF-9CFD-49D9D9E24446}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{747018B7-B713-4BDF-9CFD-49D9D9E24446}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{747018B7-B713-4BDF-9CFD-49D9D9E24446}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{747018B7-B713-4BDF-9CFD-49D9D9E24446}.Release|Any CPU.Build.0 = Release|Any CPU
+		{446F972B-AAF8-4424-A55B-01FA49D0EA4B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{446F972B-AAF8-4424-A55B-01FA49D0EA4B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{446F972B-AAF8-4424-A55B-01FA49D0EA4B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{446F972B-AAF8-4424-A55B-01FA49D0EA4B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FDD9240D-6D71-40B3-B7A0-240E469B3DAE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FDD9240D-6D71-40B3-B7A0-240E469B3DAE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FDD9240D-6D71-40B3-B7A0-240E469B3DAE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FDD9240D-6D71-40B3-B7A0-240E469B3DAE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{538FDBC3-A9D8-4D49-88F9-D6AF395E6758}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{538FDBC3-A9D8-4D49-88F9-D6AF395E6758}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{538FDBC3-A9D8-4D49-88F9-D6AF395E6758}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{538FDBC3-A9D8-4D49-88F9-D6AF395E6758}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CDF3BABC-5849-4513-BC8A-64821EE5F954}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CDF3BABC-5849-4513-BC8A-64821EE5F954}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CDF3BABC-5849-4513-BC8A-64821EE5F954}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CDF3BABC-5849-4513-BC8A-64821EE5F954}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
