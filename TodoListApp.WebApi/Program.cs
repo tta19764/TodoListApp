@@ -1,24 +1,16 @@
+using TodoListApp.WebApi.Extensions;
+
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
-
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle.
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+// Services
+builder.Services.AddTodoListAppServices(builder.Configuration);
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    _ = app.UseSwagger();
-    _ = app.UseSwaggerUI();
-}
+// Middleware
+_ = app.UseTodoListAppMiddleware();
 
-app.UseHttpsRedirection();
-
-app.UseAuthorization();
-
-app.MapControllers();
+// Routes
+_ = app.MapTodoListAppRoutes();
 
 await app.RunAsync();
