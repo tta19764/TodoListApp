@@ -18,6 +18,19 @@ public class User : IdentityUser<int>
     /// <summary>
     /// Initializes a new instance of the <see cref="User"/> class with parameters.
     /// </summary>
+    /// <param name="firstName">The first name of the user.</param>
+    /// <param name="lastName">The last name of the user.</param>
+    /// <param name="userName">The user's username.</param>
+    public User(string firstName, string lastName, string userName)
+        : base(userName)
+    {
+        this.FirstName = firstName;
+        this.LastName = lastName;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="User"/> class with parameters.
+    /// </summary>
     /// <param name="id">The unique identifier of the user.</param>
     /// <param name="firstName">The first name of the user.</param>
     /// <param name="lastName">The last name of the user.</param>

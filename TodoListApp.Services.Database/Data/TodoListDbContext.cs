@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using TodoListApp.Services.Database.Entities;
+using TodoListApp.Services.Entities;
 
 namespace TodoListApp.Services.Database.Data
 {
@@ -36,10 +36,12 @@ namespace TodoListApp.Services.Database.Data
 
             // Configure composite keys
             _ = builder.Entity<TodoListUserRole>()
-                .HasKey(lur => new { lur.TodoListId, lur.UserId });
+                .HasIndex(lur => new { lur.TodoListId, lur.UserId })
+                .IsUnique();
 
             _ = builder.Entity<TaskTags>()
-                .HasKey(tt => new { tt.TagId, tt.TaskId });
+                .HasIndex(tt => new { tt.TagId, tt.TaskId })
+                .IsUnique();
 
             // Configure TodoListUserRole relationships
             _ = builder.Entity<TodoListUserRole>()

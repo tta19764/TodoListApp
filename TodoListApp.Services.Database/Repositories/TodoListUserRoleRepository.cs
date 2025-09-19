@@ -6,34 +6,34 @@ using TodoListApp.Services.Database.Interfaces;
 namespace TodoListApp.Services.Database.Repositories;
 
 /// <summary>
-/// Repository for managing <see cref="Status"/> entities.
+/// Repository for managing <see cref="TodoListUserRole"/> entities.
 /// </summary>
-public class StatusRepository : AbstractRepository, IStatusRepository
+public class TodoListUserRoleRepository : AbstractRepository, ITodoListUserRoleRepository
 {
-    private readonly DbSet<Status> dbSet;
+    private readonly DbSet<TodoListUserRole> dbSet;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="StatusRepository"/> class.
+    /// Initializes a new instance of the <see cref="TodoListUserRoleRepository"/> class.
     /// </summary>
     /// <param name="context">The database context used for data access.</param>
-    public StatusRepository(TodoListDbContext context)
+    public TodoListUserRoleRepository(TodoListDbContext context)
         : base(context)
     {
         ArgumentNullException.ThrowIfNull(context);
-        this.dbSet = context.Set<Status>();
+        this.dbSet = this.Context.Set<TodoListUserRole>();
     }
 
     /// <summary>
-    /// Asynchronously adds a new <see cref="Status"/> entity to the repository and saves the changes to the database.
+    /// Asynchronously adds a new <see cref="TodoListUserRole"/> entity to the repository and saves the changes to the database.
     /// </summary>
-    /// <param name="entity">The <see cref="Status"/> entity to add.</param>
+    /// <param name="entity">The <see cref="TodoListUserRole"/> entity to add.</param>
     /// <returns>
-    /// A task representing the asynchronous operation. The task result contains the added <see cref="Status"/> entity.
+    /// A task representing the asynchronous operation. The task result contains the added <see cref="TodoListUserRole"/> entity.
     /// </returns>
     /// <exception cref="ArgumentNullException">
     /// Thrown if <paramref name="entity"/> is <c>null</c>.
     /// </exception>
-    public async Task<Status> AddAsync(Status entity)
+    public async Task<TodoListUserRole> AddAsync(TodoListUserRole entity)
     {
         ArgumentNullException.ThrowIfNull(entity);
 
@@ -44,16 +44,16 @@ public class StatusRepository : AbstractRepository, IStatusRepository
     }
 
     /// <summary>
-    /// Asynchronously deletes <see cref="Status"/> entity to the repository and saves the changes to the database.
+    /// Asynchronously deletes <see cref="TodoListUserRole"/> entity to the repository and saves the changes to the database.
     /// </summary>
-    /// <param name="entity">The <see cref="Status"/> entity to delete.</param>
+    /// <param name="entity">The <see cref="TodoListUserRole"/> entity to delete.</param>
     /// <returns>
     /// A task representing the asynchronous operation. The task result contains the <c>bool</c> result.
     /// </returns>
     /// <exception cref="ArgumentNullException">
     /// Thrown if <paramref name="entity"/> is <c>null</c>.
     /// </exception>
-    public async Task<bool> DeleteAsync(Status entity)
+    public async Task<bool> DeleteAsync(TodoListUserRole entity)
     {
         ArgumentNullException.ThrowIfNull(entity);
 
@@ -70,7 +70,7 @@ public class StatusRepository : AbstractRepository, IStatusRepository
     }
 
     /// <summary>
-    /// Asynchronously deletes <see cref="Status"/> entity to the repository and saves the changes to the database.
+    /// Asynchronously deletes <see cref="TodoListUserRole"/> entity to the repository and saves the changes to the database.
     /// </summary>
     /// <param name="id">The id of the entity to delete.</param>
     /// <returns>
@@ -91,26 +91,29 @@ public class StatusRepository : AbstractRepository, IStatusRepository
     }
 
     /// <summary>
-    /// Asynchronously gets all <see cref="Status"/> entities.
+    /// Asynchronously gets all <see cref="TodoListUserRole"/> entities.
     /// </summary>
     /// <returns>
-    /// A task representing the asynchronous operation. The task result contains <see cref="IReadOnlyList{Status}"/>.
+    /// A task representing the asynchronous operation. The task result contains <see cref="IReadOnlyList{TodoListUserRole}"/>.
     /// </returns>
-    public async Task<IReadOnlyList<Status>> GetAllAsync()
+    public async Task<IReadOnlyList<TodoListUserRole>> GetAllAsync()
     {
         return await this.dbSet
+            .Include(tlu => tlu.ListUser)
+            .Include(tlu => tlu.List)
+            .Include(tlu => tlu.ListRole)
             .ToListAsync();
     }
 
     /// <summary>
-    /// Asynchronously gets set number of <see cref="Status"/> entities.
+    /// Asynchronously gets set number of <see cref="TodoListUserRole"/> entities.
     /// </summary>
     /// <param name="pageNumber">The page number to retrieve (1-based).</param>
     /// <param name="rowCount">The number of rows per page.</param>
     /// <returns>
-    /// A task representing the asynchronous operation. The task result contains <see cref="IReadOnlyList{Status}"/>.
+    /// A task representing the asynchronous operation. The task result contains <see cref="IReadOnlyList{TodoListUserRole}"/>.
     /// </returns>
-    public async Task<IReadOnlyList<Status>> GetAllAsync(int pageNumber, int rowCount)
+    public async Task<IReadOnlyList<TodoListUserRole>> GetAllAsync(int pageNumber, int rowCount)
     {
         if (pageNumber < 1)
         {
@@ -123,31 +126,35 @@ public class StatusRepository : AbstractRepository, IStatusRepository
         }
 
         return await this.dbSet
-            .Skip((pageNumber - 1) * rowCount)
-            .Take(rowCount)
+            .Include(tlu => tlu.ListUser)
+            .Include(tlu => tlu.List)
+            .Include(tlu => tlu.ListRole)
             .ToListAsync();
     }
 
     /// <summary>
-    /// Asynchronously retrieves a <see cref="Status"/> entity by its identifier.
+    /// Asynchronously retrieves a <see cref="TodoListUserRole"/> entity by its identifier.
     /// </summary>
     /// <param name="id">The identifier of the entity to retrieve.</param>
     /// <returns>
-    /// The <see cref="Status"/> entity with the specified identifier,
+    /// The <see cref="TodoListUserRole"/> entity with the specified identifier,
     /// or <c>null</c> if no such entity exists.
     /// </returns>
-    public async Task<Status?> GetByIdAsync(int id)
+    public async Task<TodoListUserRole?> GetByIdAsync(int id)
     {
         return await this.dbSet
-            .FindAsync(id);
+            .Include(tlu => tlu.ListUser)
+            .Include(tlu => tlu.List)
+            .Include(tlu => tlu.ListRole)
+            .FirstOrDefaultAsync(t => t.Id == id);
     }
 
     /// <summary>
-    /// Updates an existing <see cref="Status"/> entity in the repository.
+    /// Updates an existing <see cref="TodoListUserRole"/> entity in the repository.
     /// </summary>
-    /// <param name="entity">The <see cref="Status"/> entity to update.</param>
-    /// <returns>Updated <see cref="Status"/> entity.</returns>
-    public async Task<Status?> UpdateAsync(Status entity)
+    /// <param name="entity">The <see cref="TodoListUserRole"/> entity to update.</param>
+    /// <returns>Updated <see cref="TodoListUserRole"/> entity.</returns>
+    public async Task<TodoListUserRole?> UpdateAsync(TodoListUserRole entity)
     {
         ArgumentNullException.ThrowIfNull(entity);
 

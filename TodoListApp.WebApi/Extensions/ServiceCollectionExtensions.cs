@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using TodoListApp.Services.Database.Data;
-using TodoListApp.Services.Database.Entities;
+using TodoListApp.Services.Entities;
 
 namespace TodoListApp.WebApi.Extensions;
 

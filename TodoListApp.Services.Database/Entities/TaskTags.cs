@@ -3,21 +3,24 @@ namespace TodoListApp.Services.Database.Entities;
 /// <summary>
 /// Represents a link between tags and tasks in the database.
 /// </summary>
-public class TaskTags
+public class TaskTags : BaseEntity
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="TaskTags"/> class.
     /// </summary>
     public TaskTags()
+        : base()
     {
     }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="TaskTags"/> class with parameters.
     /// </summary>
+    /// <param name="id">The unique identifier of the task tag.</param>
     /// <param name="taskId">The unique identifierof the task.</param>
     /// <param name="tagId">The unique identifier of the tag.</param>
-    public TaskTags(int taskId, int tagId)
+    public TaskTags(int id, int taskId, int tagId)
+        : base(id)
     {
         this.TaskId = taskId;
         this.TagId = tagId;

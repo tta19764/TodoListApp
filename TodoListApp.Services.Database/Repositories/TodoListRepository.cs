@@ -1,41 +1,197 @@
+using Microsoft.EntityFrameworkCore;
+using TodoListApp.Services.Database.Data;
 using TodoListApp.Services.Database.Entities;
 using TodoListApp.Services.Database.Interfaces;
 
 namespace TodoListApp.Services.Database.Repositories;
-public class TodoListRepository : ITodoListRepository
+
+/// <summary>
+/// Repository for managing <see cref="TodoList"/> entities.
+/// </summary>
+public class TodoListRepository : AbstractRepository, ITodoListRepository
 {
-    public void Add(TodoList entity)
+    private readonly DbSet<TodoList> dbSet;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TodoListRepository"/> class.
+    /// </summary>
+    /// <param name="context">The database context used for data access.</param>
+    public TodoListRepository(TodoListDbContext context)
+        : base(context)
     {
-        throw new NotImplementedException();
+        ArgumentNullException.ThrowIfNull(context);
+        this.dbSet = this.Context.Set<TodoList>();
     }
 
-    public void Delete(TodoList entity)
+    /// <summary>
+    /// Asynchronously adds a new <see cref="TodoList"/> entity to the repository and saves the changes to the database.
+    /// </summary>
+    /// <param name="entity">The <see cref="TodoList"/> entity to add.</param>
+    /// <returns>
+    /// A task representing the asynchronous operation. The task result contains the added <see cref="TodoList"/> entity.
+    /// </returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown if <paramref name="entity"/> is <c>null</c>.
+    /// </exception>
+    public async Task<TodoList> AddAsync(TodoList entity)
     {
-        throw new NotImplementedException();
+        ArgumentNullException.ThrowIfNull(entity);
+
+        _ = await this.dbSet.AddAsync(entity);
+        _ = await this.Context.SaveChangesAsync();
+
+        await this.Context.Entry(entity)
+        .Reference(e => e.ListOwner)
+        .LoadAsync();
+
+        return entity;
     }
 
-    public void DeleteById(int id)
+    /// <summary>
+    /// Asynchronously deletes <see cref="TodoList"/> entity to the repository and saves the changes to the database.
+    /// </summary>
+    /// <param name="entity">The <see cref="TodoList"/> entity to delete.</param>
+    /// <returns>
+    /// A task representing the asynchronous operation. The task result contains the <c>bool</c> result.
+    /// </returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown if <paramref name="entity"/> is <c>null</c>.
+    /// </exception>
+    public async Task<bool> DeleteAsync(TodoList entity)
     {
-        throw new NotImplementedException();
+        ArgumentNullException.ThrowIfNull(entity);
+
+        var existing = await this.dbSet.FindAsync(entity.Id);
+        if (existing is null)
+        {
+            return false;
+        }
+
+        _ = this.dbSet.Remove(existing);
+        _ = await this.Context.SaveChangesAsync();
+
+        return true;
     }
 
-    public IEnumerable<TodoList> GetAll()
+    /// <summary>
+    /// Asynchronously deletes <see cref="TodoList"/> entity to the repository and saves the changes to the database.
+    /// </summary>
+    /// <param name="id">The id of the entity to delete.</param>
+    /// <returns>
+    /// A task representing the asynchronous operation. The task result contains the <c>bool</c> result.
+    /// </returns>
+    public async Task<bool> DeleteByIdAsync(int id)
     {
-        throw new NotImplementedException();
+        var existing = await this.dbSet.FindAsync(id);
+        if (existing is null)
+        {
+            return false;
+        }
+
+        _ = this.dbSet.Remove(existing);
+        _ = await this.Context.SaveChangesAsync();
+
+        return true;
     }
 
-    public IEnumerable<TodoList> GetAll(int pageNumber, int rowCount)
+    /// <summary>
+    /// Asynchronously gets all <see cref="TodoList"/> entities.
+    /// </summary>
+    /// <returns>
+    /// A task representing the asynchronous operation. The task result contains <see cref="IReadOnlyList{TodoList}"/>.
+    /// </returns>
+    public async Task<IReadOnlyList<TodoList>> GetAllAsync()
     {
-        throw new NotImplementedException();
+        return await this.dbSet
+        .Include(tl => tl.TodoTasks)
+            .ThenInclude(tt => tt.Status)
+        .Include(tl => tl.ListOwner)
+        .Include(tl => tl.TodoListUserRoles)
+            .ThenInclude(tlu => tlu.ListUser)
+        .Include(tl => tl.TodoListUserRoles)
+            .ThenInclude(tlu => tlu.ListRole)
+            .AsSplitQuery()
+        .ToListAsync();
     }
 
-    public TodoList? GetById(int id)
+    /// <summary>
+    /// Asynchronously gets set number of <see cref="TodoList"/> entities.
+    /// </summary>
+    /// <param name="pageNumber">The page number to retrieve (1-based).</param>
+    /// <param name="rowCount">The number of rows per page.</param>
+    /// <returns>
+    /// A task representing the asynchronous operation. The task result contains <see cref="IReadOnlyList{TodoList}"/>.
+    /// </returns>
+    public async Task<IReadOnlyList<TodoList>> GetAllAsync(int pageNumber, int rowCount)
     {
-        throw new NotImplementedException();
+        if (pageNumber < 1)
+        {
+            throw new ArgumentException("Page number must be greater than 0.");
+        }
+
+        if (rowCount < 1)
+        {
+            throw new ArgumentException("Row count must be greater than 0.");
+        }
+
+        return await this.dbSet
+            .Include(tl => tl.TodoTasks)
+                .ThenInclude(tt => tt.Status)
+            .Include(tl => tl.ListOwner)
+            .Include(tl => tl.TodoListUserRoles)
+                .ThenInclude(tlu => tlu.ListUser)
+            .Include(tl => tl.TodoListUserRoles)
+                .ThenInclude(tlu => tlu.ListRole)
+                .AsSplitQuery()
+            .Skip((pageNumber - 1) * rowCount)
+            .Take(rowCount)
+            .ToListAsync();
     }
 
-    public void Update(TodoList entity)
+    /// <summary>
+    /// Asynchronously retrieves a <see cref="TodoList"/> entity by its identifier.
+    /// </summary>
+    /// <param name="id">The identifier of the entity to retrieve.</param>
+    /// <returns>
+    /// The <see cref="TodoList"/> entity with the specified identifier,
+    /// or <c>null</c> if no such entity exists.
+    /// </returns>
+    public async Task<TodoList?> GetByIdAsync(int id)
     {
-        throw new NotImplementedException();
+        return await this.dbSet
+            .Include(tl => tl.TodoTasks)
+                .ThenInclude(tt => tt.Status)
+            .Include(tl => tl.ListOwner)
+            .Include(tl => tl.TodoListUserRoles)
+                .ThenInclude(tlu => tlu.ListUser)
+            .Include(tl => tl.TodoListUserRoles)
+                .ThenInclude(tlu => tlu.ListRole)
+                .AsSplitQuery()
+            .FirstOrDefaultAsync(t => t.Id == id);
+    }
+
+    /// <summary>
+    /// Updates an existing <see cref="TodoList"/> entity in the repository.
+    /// </summary>
+    /// <param name="entity">The <see cref="TodoList"/> entity to update.</param>
+    /// <returns>Updated <see cref="TodoList"/> entity.</returns>
+    public async Task<TodoList?> UpdateAsync(TodoList entity)
+    {
+        ArgumentNullException.ThrowIfNull(entity);
+
+        var existing = await this.dbSet.FindAsync(entity.Id);
+        if (existing is null)
+        {
+            return null;
+        }
+
+        this.Context.Entry(existing).CurrentValues.SetValues(entity);
+        _ = await this.Context.SaveChangesAsync();
+
+        await this.Context.Entry(existing)
+        .Reference(tl => tl.ListOwner)
+        .LoadAsync();
+
+        return existing;
     }
 }

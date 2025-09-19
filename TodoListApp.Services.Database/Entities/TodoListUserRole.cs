@@ -3,22 +3,25 @@ namespace TodoListApp.Services.Database.Entities;
 /// <summary>
 /// Represents an entity that connects lists with users and their roles.
 /// </summary>
-public class TodoListUserRole
+public class TodoListUserRole : BaseEntity
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="TodoListUserRole"/> class.
     /// </summary>
     public TodoListUserRole()
+        : base()
     {
     }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="TodoListUserRole"/> class with parameters.
     /// </summary>
+    /// <param name="id">The unique identifier of the list user role.</param>
     /// <param name="todoListId">The unique identifier of the list.</param>
     /// <param name="userId">The unique identifer of the user.</param>
     /// <param name="roleId">The unique identifier of the role.</param>
-    public TodoListUserRole(int todoListId, int userId, int roleId)
+    public TodoListUserRole(int id, int todoListId, int userId, int roleId)
+        : base(id)
     {
         this.TodoListId = todoListId;
         this.UserId = userId;

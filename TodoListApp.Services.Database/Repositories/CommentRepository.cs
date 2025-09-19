@@ -1,41 +1,171 @@
+using Microsoft.EntityFrameworkCore;
+using TodoListApp.Services.Database.Data;
 using TodoListApp.Services.Database.Entities;
 using TodoListApp.Services.Database.Interfaces;
 
 namespace TodoListApp.Services.Database.Repositories;
-public class CommentRepository : ICommentRepository
+
+/// <summary>
+/// Repository for managing <see cref="Comment"/> entities.
+/// </summary>
+public class CommentRepository : AbstractRepository, ICommentRepository
 {
-    public void Add(Comment entity)
+    private readonly DbSet<Comment> dbSet;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CommentRepository"/> class.
+    /// </summary>
+    /// <param name="context">The database context used for data access.</param>
+    public CommentRepository(TodoListDbContext context)
+        : base(context)
     {
-        throw new NotImplementedException();
+        ArgumentNullException.ThrowIfNull(context);
+        this.dbSet = context.Set<Comment>();
     }
 
-    public void Delete(Comment entity)
+    /// <summary>
+    /// Asynchronously adds a new <see cref="Comment"/> entity to the repository and saves the changes to the database.
+    /// </summary>
+    /// <param name="entity">The <see cref="Comment"/> entity to add.</param>
+    /// <returns>
+    /// A task representing the asynchronous operation. The task result contains the added <see cref="Comment"/> entity.
+    /// </returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown if <paramref name="entity"/> is <c>null</c>.
+    /// </exception>
+    public async Task<Comment> AddAsync(Comment entity)
     {
-        throw new NotImplementedException();
+        ArgumentNullException.ThrowIfNull(entity);
+
+        _ = await this.dbSet.AddAsync(entity);
+        _ = await this.Context.SaveChangesAsync();
+
+        return entity;
     }
 
-    public void DeleteById(int id)
+    /// <summary>
+    /// Asynchronously deletes <see cref="Comment"/> entity to the repository and saves the changes to the database.
+    /// </summary>
+    /// <param name="entity">The <see cref="Comment"/> entity to delete.</param>
+    /// <returns>
+    /// A task representing the asynchronous operation. The task result contains the <c>bool</c> result.
+    /// </returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown if <paramref name="entity"/> is <c>null</c>.
+    /// </exception>
+    public async Task<bool> DeleteAsync(Comment entity)
     {
-        throw new NotImplementedException();
+        ArgumentNullException.ThrowIfNull(entity);
+
+        var existing = await this.dbSet.FindAsync(entity.Id);
+        if (existing is null)
+        {
+            return false;
+        }
+
+        _ = this.dbSet.Remove(existing);
+        _ = await this.Context.SaveChangesAsync();
+
+        return true;
     }
 
-    public IEnumerable<Comment> GetAll()
+    /// <summary>
+    /// Asynchronously deletes <see cref="Comment"/> entity to the repository and saves the changes to the database.
+    /// </summary>
+    /// <param name="id">The id of the entity to delete.</param>
+    /// <returns>
+    /// A task representing the asynchronous operation. The task result contains the <c>bool</c> result.
+    /// </returns>
+    public async Task<bool> DeleteByIdAsync(int id)
     {
-        throw new NotImplementedException();
+        var existing = await this.dbSet.FindAsync(id);
+        if (existing is null)
+        {
+            return false;
+        }
+
+        _ = this.dbSet.Remove(existing);
+        _ = await this.Context.SaveChangesAsync();
+
+        return true;
     }
 
-    public IEnumerable<Comment> GetAll(int pageNumber, int rowCount)
+    /// <summary>
+    /// Asynchronously gets all <see cref="Comment"/> entities.
+    /// </summary>
+    /// <returns>
+    /// A task representing the asynchronous operation. The task result contains <see cref="IReadOnlyList{Comment}"/>.
+    /// </returns>
+    public async Task<IReadOnlyList<Comment>> GetAllAsync()
     {
-        throw new NotImplementedException();
+        return await this.dbSet
+            .Include(c => c.Author)
+            .Include(c => c.Task)
+            .ToListAsync();
     }
 
-    public Comment? GetById(int id)
+    /// <summary>
+    /// Asynchronously gets set number of <see cref="Comment"/> entities.
+    /// </summary>
+    /// <param name="pageNumber">The page number to retrieve (1-based).</param>
+    /// <param name="rowCount">The number of rows per page.</param>
+    /// <returns>
+    /// A task representing the asynchronous operation. The task result contains <see cref="IReadOnlyList{Comment}"/>.
+    /// </returns>
+    public async Task<IReadOnlyList<Comment>> GetAllAsync(int pageNumber, int rowCount)
     {
-        throw new NotImplementedException();
+        if (pageNumber < 1)
+        {
+            throw new ArgumentException("Page number must be greater than 0.");
+        }
+
+        if (rowCount < 1)
+        {
+            throw new ArgumentException("Row count must be greater than 0.");
+        }
+
+        return await this.dbSet
+            .Include(c => c.Author)
+            .Include(c => c.Task)
+            .Skip((pageNumber - 1) * rowCount)
+            .Take(rowCount)
+            .ToListAsync();
     }
 
-    public void Update(Comment entity)
+    /// <summary>
+    /// Asynchronously retrieves a <see cref="Comment"/> entity by its identifier.
+    /// </summary>
+    /// <param name="id">The identifier of the entity to retrieve.</param>
+    /// <returns>
+    /// The <see cref="Comment"/> entity with the specified identifier,
+    /// or <c>null</c> if no such entity exists.
+    /// </returns>
+    public async Task<Comment?> GetByIdAsync(int id)
     {
-        throw new NotImplementedException();
+        return await this.dbSet
+            .Include(c => c.Author)
+            .Include(c => c.Task)
+            .FirstOrDefaultAsync(c => c.Id == id);
+    }
+
+    /// <summary>
+    /// Updates an existing <see cref="Comment"/> entity in the repository.
+    /// </summary>
+    /// <param name="entity">The <see cref="Comment"/> entity to update.</param>
+    /// <returns>Updated <see cref="Comment"/> entity.</returns>
+    public async Task<Comment?> UpdateAsync(Comment entity)
+    {
+        ArgumentNullException.ThrowIfNull(entity);
+
+        var existing = await this.dbSet.FindAsync(entity.Id);
+        if (existing is null)
+        {
+            return null;
+        }
+
+        this.Context.Entry(existing).CurrentValues.SetValues(entity);
+        _ = await this.Context.SaveChangesAsync();
+
+        return existing;
     }
 }

@@ -1,17 +1,21 @@
+using TodoListApp.Services.Database.Entities;
+
 namespace TodoListApp.Services.Database.Interfaces;
+
 public interface IRepository<TEntity>
+    where TEntity : BaseEntity
 {
-    IEnumerable<TEntity> GetAll();
+    Task<IReadOnlyList<TEntity>> GetAllAsync();
 
-    IEnumerable<TEntity> GetAll(int pageNumber, int rowCount);
+    Task<IReadOnlyList<TEntity>> GetAllAsync(int pageNumber, int rowCount);
 
-    TEntity? GetById(int id);
+    Task<TEntity?> GetByIdAsync(int id);
 
-    void Add(TEntity entity);
+    Task<TEntity> AddAsync(TEntity entity);
 
-    void Delete(TEntity entity);
+    Task<bool> DeleteAsync(TEntity entity);
 
-    void DeleteById(int id);
+    Task<bool> DeleteByIdAsync(int id);
 
-    void Update(TEntity entity);
+    Task<TEntity?> UpdateAsync(TEntity entity);
 }
