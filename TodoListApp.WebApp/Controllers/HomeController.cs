@@ -3,13 +3,13 @@ using Microsoft.AspNetCore.Mvc;
 using TodoListApp.WebApp.Models;
 
 namespace TodoListApp.WebApp.Controllers;
-internal class HomeController : Controller
+public class HomeController : Controller
 {
-    private readonly ILogger<HomeController> _logger;
+    private readonly ILogger<HomeController> logger;
 
     public HomeController(ILogger<HomeController> logger)
     {
-        this._logger = logger;
+        this.logger = logger;
     }
 
     public IActionResult Index()

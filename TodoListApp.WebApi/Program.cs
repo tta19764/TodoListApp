@@ -13,4 +13,7 @@ _ = app.UseTodoListAppMiddleware();
 // Routes
 _ = app.MapTodoListAppRoutes();
 
+// Identity Seed
+_ = app.SeedTodoListIdentity();
+
 await app.RunAsync();

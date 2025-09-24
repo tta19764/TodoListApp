@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using TodoListApp.Services.Entities;
+using TodoListApp.Services.Database.Entities;
 
 namespace TodoListApp.Services.Database.Data
 {
@@ -134,6 +134,17 @@ namespace TodoListApp.Services.Database.Data
                 .HasIndex(t => new { t.UserId, t.Label })
                 .IsUnique()
                 .HasDatabaseName("IX_Tag_UserId_Label");
+
+            _ = builder.Entity<Status>()
+                .HasData(
+                    new Status(1, "Not Started"),
+                    new Status(2, "In Progress"),
+                    new Status(3, "Completed"));
+
+            _ = builder.Entity<TodoListRole>()
+                .HasData(
+                    new TodoListRole(1, "Viwer"),
+                    new TodoListRole(2, "Editor"));
         }
     }
 }
