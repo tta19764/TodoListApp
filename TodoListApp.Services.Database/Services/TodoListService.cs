@@ -183,4 +183,16 @@ public class TodoListService : ITodoListService
 
         return entity;
     }
+
+    public async Task<TodoListModel?> GetByIdAsync(int listId, int userId)
+    {
+        var entity = await this.repository.GetByIdAsync(listId);
+
+        if (entity == null || entity.TodoListUserRoles.Any(lur => lur.UserId != userId))
+        {
+            return null;
+        }
+
+        return EntityToModel(entity);
+    }
 }

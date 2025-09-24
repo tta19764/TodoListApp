@@ -82,7 +82,7 @@ internal static class ServiceCollectionExtensions
                 ValidIssuer = configuration["AppSettings:Issuer"],
                 ValidAudience = configuration["AppSettings:Audience"],
                 IssuerSigningKey = new SymmetricSecurityKey(
-                    Encoding.UTF8.GetBytes(configuration["AppSettings:Token"]!)),
+                    Encoding.UTF8.GetBytes(configuration["AppSettings:Token"] ?? "SomeSuperSecureKey")),
             };
             options.Events = new JwtBearerEvents
             {

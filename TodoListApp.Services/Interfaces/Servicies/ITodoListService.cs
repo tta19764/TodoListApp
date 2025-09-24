@@ -10,4 +10,6 @@ public interface ITodoListService : ICrudService<TodoListModel>
     Task<IReadOnlyList<TodoListModel>> GetAllByAuthorAsync(int authorId);
 
     Task<IReadOnlyList<TodoListModel>> GetAllByAuthorAsync(int authorId, int pageNumber, int rowCount);
+
+    Task<TodoListModel?> GetByIdAsync(int listId, int userId);
 }

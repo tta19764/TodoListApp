@@ -34,14 +34,14 @@ public class AuthService : IAuthService
     {
         if (request == null)
         {
-            Log.LogNullUserLoginOrPassword(this.logger);
+            AuthLog.LogNullUserLoginOrPassword(this.logger);
             throw new ArgumentNullException(nameof(request));
         }
 
         var user = await this.userManager.FindByNameAsync(request.Username);
         if (user is null)
         {
-            Log.LogUserNotfound(this.logger, request.Username);
+            AuthLog.LogUserNotfound(this.logger, request.Username);
             return null;
         }
 
@@ -49,7 +49,7 @@ public class AuthService : IAuthService
 
         if (!res)
         {
-            Log.LogUserNotfound(this.logger, request.Username);
+            AuthLog.LogUserNotfound(this.logger, user.Id.ToString(CultureInfo.InvariantCulture));
             return null;
         }
 
@@ -72,10 +72,12 @@ public class AuthService : IAuthService
 
         if (result.Succeeded)
         {
+            AuthLog.LogJwtTokenRemoved(this.logger, user.Id.ToString(CultureInfo.InvariantCulture));
             return true;
         }
         else
         {
+            AuthLog.LogJwtTokenNotRemoved(this.logger, user.Id.ToString(CultureInfo.InvariantCulture));
             return false;
         }
     }
@@ -143,9 +145,12 @@ public class AuthService : IAuthService
             return null;
         }
 
+        AuthLog.LogJwtTokenCreated(this.logger, user.Id.ToString(CultureInfo.InvariantCulture));
+
         return new TokenResponseDto
         {
             AccessToken = token,
+            RefreshToken = refreshToken,
         };
     }
 
@@ -191,6 +196,8 @@ public class AuthService : IAuthService
             LOGINPROVIDER,
             "JwtRefreshToken",
             payload);
+
+        AuthLog.LogJwtTokenRefreshed(this.logger, user.Id.ToString(CultureInfo.InvariantCulture));
 
         return result.Succeeded ? refreshToken : null;
     }
