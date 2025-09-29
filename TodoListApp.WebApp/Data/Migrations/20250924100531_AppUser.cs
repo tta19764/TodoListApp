@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -8,7 +8,9 @@ namespace TodoListApp.WebApp.Data.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AlterColumn<int>(
+            ArgumentNullException.ThrowIfNull(migrationBuilder);
+
+            _ = migrationBuilder.AlterColumn<int>(
                 name: "UserId",
                 table: "AspNetUserTokens",
                 type: "int",
@@ -16,7 +18,7 @@ namespace TodoListApp.WebApp.Data.Migrations
                 oldClrType: typeof(string),
                 oldType: "nvarchar(450)");
 
-            migrationBuilder.AlterColumn<int>(
+            _ = migrationBuilder.AlterColumn<int>(
                 name: "Id",
                 table: "AspNetUsers",
                 type: "int",
@@ -25,21 +27,21 @@ namespace TodoListApp.WebApp.Data.Migrations
                 oldType: "nvarchar(450)")
                 .Annotation("SqlServer:Identity", "1, 1");
 
-            migrationBuilder.AddColumn<string>(
+            _ = migrationBuilder.AddColumn<string>(
                 name: "FirstName",
                 table: "AspNetUsers",
                 type: "nvarchar(max)",
                 nullable: false,
-                defaultValue: "");
+                defaultValue: string.Empty);
 
-            migrationBuilder.AddColumn<string>(
+            _ = migrationBuilder.AddColumn<string>(
                 name: "LastName",
                 table: "AspNetUsers",
                 type: "nvarchar(max)",
                 nullable: false,
-                defaultValue: "");
+                defaultValue: string.Empty);
 
-            migrationBuilder.AlterColumn<int>(
+            _ = migrationBuilder.AlterColumn<int>(
                 name: "RoleId",
                 table: "AspNetUserRoles",
                 type: "int",
@@ -47,7 +49,7 @@ namespace TodoListApp.WebApp.Data.Migrations
                 oldClrType: typeof(string),
                 oldType: "nvarchar(450)");
 
-            migrationBuilder.AlterColumn<int>(
+            _ = migrationBuilder.AlterColumn<int>(
                 name: "UserId",
                 table: "AspNetUserRoles",
                 type: "int",
@@ -55,7 +57,7 @@ namespace TodoListApp.WebApp.Data.Migrations
                 oldClrType: typeof(string),
                 oldType: "nvarchar(450)");
 
-            migrationBuilder.AlterColumn<int>(
+            _ = migrationBuilder.AlterColumn<int>(
                 name: "UserId",
                 table: "AspNetUserLogins",
                 type: "int",
@@ -63,7 +65,7 @@ namespace TodoListApp.WebApp.Data.Migrations
                 oldClrType: typeof(string),
                 oldType: "nvarchar(450)");
 
-            migrationBuilder.AlterColumn<int>(
+            _ = migrationBuilder.AlterColumn<int>(
                 name: "UserId",
                 table: "AspNetUserClaims",
                 type: "int",
@@ -71,7 +73,7 @@ namespace TodoListApp.WebApp.Data.Migrations
                 oldClrType: typeof(string),
                 oldType: "nvarchar(450)");
 
-            migrationBuilder.AlterColumn<int>(
+            _ = migrationBuilder.AlterColumn<int>(
                 name: "Id",
                 table: "AspNetRoles",
                 type: "int",
@@ -80,7 +82,7 @@ namespace TodoListApp.WebApp.Data.Migrations
                 oldType: "nvarchar(450)")
                 .Annotation("SqlServer:Identity", "1, 1");
 
-            migrationBuilder.AlterColumn<int>(
+            _ = migrationBuilder.AlterColumn<int>(
                 name: "RoleId",
                 table: "AspNetRoleClaims",
                 type: "int",
@@ -91,15 +93,17 @@ namespace TodoListApp.WebApp.Data.Migrations
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
+            ArgumentNullException.ThrowIfNull(migrationBuilder);
+
+            _ = migrationBuilder.DropColumn(
                 name: "FirstName",
                 table: "AspNetUsers");
 
-            migrationBuilder.DropColumn(
+            _ = migrationBuilder.DropColumn(
                 name: "LastName",
                 table: "AspNetUsers");
 
-            migrationBuilder.AlterColumn<string>(
+            _ = migrationBuilder.AlterColumn<string>(
                 name: "UserId",
                 table: "AspNetUserTokens",
                 type: "nvarchar(450)",
@@ -107,7 +111,7 @@ namespace TodoListApp.WebApp.Data.Migrations
                 oldClrType: typeof(int),
                 oldType: "int");
 
-            migrationBuilder.AlterColumn<string>(
+            _ = migrationBuilder.AlterColumn<string>(
                 name: "Id",
                 table: "AspNetUsers",
                 type: "nvarchar(450)",
@@ -116,7 +120,7 @@ namespace TodoListApp.WebApp.Data.Migrations
                 oldType: "int")
                 .OldAnnotation("SqlServer:Identity", "1, 1");
 
-            migrationBuilder.AlterColumn<string>(
+            _ = migrationBuilder.AlterColumn<string>(
                 name: "RoleId",
                 table: "AspNetUserRoles",
                 type: "nvarchar(450)",
@@ -124,7 +128,7 @@ namespace TodoListApp.WebApp.Data.Migrations
                 oldClrType: typeof(int),
                 oldType: "int");
 
-            migrationBuilder.AlterColumn<string>(
+            _ = migrationBuilder.AlterColumn<string>(
                 name: "UserId",
                 table: "AspNetUserRoles",
                 type: "nvarchar(450)",
@@ -132,7 +136,7 @@ namespace TodoListApp.WebApp.Data.Migrations
                 oldClrType: typeof(int),
                 oldType: "int");
 
-            migrationBuilder.AlterColumn<string>(
+            _ = migrationBuilder.AlterColumn<string>(
                 name: "UserId",
                 table: "AspNetUserLogins",
                 type: "nvarchar(450)",
@@ -140,7 +144,7 @@ namespace TodoListApp.WebApp.Data.Migrations
                 oldClrType: typeof(int),
                 oldType: "int");
 
-            migrationBuilder.AlterColumn<string>(
+            _ = migrationBuilder.AlterColumn<string>(
                 name: "UserId",
                 table: "AspNetUserClaims",
                 type: "nvarchar(450)",
@@ -148,7 +152,7 @@ namespace TodoListApp.WebApp.Data.Migrations
                 oldClrType: typeof(int),
                 oldType: "int");
 
-            migrationBuilder.AlterColumn<string>(
+            _ = migrationBuilder.AlterColumn<string>(
                 name: "Id",
                 table: "AspNetRoles",
                 type: "nvarchar(450)",
@@ -157,7 +161,7 @@ namespace TodoListApp.WebApp.Data.Migrations
                 oldType: "int")
                 .OldAnnotation("SqlServer:Identity", "1, 1");
 
-            migrationBuilder.AlterColumn<string>(
+            _ = migrationBuilder.AlterColumn<string>(
                 name: "RoleId",
                 table: "AspNetRoleClaims",
                 type: "nvarchar(450)",

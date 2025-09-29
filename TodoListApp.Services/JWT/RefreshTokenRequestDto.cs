@@ -1,4 +1,4 @@
-namespace TodoListApp.WebApi.Models.JWT;
+namespace TodoListApp.Services.JWT;
 public class RefreshTokenRequestDto
 {
     public string UserId { get; set; } = null!;

@@ -1,7 +1,10 @@
+using System.Net.Http.Headers;
 using Microsoft.EntityFrameworkCore;
-using TodoListApp.Services.WebApi.Interfaces;
+using TodoListApp.Services.Interfaces.Servicies;
 using TodoListApp.Services.WebApi.Servicies;
 using TodoListApp.WebApp.Data;
+using TodoListApp.WebApp.Handlers;
+using TodoListApp.WebApp.Services;
 
 namespace TodoListApp.WebApp.Extensions;
 
@@ -29,18 +32,23 @@ internal static class ServiceCollectionExtensions
         })
             .AddEntityFrameworkStores<ApplicationDbContext>();
 
+        _ = services.AddTransient<JwtTokenHandler>()
+            .AddTransient<ITokenStorageService, IdentityTokenStorageService>();
+
         _ = services.AddControllersWithViews();
 
-        _ = services.AddHttpClient<IUserService, UserService>((provider, client) =>
+        _ = services.AddHttpClient<IAuthService, AuthService>((provider, client) =>
         {
             var apiUrl = configuration["ApiSettings:ApiBaseUrl"];
+            var controllerUrl = configuration["ApiSettings:ApiAuthController"];
             if (!string.IsNullOrWhiteSpace(apiUrl))
             {
-                client.BaseAddress = new Uri(apiUrl);
+                client.BaseAddress = new Uri(apiUrl + controllerUrl);
             }
 
             client.Timeout = TimeSpan.FromSeconds(30);
-            client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+            client.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
         });
 
         _ = services.AddHttpContextAccessor();

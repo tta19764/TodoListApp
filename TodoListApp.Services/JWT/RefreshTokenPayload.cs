@@ -1,4 +1,4 @@
-namespace TodoListApp.WebApi.Paylodas;
+namespace TodoListApp.Services.JWT;
 
 public class RefreshTokenPayload
 {

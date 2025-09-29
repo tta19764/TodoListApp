@@ -1,8 +1,10 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using TodoListApp.Services.WebApi.Interfaces;
+using TodoListApp.Services.Interfaces.Servicies;
+using TodoListApp.Services.JWT;
 using TodoListApp.WebApp.CustomLogs;
 using TodoListApp.WebApp.Data;
 using TodoListApp.WebApp.Models;
@@ -14,20 +16,23 @@ namespace TodoListApp.WebApp.Controllers;
 public class AccountController : Controller
 {
     private readonly SignInManager<AppUser> signInManager;
-    private readonly IUserService userService;
+    private readonly IAuthService authService;
     private readonly ILogger<AccountController> logger;
-    private readonly IConfiguration configuration;
+    private readonly UserManager<AppUser> userManager;
+    private readonly ITokenStorageService tokenStorageService;
 
     public AccountController(
         SignInManager<AppUser> signInManager,
-        IUserService userService,
+        IAuthService authService,
         ILogger<AccountController> logger,
-        IConfiguration configuration)
+        UserManager<AppUser> userManager,
+        ITokenStorageService tokenStorageService)
     {
         this.signInManager = signInManager ?? throw new ArgumentNullException(nameof(signInManager));
-        this.userService = userService ?? throw new ArgumentNullException(nameof(userService));
+        this.authService = authService ?? throw new ArgumentNullException(nameof(authService));
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        this.userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
+        this.tokenStorageService = tokenStorageService ?? throw new ArgumentNullException(nameof(tokenStorageService));
     }
 
     [HttpGet]
@@ -35,17 +40,27 @@ public class AccountController : Controller
     [AllowAnonymous]
     public async Task<ViewResult> LoginAsync(Uri? returnUrl = null)
     {
-        _ = this.ModelState.IsValid;
-
-        returnUrl ??= new Uri("/", UriKind.Relative);
-
-        // Clear the existing external cookie to ensure a clean login process
-        await this.HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
-
-        return this.View(new LoginViewModel
+        try
         {
-            ReturnUrl = returnUrl,
-        });
+            _ = this.ModelState.IsValid;
+
+            returnUrl ??= new Uri("/", UriKind.Relative);
+
+            AccountLog.LogLoginPageAccessed(this.logger, returnUrl);
+
+            // Clear the existing external cookie to ensure a clean login process
+            await this.HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
+
+            return this.View(new LoginViewModel
+            {
+                ReturnUrl = returnUrl,
+            });
+        }
+        catch (Exception ex)
+        {
+            AccountLog.LogUnexpectedErrorDuringLogin(this.logger, "Anonymous", ex);
+            throw;
+        }
     }
 
     [HttpPost]
@@ -54,46 +69,225 @@ public class AccountController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> LoginAsync(LoginViewModel loginViewModel)
     {
-        ArgumentNullException.ThrowIfNull(loginViewModel);
-
-        if (!this.ModelState.IsValid)
+        try
         {
-            return this.View(loginViewModel);
-        }
-
-        var result = await this.signInManager.PasswordSignInAsync(
-                loginViewModel.Login,
-                loginViewModel.Password,
-                loginViewModel.RememberMe,
-                lockoutOnFailure: false);
-
-        if (result.Succeeded)
-        {
-            Log.LogUserLoggedIn(this.logger, loginViewModel.Login);
-            var connection = this.configuration.GetValue<string>("ApiSettings:ApiBaseUrl");
-            ArgumentNullException.ThrowIfNull(connection);
-
-            var uri = new Uri($"{connection}auth/login", UriKind.Absolute);
-
-            var tokenResult = await this.userService.Login(loginViewModel.Login, loginViewModel.Password, uri);
-
-            if (tokenResult is not null)
+            if (loginViewModel == null)
             {
-                Log.LogJwtTokenStored(this.logger, loginViewModel.Login);
+                AccountLog.LogNullLoginViewModel(this.logger);
+                throw new ArgumentNullException(nameof(loginViewModel));
             }
 
-            // Redirect to return URL or default location
-            var returnUrl = string.IsNullOrEmpty(loginViewModel.ReturnUrl.ToString()) ? "~/" : loginViewModel.ReturnUrl.ToString();
-            return this.LocalRedirect(returnUrl);
-        }
+            if (!this.ModelState.IsValid)
+            {
+                AccountLog.LogInvalidModelState(this.logger);
+                return this.View(loginViewModel);
+            }
 
-        if (result.IsLockedOut)
+            // Sign out any existing sessions
+            await this.HttpContext.SignOutAsync(IdentityConstants.ApplicationScheme);
+            await this.signInManager.SignOutAsync();
+
+            var userDto = new UserDto()
+            {
+                Username = loginViewModel.Login,
+                Password = loginViewModel.Password,
+            };
+
+            TokenResponseDto? tokenResult = null;
+
+            try
+            {
+                tokenResult = await this.authService.LoginAsync(userDto);
+            }
+            catch (Exception ex)
+            {
+                AccountLog.LogApiAuthenticationFailed(this.logger, loginViewModel.Login);
+                AccountLog.LogUnexpectedErrorDuringLogin(this.logger, loginViewModel.Login, ex);
+
+                this.ModelState.AddModelError(string.Empty, "Unable to connect to authentication service. Please try again later.");
+                return this.View(loginViewModel);
+                throw;
+            }
+
+            if (tokenResult == null)
+            {
+                AccountLog.LogApiAuthenticationFailed(this.logger, loginViewModel.Login);
+                this.ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+                return this.View(loginViewModel);
+            }
+
+            // Sign in with Identity
+            Microsoft.AspNetCore.Identity.SignInResult result;
+            try
+            {
+                result = await this.signInManager.PasswordSignInAsync(
+                    loginViewModel.Login,
+                    loginViewModel.Password,
+                    loginViewModel.RememberMe,
+                    lockoutOnFailure: false);
+            }
+            catch (Exception ex)
+            {
+                AccountLog.LogIdentitySignInFailed(this.logger, loginViewModel.Login, ex);
+                throw;
+            }
+
+            if (result.Succeeded)
+            {
+                AccountLog.LogUserLoggedIn(this.logger, loginViewModel.Login);
+
+                // Store JWT token
+                var user = await this.userManager.FindByNameAsync(loginViewModel.Login);
+                if (user != null)
+                {
+                    try
+                    {
+                        var tokenSaveResult = await this.tokenStorageService.SaveToken(
+                            user.Id.ToString(CultureInfo.InvariantCulture),
+                            tokenResult.AccessToken);
+
+                        if (!tokenSaveResult)
+                        {
+                            AccountLog.LogJwtTokenStoreFailed(this.logger, loginViewModel.Login);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        AccountLog.LogUnexpectedErrorStoringToken(this.logger, user.Id.ToString(CultureInfo.InvariantCulture), ex);
+                        throw;
+                    }
+                }
+
+                var returnUrl = string.IsNullOrEmpty(loginViewModel.ReturnUrl.ToString())
+                    ? "~/"
+                    : loginViewModel.ReturnUrl.ToString();
+
+                return this.LocalRedirect(returnUrl);
+            }
+
+            if (result.IsLockedOut)
+            {
+                AccountLog.LogUserLockedOut(this.logger);
+                return this.RedirectToPage("./Lockout");
+            }
+
+            AccountLog.LogInvalidLoginAttempt(this.logger, loginViewModel.Login);
+            this.ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+            return this.View(loginViewModel);
+        }
+        catch (ArgumentNullException)
         {
-            Log.LogUserLockedOut(this.logger);
-            return this.RedirectToPage("./Lockout");
+            throw;
         }
+        catch (Exception ex)
+        {
+            AccountLog.LogUnexpectedErrorDuringLogin(this.logger, loginViewModel?.Login ?? "unknown", ex);
+            throw;
+        }
+    }
 
-        this.ModelState.AddModelError(string.Empty, "Invalid login attempt.");
-        return this.View(loginViewModel);
+    [HttpPost]
+    [Route("Logout")]
+    [Authorize]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> LogoutAsync()
+    {
+        AppUser? user = null;
+
+        try
+        {
+            user = await this.userManager.GetUserAsync(this.User);
+
+            if (user == null)
+            {
+                AccountLog.LogUserNotFoundInStorage(this.logger, "Current user");
+                return this.RedirectToAction("Index", "Home");
+            }
+
+            var token = await this.userManager.GetAuthenticationTokenAsync(user, "JwtBearer", "JwtToken");
+
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                // Logout from API
+                var logoutRequestDto = new LogoutRequestDto()
+                {
+                    UserId = user.Id.ToString(CultureInfo.InvariantCulture),
+                    AccessToken = token,
+                };
+
+                bool apiLogoutSuccess = false;
+
+                try
+                {
+                    apiLogoutSuccess = await this.authService.LogoutAsync(logoutRequestDto);
+                }
+                catch (Exception ex)
+                {
+                    AccountLog.LogUnexpectedErrorDuringLogout(this.logger, user.UserName ?? user.Id.ToString(CultureInfo.InvariantCulture), ex);
+                    throw;
+                }
+
+                if (apiLogoutSuccess)
+                {
+                    // Remove token from storage
+                    try
+                    {
+                        var accessTokenRemoved = await this.tokenStorageService.RemoveToken(
+                            user.Id.ToString(CultureInfo.InvariantCulture));
+
+                        if (accessTokenRemoved)
+                        {
+                            AccountLog.LogJwtTokenRemoved(this.logger, user.UserName ?? user.Id.ToString(CultureInfo.InvariantCulture));
+                        }
+                        else
+                        {
+                            AccountLog.LogJwtTokenRemoveFailed(this.logger, user.UserName ?? user.Id.ToString(CultureInfo.InvariantCulture));
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        AccountLog.LogUnexpectedErrorRemovingToken(
+                            this.logger,
+                            user.Id.ToString(CultureInfo.InvariantCulture),
+                            ex);
+                        throw;
+                    }
+                }
+                else
+                {
+                    AccountLog.LogJwtTokenRemoveFailed(this.logger, user.UserName ?? user.Id.ToString(CultureInfo.InvariantCulture));
+                }
+            }
+
+            await this.PerformLocalLogout();
+            AccountLog.LogUserLoggedOut(this.logger);
+
+            return this.RedirectToAction("Index", "Home");
+        }
+        catch (Exception ex)
+        {
+            AccountLog.LogUnexpectedErrorDuringLogout(
+                this.logger,
+                user?.UserName ?? "unknown",
+                ex);
+
+            await this.PerformLocalLogout();
+
+            throw;
+        }
+    }
+
+    private async Task PerformLocalLogout()
+    {
+        try
+        {
+            await this.HttpContext.SignOutAsync(IdentityConstants.ApplicationScheme);
+            await this.signInManager.SignOutAsync();
+        }
+        catch (Exception ex)
+        {
+            AccountLog.LogUnexpectedErrorDuringLogout(this.logger, "System", ex);
+            throw;
+        }
     }
 }

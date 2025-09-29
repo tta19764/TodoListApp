@@ -40,7 +40,14 @@ public class TodoTaskRepository : AbstractRepository, ITodoTaskRepository
         _ = await this.dbSet.AddAsync(entity);
         _ = await this.Context.SaveChangesAsync();
 
-        return entity;
+        return await this.dbSet
+        .Include(t => t.TodoList)
+        .Include(t => t.OwnerUser)
+        .Include(t => t.Status)
+        .Include(t => t.TaskTags)
+            .ThenInclude(tt => tt.Tag)
+        .Include(t => t.Comments)
+        .FirstAsync(e => e.Id == entity.Id);
     }
 
     /// <summary>
@@ -99,11 +106,13 @@ public class TodoTaskRepository : AbstractRepository, ITodoTaskRepository
     public async Task<IReadOnlyList<TodoTask>> GetAllAsync()
     {
         return await this.dbSet
+            .Include(t => t.TodoList)
             .Include(t => t.OwnerUser)
             .Include(t => t.Status)
             .Include(t => t.TaskTags)
-            .ThenInclude(tt => tt.Tag)
+                .ThenInclude(tt => tt.Tag)
             .Include(t => t.Comments)
+            .AsSplitQuery()
             .ToListAsync();
     }
 
@@ -128,11 +137,115 @@ public class TodoTaskRepository : AbstractRepository, ITodoTaskRepository
         }
 
         return await this.dbSet
+            .Include(t => t.TodoList)
             .Include(t => t.OwnerUser)
             .Include(t => t.Status)
             .Include(t => t.TaskTags)
-            .ThenInclude(tt => tt.Tag)
+                .ThenInclude(tt => tt.Tag)
             .Include(t => t.Comments)
+            .AsSplitQuery()
+            .Skip((pageNumber - 1) * rowCount)
+            .Take(rowCount)
+            .ToListAsync();
+    }
+
+    /// <summary>
+    /// Asynchronously gets all <see cref="TodoTask"/> entities by list inique identifier.
+    /// </summary>
+    /// <param name="id">The unique identifier of the list.</param>
+    /// <returns>
+    /// A task representing the asynchronous operation. The task result contains <see cref="IReadOnlyList{TodoTask}"/>.
+    /// </returns>
+    public async Task<IReadOnlyList<TodoTask>> GetAllByListIdAsync(int id)
+    {
+        return await this.dbSet
+            .Where(t => t.ListId == id)
+            .Include(t => t.TodoList)
+            .Include(t => t.OwnerUser)
+            .Include(t => t.Status)
+            .Include(t => t.TaskTags)
+                .ThenInclude(tt => tt.Tag)
+            .Include(t => t.Comments)
+            .AsSplitQuery()
+            .ToListAsync();
+    }
+
+    /// <summary>
+    /// Asynchronously gets all <see cref="TodoTask"/> entities by list inique identifier.
+    /// </summary>
+    /// <param name="id">The unique identifier of the list.</param>
+    /// <param name="pageNumber">The page number to retrieve (1-based).</param>
+    /// <param name="rowCount">The number of rows per page.</param>
+    /// <returns>
+    /// A task representing the asynchronous operation. The task result contains <see cref="IReadOnlyList{TodoTask}"/>.
+    /// </returns>
+    public async Task<IReadOnlyList<TodoTask>> GetAllByListIdAsync(int id, int pageNumber, int rowCount)
+    {
+        if (pageNumber < 1)
+        {
+            throw new ArgumentException("Page number must be greater than 0.");
+        }
+
+        if (rowCount < 1)
+        {
+            throw new ArgumentException("Row count must be greater than 0.");
+        }
+
+        return await this.dbSet
+            .Where(t => t.ListId == id)
+            .Include(t => t.TodoList)
+            .Include(t => t.OwnerUser)
+            .Include(t => t.Status)
+            .Include(t => t.TaskTags)
+                .ThenInclude(tt => tt.Tag)
+            .Include(t => t.Comments)
+            .AsSplitQuery()
+            .Skip((pageNumber - 1) * rowCount)
+            .Take(rowCount)
+            .ToListAsync();
+    }
+
+    /// <summary>
+    /// Asynchronously gets all <see cref="TodoTask"/> entities by user.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user.</param>
+    /// <returns>
+    /// A task representing the asynchronous operation. The task result contains <see cref="IReadOnlyList{TodoTask}"/>.
+    /// </returns>
+    public async Task<IReadOnlyList<TodoTask>> GetAllUserTasksAsync(int userId)
+    {
+        return await this.dbSet
+            .Where(t => t.OwnerUserId == userId)
+            .Include(t => t.TodoList)
+            .Include(t => t.OwnerUser)
+            .Include(t => t.Status)
+            .Include(t => t.TaskTags)
+                .ThenInclude(tt => tt.Tag)
+            .Include(t => t.Comments)
+            .AsSplitQuery()
+            .ToListAsync();
+    }
+
+    /// <summary>
+    /// Asynchronously gets all <see cref="TodoTask"/> entities by user.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user.</param>
+    /// <param name="pageNumber">The page number to retrieve (1-based).</param>
+    /// <param name="rowCount">The number of rows per page.</param>
+    /// <returns>
+    /// A task representing the asynchronous operation. The task result contains <see cref="IReadOnlyList{TodoTask}"/>.
+    /// </returns>
+    public async Task<IReadOnlyList<TodoTask>> GetAllUserTasksAsync(int userId, int pageNumber, int rowCount)
+    {
+        return await this.dbSet
+            .Where(t => t.OwnerUserId == userId)
+            .Include(t => t.TodoList)
+            .Include(t => t.OwnerUser)
+            .Include(t => t.Status)
+            .Include(t => t.TaskTags)
+                .ThenInclude(tt => tt.Tag)
+            .Include(t => t.Comments)
+            .AsSplitQuery()
             .Skip((pageNumber - 1) * rowCount)
             .Take(rowCount)
             .ToListAsync();
@@ -149,11 +262,13 @@ public class TodoTaskRepository : AbstractRepository, ITodoTaskRepository
     public async Task<TodoTask?> GetByIdAsync(int id)
     {
         return await this.dbSet
+            .Include(t => t.TodoList)
             .Include(t => t.OwnerUser)
             .Include(t => t.Status)
             .Include(t => t.TaskTags)
-            .ThenInclude(tt => tt.Tag)
+                .ThenInclude(tt => tt.Tag)
             .Include(t => t.Comments)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(t => t.Id == id);
     }
 
@@ -175,6 +290,13 @@ public class TodoTaskRepository : AbstractRepository, ITodoTaskRepository
         this.Context.Entry(existing).CurrentValues.SetValues(entity);
         _ = await this.Context.SaveChangesAsync();
 
-        return existing;
+        return await this.dbSet
+            .Include(t => t.TodoList)
+            .Include(t => t.OwnerUser)
+            .Include(t => t.Status)
+            .Include(t => t.TaskTags)
+                .ThenInclude(tt => tt.Tag)
+            .Include(t => t.Comments)
+            .FirstOrDefaultAsync(t => t.Id == existing.Id);
     }
 }

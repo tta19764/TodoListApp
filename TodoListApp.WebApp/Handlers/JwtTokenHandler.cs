@@ -1,8 +1,11 @@
 using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http.Headers;
+using System.Text.Json;
 using Microsoft.AspNetCore.Identity;
-using TodoListApp.WebApi.Models.JWT;
+using TodoListApp.Services.Interfaces.Servicies;
+using TodoListApp.Services.JWT;
+using TodoListApp.WebApp.CustomLogs;
 using TodoListApp.WebApp.Data;
 
 namespace TodoListApp.WebApp.Handlers;
@@ -11,16 +14,22 @@ public class JwtTokenHandler : DelegatingHandler
 {
     private readonly IHttpContextAccessor httpContextAccessor;
     private readonly UserManager<AppUser> userManager;
-    private readonly IHttpClientFactory httpClientFactory;
+    private readonly IAuthService authService;
+    private readonly ITokenStorageService tokenStorageService;
+    private readonly ILogger<JwtTokenHandler> logger;
 
     public JwtTokenHandler(
         IHttpContextAccessor httpContextAccessor,
         UserManager<AppUser> userManager,
-        IHttpClientFactory httpClientFactory)
+        IAuthService authService,
+        ITokenStorageService tokenStorageService,
+        ILogger<JwtTokenHandler> logger)
     {
         this.httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
         this.userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
-        this.httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+        this.authService = authService ?? throw new ArgumentNullException(nameof(authService));
+        this.tokenStorageService = tokenStorageService ?? throw new ArgumentNullException(nameof(tokenStorageService));
+        this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
@@ -34,38 +43,39 @@ public class JwtTokenHandler : DelegatingHandler
             var user = await this.userManager.GetUserAsync(httpContext.User);
             if (user != null)
             {
-                // Grab current token
-                var token = await this.userManager.GetAuthenticationTokenAsync(user, "JwtBearer", "JwtToken");
+                var token = await this.tokenStorageService.GetToken(user.Id.ToString(CultureInfo.InvariantCulture));
 
-                if (!string.IsNullOrEmpty(token))
+                if (token is not null && !string.IsNullOrEmpty(token))
                 {
                     // Check expiry
                     var jwt = new JwtSecurityTokenHandler().ReadJwtToken(token);
                     var exp = jwt.ValidTo;
 
-                    if (exp < DateTime.UtcNow.AddMinutes(-1)) // expired or close to expiry
+                    if (exp < DateTime.UtcNow.AddMinutes(-1))
                     {
-                        var refreshToken = await this.userManager.GetAuthenticationTokenAsync(user, "JwtBearer", "JwtRefreshToken");
+                        var refreshToken = JsonSerializer.Deserialize<RefreshTokenPayload>(await this.userManager.GetAuthenticationTokenAsync(user, "JwtBearer", "JwtRefreshToken"));
 
-                        if (!string.IsNullOrEmpty(refreshToken))
+                        if (refreshToken is not null && !string.IsNullOrEmpty(refreshToken.Token))
                         {
-                            var client = this.httpClientFactory.CreateClient("ApiClient");
-                            var response = await client.PostAsJsonAsync(
-                                "/api/auth/refresh-token",
-                                new RefreshTokenRequestDto
-                                {
-                                    UserId = user.Id.ToString(CultureInfo.InvariantCulture),
-                                    RefreshToken = refreshToken,
-                                },
-                                cancellationToken);
-
-                            if (response.IsSuccessStatusCode)
+                            var tokenRequestDto = new RefreshTokenRequestDto { RefreshToken = refreshToken.Token, UserId = user.Id.ToString(CultureInfo.InvariantCulture) };
+                            var tokenResponse = await this.authService.RefreshTokensAsync(tokenRequestDto, cancellationToken);
+                            if (tokenResponse != null)
                             {
-                                var tokenResponse = await response.Content.ReadFromJsonAsync<TokenResponseDto>(cancellationToken: cancellationToken);
-                                if (tokenResponse != null)
+                                AccountLog.LogJwtTokenRefreshed(this.logger, user.UserName);
+                                token = tokenResponse.AccessToken;
+                                var tokenSaveResult = await this.tokenStorageService.SaveToken(user.Id.ToString(CultureInfo.InvariantCulture), token);
+                                if (tokenSaveResult)
                                 {
-                                    token = tokenResponse.AccessToken;
+                                    AccountLog.LogJwtTokenStored(this.logger, user.UserName);
                                 }
+                                else
+                                {
+                                    AccountLog.LogJwtTokenStoreFailed(this.logger, user.UserName);
+                                }
+                            }
+                            else
+                            {
+                                AccountLog.LogJwtTokenRefreshFailed(this.logger, user.UserName);
                             }
                         }
                     }

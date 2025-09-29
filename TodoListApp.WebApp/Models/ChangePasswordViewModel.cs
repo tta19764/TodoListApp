@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace TodoListApp.WebApp.Models;
 
-public class ChangePasswordViewModel
+public sealed class ChangePasswordViewModel
 {
     [Required(ErrorMessage = "Email is required.")]
     [EmailAddress]

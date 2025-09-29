@@ -1,4 +1,4 @@
-namespace TodoListApp.WebApi.Models.JWT;
+namespace TodoListApp.Services.JWT;
 public class UserDto
 {
     public string Username { get; set; } = string.Empty;

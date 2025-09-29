@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -8,12 +9,20 @@ using TodoListApp.Services.Database.Data;
 using TodoListApp.Services.Database.Entities;
 using TodoListApp.Services.Database.Services;
 using TodoListApp.Services.Interfaces.Servicies;
-using TodoListApp.WebApi.Servicies;
 
 namespace TodoListApp.WebApi.Extensions;
 
+/// <summary>
+/// Extension methods for IServiceCollection to add application services.
+/// </summary>
 internal static class ServiceCollectionExtensions
 {
+    /// <summary>
+    /// Adds the TodoListApp services to the IServiceCollection.
+    /// </summary>
+    /// <param name="services">The <see cref="IServiceCollection"/> collection of services.</param>
+    /// <param name="configuration">The <see cref="IConfiguration"/> set of application properties.</param>
+    /// <returns>The updated <see cref="IServiceCollection"/>.</returns>
     public static IServiceCollection AddTodoListAppServices(this IServiceCollection services, IConfiguration configuration)
     {
         _ = services.AddDbContext<TodoListDbContext>(options =>
@@ -27,7 +36,8 @@ internal static class ServiceCollectionExtensions
             .AddEntityFrameworkStores<TodoListDbContext>()
             .AddDefaultTokenProviders();
 
-        _ = services.AddScoped<ITodoListService, TodoListService>();
+        _ = services.AddTransient<ITodoListService, TodoListService>();
+        _ = services.AddTransient<ITodoTaskService, TodoTaskService>();
 
         _ = services.AddControllers();
 
@@ -83,13 +93,52 @@ internal static class ServiceCollectionExtensions
                 ValidAudience = configuration["AppSettings:Audience"],
                 IssuerSigningKey = new SymmetricSecurityKey(
                     Encoding.UTF8.GetBytes(configuration["AppSettings:Token"] ?? "SomeSuperSecureKey")),
+                ClockSkew = TimeSpan.FromMinutes(5),
             };
+
             options.Events = new JwtBearerEvents
             {
-                OnAuthenticationFailed = ctx =>
+                OnChallenge = async ctx =>
                 {
-                    Console.WriteLine("JWT validation failed: " + ctx.Exception.Message);
-                    return Task.CompletedTask;
+                    ctx.HandleResponse();
+
+                    var response = ctx.Response;
+                    response.StatusCode = 401;
+                    response.ContentType = "application/json";
+
+                    string message;
+                    string errorCode;
+
+                    if (ctx.AuthenticateFailure is SecurityTokenExpiredException)
+                    {
+                        message = "Token has expired";
+                        errorCode = "TOKEN_EXPIRED";
+                        response.Headers.Add("Token-Expired", "true");
+                    }
+                    else if (ctx.AuthenticateFailure is SecurityTokenInvalidSignatureException)
+                    {
+                        message = "Invalid token signature";
+                        errorCode = "INVALID_SIGNATURE";
+                    }
+                    else if (ctx.AuthenticateFailure is SecurityTokenValidationException)
+                    {
+                        message = "Invalid token";
+                        errorCode = "INVALID_TOKEN";
+                    }
+                    else
+                    {
+                        message = "Authentication failed";
+                        errorCode = "AUTH_FAILED";
+                    }
+
+                    var result = new
+                    {
+                        error = errorCode,
+                        message = message,
+                        timestamp = DateTime.UtcNow,
+                    };
+
+                    await response.WriteAsync(JsonSerializer.Serialize(result));
                 },
             };
         });

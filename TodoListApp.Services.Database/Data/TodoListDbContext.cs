@@ -143,7 +143,7 @@ namespace TodoListApp.Services.Database.Data
 
             _ = builder.Entity<TodoListRole>()
                 .HasData(
-                    new TodoListRole(1, "Viwer"),
+                    new TodoListRole(1, "Viewer"),
                     new TodoListRole(2, "Editor"));
         }
     }

@@ -4,15 +4,15 @@ namespace TodoListApp.Services.Interfaces;
 public interface ICrudService<TEntity>
     where TEntity : AbstractModel
 {
-    Task<IReadOnlyList<TEntity>> GetAllAsync();
+    Task<IReadOnlyList<TEntity>> GetAllAsync(int userId);
 
-    Task<IReadOnlyList<TEntity>> GetAllAsync(int pageNumber, int rowCount);
+    Task<IReadOnlyList<TEntity>> GetAllAsync(int userId, int pageNumber, int rowCount);
 
-    Task<TEntity> GetByIdAsync(int id);
+    Task<TEntity> GetByIdAsync(int userId, int id);
 
     Task<TEntity> AddAsync(TEntity model);
 
-    Task DeleteAsync(int id);
+    Task DeleteAsync(int userId, int id);
 
-    Task<TEntity> UpdateAsync(TEntity model);
+    Task<TEntity> UpdateAsync(int userId, TEntity model);
 }

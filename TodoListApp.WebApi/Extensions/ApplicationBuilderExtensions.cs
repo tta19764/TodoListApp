@@ -2,8 +2,16 @@ using TodoListApp.WebApi.Seed;
 
 namespace TodoListApp.WebApi.Extensions;
 
+/// <summary>
+/// Extension methods for configuring the application's request pipeline.
+/// </summary>
 internal static class ApplicationBuilderExtensions
 {
+    /// <summary>
+    /// Configures middleware for the TodoList application.
+    /// </summary>
+    /// <param name="app">The <see cref="WebApplication"/> instance to configure.</param></param>
+    /// <returns>The configured <see cref="WebApplication"/> instance.</returns>
     public static WebApplication UseTodoListAppMiddleware(this WebApplication app)
     {
         // Configure the HTTP request pipeline.
@@ -21,6 +29,11 @@ internal static class ApplicationBuilderExtensions
         return app;
     }
 
+    /// <summary>
+    /// Maps the routes for the TodoList application.
+    /// </summary>
+    /// <param name="app">The <see cref="WebApplication"/> instance to configure.</param></param>
+    /// <returns>The configured <see cref="WebApplication"/> instance.</returns>
     public static WebApplication MapTodoListAppRoutes(this WebApplication app)
     {
         _ = app.MapControllers();
@@ -28,6 +41,11 @@ internal static class ApplicationBuilderExtensions
         return app;
     }
 
+    /// <summary>
+    /// Seeds the identity data for the TodoList application.
+    /// </summary>
+    /// <param name="app">The <see cref="WebApplication"/> instance to configure.</param></param>
+    /// <returns>The configured <see cref="WebApplication"/> instance.</returns>
     public static WebApplication SeedTodoListIdentity(this WebApplication app)
     {
         _ = IdentitySeed.EnsurePopulated(app);

@@ -1,7 +1,9 @@
+using System.Collections.ObjectModel;
+
 namespace TodoListApp.Services.Models;
 public class TodoTaskModel : AbstractModel
 {
-    public TodoTaskModel(int id, string title, string? description, DateTime creationDate, DateTime dueDate, int statusId, int ownerUserId, int listId, UserModel owner, StatusModel status, List<TagModel> tags)
+    public TodoTaskModel(int id, string title, string? description, DateTime? creationDate, DateTime dueDate, int statusId, int ownerUserId, int listId, UserModel? owner = null, StatusModel? status = null, ReadOnlyCollection<TagModel>? tags = null, ReadOnlyCollection<CommentModel>? comments = null)
         : base(id)
     {
         this.Title = title;
@@ -13,7 +15,21 @@ public class TodoTaskModel : AbstractModel
         this.ListId = listId;
         this.OwnerUser = owner;
         this.Status = status;
-        this.UsersTags = tags;
+        if (tags != null)
+        {
+            foreach (var tag in tags)
+            {
+                this.UsersTags.Add(tag);
+            }
+        }
+
+        if (comments != null)
+        {
+            foreach (var comment in comments)
+            {
+                this.UserComments.Add(comment);
+            }
+        }
     }
 
     /// <summary>
@@ -29,7 +45,7 @@ public class TodoTaskModel : AbstractModel
     /// <summary>
     /// Gets or sets the date of task creation.
     /// </summary>
-    public DateTime CreationDate { get; set; }
+    public DateTime? CreationDate { get; set; }
 
     /// <summary>
     /// Gets or sets the task due date.
@@ -54,15 +70,20 @@ public class TodoTaskModel : AbstractModel
     /// <summary>
     /// Gets or sets the task owner.
     /// </summary>
-    public UserModel OwnerUser { get; set; }
+    public UserModel? OwnerUser { get; set; }
 
     /// <summary>
     /// Gets or sets the task status.
     /// </summary>
-    public StatusModel Status { get; set; }
+    public StatusModel? Status { get; set; }
 
     /// <summary>
     /// Gets user's tags.
     /// </summary>
-    public IList<TagModel> UsersTags { get; }
+    public IList<TagModel> UsersTags { get; private set; } = new List<TagModel>();
+
+    /// <summary>
+    /// Gets user's tags.
+    /// </summary>
+    public IList<CommentModel> UserComments { get; private set; } = new List<CommentModel>();
 }

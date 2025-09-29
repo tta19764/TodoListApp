@@ -1,4 +1,4 @@
-namespace TodoListApp.WebApi.Models.JWT;
+namespace TodoListApp.Services.JWT;
 public class TokenResponseDto
 {
     public string AccessToken { get; set; } = null!;
