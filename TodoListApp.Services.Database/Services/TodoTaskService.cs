@@ -9,25 +9,61 @@ using TodoListApp.Services.Interfaces.Servicies;
 using TodoListApp.Services.Models;
 
 namespace TodoListApp.Services.Database.Services;
+
+/// <summary>
+/// Service for managing to-do tasks.
+/// </summary>
 public class TodoTaskService : ITodoTaskService
 {
     private readonly TodoTaskRepository repository;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TodoTaskService"/> class.
+    /// </summary>
+    /// <param name="context">The to-do lists database context.</param>
     public TodoTaskService(TodoListDbContext context)
     {
         this.repository = new TodoTaskRepository(context);
     }
 
+    /// <summary>
+    /// Adds a new to-do task.
+    /// </summary>
+    /// <param name="model">The model containing the info about the new task.</param>
+    /// <returns>The added to-do task model.</returns>
+    /// <exception cref="ArgumentNullException">If the model is null.</exception>
+    /// <exception cref="EntityWithIdExistsException">If a task with the same ID already exists.</exception>
     public async Task<TodoTaskModel> AddAsync(TodoTaskModel model)
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        model.CreationDate = null;
+        TodoTask? existing = await this.repository.GetByIdAsync(model.Id);
+        if (existing is not null)
+        {
+            throw new EntityWithIdExistsException(nameof(TodoTask), model.Id);
+        }
 
-        var entity = await this.repository.AddAsync(ModelToEntity(model));
-        return EntityToModel(entity, model.OwnerUserId);
+        try
+        {
+            model.CreationDate = null;
+            TodoTask newTask = await this.repository.AddAsync(ModelToEntity(model));
+            return EntityToModel(newTask, model.OwnerUserId);
+        }
+        catch (DbUpdateException ex)
+        {
+            throw new UnableToCreateException(nameof(TodoList), ex, model.Id);
+        }
     }
 
+    /// <summary>
+    /// Deletes a to-do task by its ID.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user.</param>
+    /// <param name="id">The unique identifier of the task.</param>
+    /// <returns>A task representing the asynchronous delete operation.</returns>
+    /// <exception cref="EntityNotFoundException">If there is no entity with the specified ID in the context.</exception>
+    /// <exception cref="UnauthorizedAccessException">If the user has no permission to delete the task.</exception>
+    /// <exception cref="UnableToDeleteException">Is service is unable to delete the task.</exception>
     public async Task DeleteAsync(int userId, int id)
     {
         TodoTask? existing = await this.repository.GetByIdAsync(id);
@@ -55,6 +91,11 @@ public class TodoTaskService : ITodoTaskService
         }
     }
 
+    /// <summary>
+    /// Gets all to-do tasks the specified user hass access to.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user.</param>
+    /// <returns>A read-only list of to-do task models.</returns>
     public async Task<IReadOnlyList<TodoTaskModel>> GetAllAsync(int userId)
     {
         var lists = await this.repository.GetAllUserTasksAsync(userId);
@@ -64,6 +105,13 @@ public class TodoTaskService : ITodoTaskService
             .ToList();
     }
 
+    /// <summary>
+    /// Gets all to-do tasks the specified user has access to with pagination.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user.</param>
+    /// <param name="pageNumber">The page number.</param>
+    /// <param name="rowCount">The number of tasks on the page.</param>
+    /// <returns>A read-only list of to-do task models.</returns>
     public async Task<IReadOnlyList<TodoTaskModel>> GetAllAsync(int userId, int pageNumber, int rowCount)
     {
         var lists = await this.repository.GetAllUserTasksAsync(userId, pageNumber, rowCount);
@@ -73,6 +121,14 @@ public class TodoTaskService : ITodoTaskService
             .ToList();
     }
 
+    /// <summary>
+    /// Gets a to-do task by its ID if the specified user has access to it.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user.</param>
+    /// <param name="id">The unique identifier of the task.</param>
+    /// <returns>The to-do task model.</returns>
+    /// <exception cref="EntityNotFoundException">If there is no entity with the specified ID in the context.</exception>
+    /// <exception cref="UnauthorizedAccessException">If the user has no rights to see the task.</exception>
     public async Task<TodoTaskModel> GetByIdAsync(int userId, int id)
     {
         var entity = await this.repository.GetByIdAsync(id);
@@ -90,6 +146,15 @@ public class TodoTaskService : ITodoTaskService
         return EntityToModel(entity, userId);
     }
 
+    /// <summary>
+    /// Updates an existing to-do task.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user.</param>
+    /// <param name="model">The model containing the new info about the task.</param>
+    /// <returns>The updated to-do task model.</returns>
+    /// <exception cref="EntityNotFoundException">If there is no task with the specified ID in the context.</exception>
+    /// <exception cref="UnauthorizedAccessException">If the user has no rights to edit the task.</exception>
+    /// <exception cref="UnableToUpdateException">If the service is unable to update the task.</exception>
     public async Task<TodoTaskModel> UpdateAsync(int userId, TodoTaskModel model)
     {
         ArgumentNullException.ThrowIfNull(model);
@@ -119,6 +184,17 @@ public class TodoTaskService : ITodoTaskService
         }
     }
 
+    /// <summary>
+    /// Gets all to-do tasks by the list ID with filtering, sorting, and pagination.
+    /// </summary>
+    /// <param name="id">The unqiue identifier of the list.</param>
+    /// <param name="userId">The unique identifier of the user.</param>
+    /// <param name="filter">The filtering by task status.</param>
+    /// <param name="sortBy">The sorting property.</param>
+    /// <param name="sortOrder">The sortyng direction.</param>
+    /// <param name="pageNumber">The page number.</param>
+    /// <param name="rowCount">The number of tasks on the page.</param>
+    /// <returns>A read-only list of to-do task models.</returns>
     public async Task<IReadOnlyList<TodoTaskModel>> GetAllByListIdAsync(int id, int userId, TaskFilter filter = TaskFilter.Active, string? sortBy = "DueDate", string? sortOrder = "asc", int? pageNumber = null, int? rowCount = null)
     {
         sortOrder = string.Equals(sortOrder, "asc", StringComparison.OrdinalIgnoreCase) ? sortOrder : "desc";
@@ -152,6 +228,16 @@ public class TodoTaskService : ITodoTaskService
         return sortedTasks.Select(t => EntityToModel(t, userId)).ToList();
     }
 
+    /// <summary>
+    /// Gets all to-do tasks created by the specified user with filtering, sorting, and pagination.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user.</param>
+    /// <param name="filter">The filtering by task status.</param>
+    /// <param name="sortBy">The sorting property.</param>
+    /// <param name="sortOrder">The sortyng direction.</param>
+    /// <param name="pageNumber">The page number.</param>
+    /// <param name="rowCount">The number of tasks on the page.</param>
+    /// <returns>A read-only list of to-do task models.</returns>
     public async Task<IReadOnlyList<TodoTaskModel>> GetAllByAuthorAsync(int userId, TaskFilter filter = TaskFilter.Active, string? sortBy = "DueDate", string? sortOrder = "asc", int? pageNumber = null, int? rowCount = null)
     {
         sortOrder = string.Equals(sortOrder, "desc", StringComparison.OrdinalIgnoreCase) ? sortOrder : "asc";
@@ -185,6 +271,16 @@ public class TodoTaskService : ITodoTaskService
         return sortedTasks.Select(t => EntityToModel(t, userId)).ToList();
     }
 
+    /// <summary>
+    /// Updates the status of a to-do task.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user.</param>
+    /// <param name="taskId">The unique identifier of the task.</param>
+    /// <param name="statusId">The unique identifier of the status.</param>
+    /// <returns>The updated to-do task model.</returns>
+    /// <exception cref="EntityNotFoundException">If there is not task with the specifed ID in the context.</exception>
+    /// <exception cref="UnauthorizedAccessException">If the use has no rights to edit the task.</exception>
+    /// <exception cref="UnableToUpdateException">If the service is unable to update the task.</exception>
     public async Task<TodoTaskModel> UpdateTaskStatusAsync(int userId, int taskId, int statusId)
     {
         TodoTask? existing = await this.repository.GetByIdAsync(taskId);

@@ -4,6 +4,10 @@ using TodoListApp.Services.JWT;
 using TodoListApp.WebApi.CustomLogs;
 
 namespace TodoListApp.WebApi.Controllers;
+
+/// <summary>
+/// An api controller for handling authentication-related operations such as login, logout, and token refresh.
+/// </summary>
 [Route("api/[controller]")]
 [ApiController]
 public class AuthController : ControllerBase
@@ -11,6 +15,12 @@ public class AuthController : ControllerBase
     private readonly IAuthService authService;
     private readonly ILogger<AuthController> logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AuthController"/> class.
+    /// </summary>
+    /// <param name="authService">The service for authentication.</param>
+    /// <param name="logger">The logger.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="authService"/> or <paramref name="logger"/> is null.</exception>
     public AuthController(
         IAuthService authService, ILogger<AuthController> logger)
     {
@@ -18,6 +28,11 @@ public class AuthController : ControllerBase
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
+    /// <summary>
+    /// Logs in a user and returns JWT tokens upon successful authentication.
+    /// </summary>
+    /// <param name="request">The login request containing username and password.</param>
+    /// <returns>A <see cref="TokenResponseDto"/> containing access and refresh tokens if successful; otherwise, an error response.</returns>
     [HttpPost("login")]
     public async Task<ActionResult<TokenResponseDto>> Login([FromBody] UserDto request)
     {
@@ -59,6 +74,11 @@ public class AuthController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Logs out a user by invalidating their access token.
+    /// </summary>
+    /// <param name="logoutRequestDto">The logout request containing user ID and access token.</param>
+    /// <returns>An <see cref="IActionResult"/> indicating the result of the logout operation.</returns>
     [HttpPost("logout")]
     public async Task<IActionResult> Logout([FromBody] LogoutRequestDto logoutRequestDto)
     {
@@ -100,6 +120,11 @@ public class AuthController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Refreshes JWT tokens using a valid refresh token.
+    /// </summary>
+    /// <param name="request">The refresh token request containing user ID and refresh token.</param>
+    /// <returns>A <see cref="TokenResponseDto"/> containing new access and refresh tokens if successful; otherwise, an error response.</returns>
     [HttpPost("refresh-token")]
     public async Task<ActionResult<TokenResponseDto>> RefreshToken(RefreshTokenRequestDto request)
     {

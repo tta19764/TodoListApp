@@ -5,27 +5,58 @@ using TodoListApp.Services.Database.Entities;
 
 namespace TodoListApp.Services.Database.Data
 {
+    /// <summary>
+    /// Database context for the To-Do List application, integrating ASP.NET Core Identity for user management.
+    /// </summary>
     public class TodoListDbContext : IdentityDbContext<User, IdentityRole<int>, int>
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="TodoListDbContext"/> class.
+        /// </summary>
+        /// <param name="options">The options to be used by a <see cref="DbContext"/>.</param>
         public TodoListDbContext(DbContextOptions<TodoListDbContext> options)
             : base(options)
         {
         }
 
+        /// <summary>
+        /// Gets or sets the DbSet for to-do list roles.
+        /// </summary>
         public DbSet<TodoListRole> TodoListRoles { get; set; } = null!;
 
+        /// <summary>
+        /// Gets or sets the DbSet for to-do lists.
+        /// </summary>
         public DbSet<TodoList> TodoLists { get; set; } = null!;
 
+        /// <summary>
+        /// Gets or sets the DbSet for to-do tasks.
+        /// </summary>
         public DbSet<TodoTask> TodoTasks { get; set; } = null!;
 
+        /// <summary>
+        /// Gets or sets the DbSet for tags.
+        /// </summary>
         public DbSet<Tag> Tags { get; set; } = null!;
 
+        /// <summary>
+        /// Gets or sets the DbSet for comments.
+        /// </summary>
         public DbSet<Comment> Comments { get; set; } = null!;
 
+        /// <summary>
+        /// Gets or sets the DbSet for to-do list user roles.
+        /// </summary>
         public DbSet<TodoListUserRole> TodoListUserRoles { get; set; } = null!;
 
+        /// <summary>
+        /// Gets or sets the DbSet for statuses.
+        /// </summary>
         public DbSet<Status> Statuses { get; set; } = null!;
 
+        /// <summary>
+        /// Gets or sets the DbSet for task-tags relationships.
+        /// </summary>
         public DbSet<TaskTags> TaskTags { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder builder)

@@ -12,6 +12,9 @@ using TodoListApp.WebApi.Models.Dtos.Update;
 
 namespace TodoListApp.WebApi.Controllers;
 
+/// <summary>
+/// An API controller for managing to-do lists, including operations to create, retrieve, update, and delete lists.
+/// </summary>
 [Route("api/[controller]")]
 [ApiController]
 [Authorize]
@@ -21,12 +24,23 @@ public class TodoListsController : ControllerBase
     private readonly ITodoListService service;
     private readonly ILogger<TodoListsController> logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TodoListsController"/> class.
+    /// </summary>
+    /// <param name="todoListService">The service to retrieve lists from database.</param>
+    /// <param name="logger">The logger.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="todoListService"/> or <paramref name="logger"/> is null.</exception>
     public TodoListsController(ITodoListService todoListService, ILogger<TodoListsController> logger)
     {
         this.service = todoListService ?? throw new ArgumentNullException(nameof(todoListService));
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
+    /// <summary>
+    /// Retrieves a to-do list by its ID.
+    /// </summary>
+    /// <param name="listId">The unique identifier of the list.</param>
+    /// <returns>The to-do list if found; otherwise, an appropriate error response.</returns>
     [Authorize]
     [HttpGet("{listId:int}")]
     public async Task<ActionResult<TodoListDto>> GetList(int listId)
@@ -69,6 +83,10 @@ public class TodoListsController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Retrieves all to-do lists accessible to the current user.
+    /// </summary>
+    /// <returns>A list of to-do lists if found; otherwise, an appropriate error response.</returns>
     [Authorize]
     [HttpGet]
     public async Task<ActionResult<List<TodoListDto>>> GetLists()
@@ -100,6 +118,12 @@ public class TodoListsController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Retrieves a paginated list of to-do lists accessible to the current user.
+    /// </summary>
+    /// <param name="pageNumber">The page number.</param>
+    /// <param name="rowCount">The number of lists on the page.</param>
+    /// <returns>A paginated list of to-do lists if found; otherwise, an appropriate error response.</returns>
     [Authorize]
     [HttpGet("{pageNumber:min(1)}/{rowCount:min(1)}")]
     public async Task<ActionResult<List<TodoListDto>>> GetListsPaginated(int pageNumber, int rowCount)
@@ -136,6 +160,10 @@ public class TodoListsController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Retrieves all to-do lists created by the current user.
+    /// </summary>
+    /// <returns>A list of to-do lists if found; otherwise, an appropriate error response.</returns>
     [Authorize]
     [HttpGet("UserLists")]
     public async Task<ActionResult<List<TodoListDto>>> GetUsersLists()
@@ -167,6 +195,12 @@ public class TodoListsController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Retrieves a paginated list of to-do lists created by the current user.
+    /// </summary>
+    /// <param name="pageNumber">The page number.</param>
+    /// <param name="rowCount">The number of lists on the page.</param>
+    /// <returns>A paginated list of to-do lists if found; otherwise, an appropriate error response.</returns>
     [Authorize]
     [HttpGet("UserLists/{pageNumber:min(1)}/{rowCount:min(1)}")]
     public async Task<ActionResult<List<TodoListDto>>> GetUsersListsPaginated(int pageNumber, int rowCount)
@@ -203,6 +237,11 @@ public class TodoListsController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Deletes a to-do list by its ID.
+    /// </summary>
+    /// <param name="listId">The unique identifier of the list to delete.</param>
+    /// <returns>An appropriate response indicating the result of the deletion operation.</returns>
     [Authorize]
     [HttpDelete("{listId:int}")]
     public async Task<ActionResult> DeleteuserList(int listId)
@@ -244,6 +283,11 @@ public class TodoListsController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Creates a new to-do list.
+    /// </summary>
+    /// <param name="dto">The data transfer object that contains the info for the new list.</param>
+    /// <returns>The created to-do list if successful; otherwise, an appropriate error response.</returns>
     [Authorize]
     [HttpPut]
     public async Task<ActionResult<TodoListDto>> CreateList([FromBody] CreateTodoListDto dto)
@@ -281,11 +325,6 @@ public class TodoListsController : ControllerBase
             TodoListsLog.LogUnauthorizedListsAccess(this.logger, this.GetCurrentUserId(), ex.Message);
             return this.Forbid("You don't have permission to create lists.");
         }
-        catch (EntityNotFoundException ex)
-        {
-            TodoListsLog.LogReferencedEntityNotFound(this.logger, ex.Message);
-            return this.BadRequest("Referenced user does not exist.");
-        }
         catch (Exception ex)
         {
             TodoListsLog.LogUnexpectedErrorCreatingList(this.logger, ex);
@@ -293,6 +332,11 @@ public class TodoListsController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Updates an existing to-do list.
+    /// </summary>
+    /// <param name="dto">The data transfer object that contains the updated info of the list.</param>
+    /// <returns>The updated to-do list if successful; otherwise, an appropriate error response.</returns>
     [Authorize]
     [HttpPost]
     public async Task<ActionResult<TodoListDto>> UpadateList([FromBody] UpdateTodoListDto dto)

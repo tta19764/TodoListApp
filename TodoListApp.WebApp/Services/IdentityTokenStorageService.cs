@@ -7,12 +7,22 @@ using TodoListApp.WebApp.Data;
 
 namespace TodoListApp.WebApp.Services;
 
+/// <summary>
+/// Service for storing and retrieving JWT tokens using ASP.NET Core Identity.
+/// </summary>
 public class IdentityTokenStorageService : ITokenStorageService
 {
     private readonly UserManager<AppUser> userManager;
     private readonly ApplicationDbContext context;
     private readonly ILogger<IdentityTokenStorageService> logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="IdentityTokenStorageService"/> class.
+    /// </summary>
+    /// <param name="userManager">The user manager.</param>
+    /// <param name="context">The database context.</param>
+    /// <param name="logger">Teh logger.</param>
+    /// <exception cref="ArgumentNullException">If any of the parameters ar null.</exception>
     public IdentityTokenStorageService(
         UserManager<AppUser> userManager,
         ApplicationDbContext context,
@@ -23,6 +33,11 @@ public class IdentityTokenStorageService : ITokenStorageService
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
+    /// <summary>
+    /// Retrieves the JWT token for a given user ID.
+    /// </summary>
+    /// <param name="userId">The unqiue identifier of the user.</param>
+    /// <returns>The JWT token if found; otherwise, null.</returns>
     public async Task<string?> GetToken(string userId)
     {
         if (string.IsNullOrWhiteSpace(userId))
@@ -59,6 +74,11 @@ public class IdentityTokenStorageService : ITokenStorageService
         }
     }
 
+    /// <summary>
+    /// Removes the JWT token for a given user ID.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user.</param>
+    /// <returns>True if the token was successfully removed; otherwise, false.</returns>
     public async Task<bool> RemoveToken(string userId)
     {
         if (string.IsNullOrWhiteSpace(userId))
@@ -100,6 +120,12 @@ public class IdentityTokenStorageService : ITokenStorageService
         }
     }
 
+    /// <summary>
+    /// Saves the JWT token for a given user ID.
+    /// </summary>
+    /// <param name="userId">The unqiue identifier of the user.</param>
+    /// <param name="token">The access token.</param>
+    /// <returns>True if the token was successfully saved; otherwise, false.</returns>
     public async Task<bool> SaveToken(string userId, string token)
     {
         if (string.IsNullOrWhiteSpace(userId))
