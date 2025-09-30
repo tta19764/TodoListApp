@@ -6,17 +6,36 @@ using TodoListApp.Services.JWT;
 using TodoListApp.Services.WebApi.CustomLogs;
 
 namespace TodoListApp.Services.WebApi.Servicies;
+
+/// <summary>
+/// Service for handling authentication-related operations such as login, logout, and token refresh via HTTP requests.
+/// </summary>
 public class AuthService : IAuthService
 {
     private readonly HttpClient httpClient;
     private readonly ILogger<AuthService> logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AuthService"/> class.
+    /// </summary>
+    /// <param name="httpClient">The request http client.</param>
+    /// <param name="logger">The logger.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="httpClient"/> or <paramref name="logger"/> is null.</exception>
     public AuthService(HttpClient httpClient, ILogger<AuthService> logger)
     {
         this.httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
+    /// <summary>
+    /// Logs in a user and returns JWT tokens upon successful authentication.
+    /// </summary>
+    /// <param name="request">The data transfer object that contains the user login info.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A <see cref="TokenResponseDto"/> containing access and refresh tokens if successful; otherwise, null.</returns>
+    /// <exception cref="ArgumentNullException">If request is null.</exception>
+    /// <exception cref="ArgumentException">If any of the user info is null.</exception>
+    /// <exception cref="TimeoutException">If the request timed out.</exception>
     public async Task<TokenResponseDto?> LoginAsync(UserDto request, CancellationToken cancellationToken = default)
     {
         if (request == null)
@@ -80,6 +99,14 @@ public class AuthService : IAuthService
         }
     }
 
+    /// <summary>
+    /// Logs out a user by invalidating their JWT tokens.
+    /// </summary>
+    /// <param name="logoutRequestDto">The data transfer object containing the access token and user ID.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>True if logout was successful; otherwise, false.</returns>
+    /// <exception cref="ArgumentNullException">If the data tranfer object is null.</exception>
+    /// <exception cref="TimeoutException">The request times out.</exception>
     public async Task<bool> LogoutAsync(LogoutRequestDto logoutRequestDto, CancellationToken cancellationToken = default)
     {
         if (logoutRequestDto == null)
@@ -124,6 +151,15 @@ public class AuthService : IAuthService
         }
     }
 
+    /// <summary>
+    /// Refreshes JWT tokens using a valid refresh token.
+    /// </summary>
+    /// <param name="request">The data transfer object containing the user Id and refresh token.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A <see cref="TokenResponseDto"/> containing new access and refresh tokens if successful; otherwise, null.</returns>
+    /// <exception cref="ArgumentNullException">If data transfer onject is null.</exception>
+    /// <exception cref="ArgumentException">If any properties of the data transfer object is null.</exception>
+    /// <exception cref="TimeoutException">If request times out.</exception>
     public async Task<TokenResponseDto?> RefreshTokensAsync(RefreshTokenRequestDto request, CancellationToken cancellationToken = default)
     {
         if (request == null)

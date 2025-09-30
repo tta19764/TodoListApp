@@ -382,11 +382,6 @@ public class TodoTasksController : ControllerBase
             TodoTasksLog.LogUnauthorizedTasksAccess(this.logger, this.GetCurrentUserId(), ex.Message);
             return this.Forbid("You don't have permission to create tasks in this list.");
         }
-        catch (EntityNotFoundException ex)
-        {
-            TodoTasksLog.LogReferencedEntityNotFound(this.logger, ex.Message);
-            return this.BadRequest("Referenced list or user does not exist.");
-        }
         catch (Exception ex)
         {
             TodoTasksLog.LogUnexpectedErrorCreatingTask(this.logger, ex);

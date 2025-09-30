@@ -15,6 +15,9 @@ using TodoListApp.Services.JWT;
 
 namespace TodoListApp.Services.Database.Services;
 
+/// <summary>
+/// Service for handling authentication-related operations such as login, logout, and token refresh.
+/// </summary>
 public class AuthService : IAuthService
 {
     private const string LOGINPROVIDER = "JwtBearer";
@@ -22,6 +25,13 @@ public class AuthService : IAuthService
     private readonly IConfiguration configuration;
     private readonly ILogger<AuthService> logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AuthService"/> class.
+    /// </summary>
+    /// <param name="userManager">The user manager.</param>
+    /// <param name="configuration">The application configuration.</param>
+    /// <param name="logger">The logger.</param>
+    /// <exception cref="ArgumentNullException">If any of the parameters are null.</exception>
     public AuthService(
         UserManager<User> userManager,
         IConfiguration configuration,
@@ -32,6 +42,13 @@ public class AuthService : IAuthService
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
+    /// <summary>
+    /// Logs in a user and returns JWT tokens upon successful authentication.
+    /// </summary>
+    /// <param name="request">The data transfer object containing the user login info.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A <see cref="TokenResponseDto"/> containing access and refresh tokens if successful; otherwise, null.</returns>
+    /// <exception cref="ArgumentNullException">If data transfer object is null.</exception>
     public async Task<TokenResponseDto?> LoginAsync(UserDto request, CancellationToken cancellationToken = default)
     {
         if (request == null)
@@ -60,6 +77,12 @@ public class AuthService : IAuthService
         return tokenResponse;
     }
 
+    /// <summary>
+    /// Logs out a user by invalidating their refresh token.
+    /// </summary>
+    /// <param name="logoutRequestDto">The data transfer object containing the access token and user ID.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>True if logout was successful; otherwise, false.</returns>
     public async Task<bool> LogoutAsync(LogoutRequestDto logoutRequestDto, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(logoutRequestDto);
@@ -101,6 +124,12 @@ public class AuthService : IAuthService
         }
     }
 
+    /// <summary>
+    /// Refreshes JWT tokens using a valid refresh token.
+    /// </summary>
+    /// <param name="request">The data transfer object containing the refresh token and user ID.</param>
+    /// <param name="cancellationToken">The cancellation toke.</param>
+    /// <returns>A <see cref="TokenResponseDto"/> containing new access and refresh tokens if successful; otherwise, null.</returns>
     public async Task<TokenResponseDto?> RefreshTokensAsync(RefreshTokenRequestDto request, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);

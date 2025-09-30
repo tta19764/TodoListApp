@@ -1,6 +1,10 @@
 using Microsoft.Extensions.Logging;
 
 namespace TodoListApp.Services.Database.CustomLogs;
+
+/// <summary>
+/// Logging helper for JWT-related events.
+/// </summary>
 public static class JwtLog
 {
     private static readonly Action<ILogger, string, Exception?> TokenMismatch =

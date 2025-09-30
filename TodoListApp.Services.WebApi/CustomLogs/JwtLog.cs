@@ -1,6 +1,10 @@
 using Microsoft.Extensions.Logging;
 
 namespace TodoListApp.Services.WebApi.CustomLogs;
+
+/// <summary>
+/// Static class for structured logging related to JWT operations.
+/// </summary>
 public static class JwtLog
 {
     // Information level logs - Successful operations
