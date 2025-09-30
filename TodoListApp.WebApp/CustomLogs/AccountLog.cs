@@ -44,6 +44,18 @@ public static class AccountLog
             new EventId(1007, nameof(TokenRetrievedFromStorage)),
             "Token retrieved from storage for user ID: {UserId}");
 
+    private static readonly Action<ILogger, Uri, Exception?> RegisterPageAccessed =
+        LoggerMessage.Define<Uri>(
+            LogLevel.Information,
+            new EventId(1008, nameof(RegisterPageAccessed)),
+            "Register page accessed with return URL: {ReturnUrl}");
+
+    private static readonly Action<ILogger, string, Exception?> UserRegistered =
+        LoggerMessage.Define<string>(
+            LogLevel.Information,
+            new EventId(1001, nameof(UserRegistered)),
+            "User {Username} regesterd successfully with Identity");
+
     // Warning level logs - Expected failures
     private static readonly Action<ILogger, string, Exception?> JwtTokenStoreFailed =
         LoggerMessage.Define<string>(
@@ -111,6 +123,18 @@ public static class AccountLog
             new EventId(2011, nameof(InvalidUserIdFormat)),
             "Invalid user ID format: {UserId}");
 
+    private static readonly Action<ILogger, Exception?> NullRegisterViewModel =
+        LoggerMessage.Define(
+            LogLevel.Warning,
+            new EventId(2012, nameof(NullRegisterViewModel)),
+            "Null register view model received");
+
+    private static readonly Action<ILogger, string, string, Exception?> RegistrationFailedWithErrors =
+    LoggerMessage.Define<string, string>(
+        LogLevel.Warning,
+        new EventId(2013, nameof(RegistrationFailedWithErrors)),
+        "Registration failed for user {Login} with errors: {Errors}");
+
     // Error level logs - System failures
     private static readonly Action<ILogger, string, Exception?> UnexpectedErrorDuringLogin =
         LoggerMessage.Define<string>(
@@ -154,6 +178,18 @@ public static class AccountLog
             new EventId(3007, nameof(IdentitySignInFailed)),
             "Identity sign-in failed for user: {Username}");
 
+    private static readonly Action<ILogger, string, Exception?> UnexpectedErrorDuringRegister =
+        LoggerMessage.Define<string>(
+            LogLevel.Error,
+            new EventId(3008, nameof(UnexpectedErrorDuringRegister)),
+            "Unexpected error occurred during register for user: {Username}");
+
+    private static readonly Action<ILogger, string, Exception?> IdentityRegisterFailed =
+        LoggerMessage.Define<string>(
+            LogLevel.Error,
+            new EventId(3009, nameof(IdentityRegisterFailed)),
+            "Identity register failed for user: {Username}");
+
     // Public methods for Information level logs
     public static void LogUserLoggedIn(ILogger logger, string username) =>
         UserLoggedIn(logger, username, null);
@@ -175,6 +211,12 @@ public static class AccountLog
 
     public static void LogTokenRetrievedFromStorage(ILogger logger, string userId) =>
         TokenRetrievedFromStorage(logger, userId, null);
+
+    public static void LogRegisterPageAccessed(ILogger logger, Uri returnUrl) =>
+        RegisterPageAccessed(logger, returnUrl, null);
+
+    public static void LogUserRegistered(ILogger logger, string username) =>
+        UserRegistered(logger, username, null);
 
     // Public methods for Warning level logs
     public static void LogJwtTokenStoreFailed(ILogger logger, string username) =>
@@ -210,6 +252,12 @@ public static class AccountLog
     public static void LogInvalidUserIdFormat(ILogger logger, string userId) =>
         InvalidUserIdFormat(logger, userId, null);
 
+    public static void LogNullRegisterViewModel(ILogger logger) =>
+        NullRegisterViewModel(logger, null);
+
+    public static void LogRegistrationFailedWithErrors(ILogger logger, string login, string errors, Exception? exception = null) =>
+        RegistrationFailedWithErrors(logger, login, errors, exception);
+
     // Public methods for Error level logs
     public static void LogUnexpectedErrorDuringLogin(ILogger logger, string username, Exception exception) =>
         UnexpectedErrorDuringLogin(logger, username, exception);
@@ -229,6 +277,12 @@ public static class AccountLog
     public static void LogDatabaseErrorRemovingToken(ILogger logger, string userId, Exception exception) =>
         DatabaseErrorRemovingToken(logger, userId, exception);
 
-    public static void LogIdentitySignInFailed(ILogger logger, string username, Exception exception) =>
+    public static void LogIdentitySignInFailed(ILogger logger, string username, Exception? exception) =>
         IdentitySignInFailed(logger, username, exception);
+
+    public static void LogIdentityRegisterFailed(ILogger logger, string username, Exception exception) =>
+        IdentityRegisterFailed(logger, username, exception);
+
+    public static void LogUnexpectedErrorDuringRegister(ILogger logger, string username, Exception exception) =>
+        UnexpectedErrorDuringRegister(logger, username, exception);
 }

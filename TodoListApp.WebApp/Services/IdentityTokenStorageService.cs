@@ -150,18 +150,30 @@ public class IdentityTokenStorageService : ITokenStorageService
                 return false;
             }
 
-            var tokenSaveResult = await this.userManager.SetAuthenticationTokenAsync(user, "JwtBearer", "JwtToken", token);
+            var userIdInt = int.Parse(userId, NumberStyles.Integer, CultureInfo.InvariantCulture);
+            var identityUserToken = new IdentityUserToken<int>()
+            {
+                UserId = userIdInt,
+                LoginProvider = "JwtBearer",
+                Name = "JwtToken",
+                Value = token,
+            };
 
-            if (tokenSaveResult.Succeeded)
+            var accessToken = await this.context.UserTokens
+                .FirstOrDefaultAsync(t => t.UserId == identityUserToken.UserId &&
+                                  t.LoginProvider == identityUserToken.LoginProvider &&
+                                  t.Name == identityUserToken.Name);
+
+            if (accessToken != null)
             {
-                AccountLog.LogJwtTokenStored(this.logger, user.UserName ?? userId);
-                return true;
+                _ = this.context.UserTokens.Remove(accessToken);
             }
-            else
-            {
-                AccountLog.LogJwtTokenStoreFailed(this.logger, user.UserName ?? userId);
-                return false;
-            }
+
+            _ = this.context.UserTokens.Add(identityUserToken);
+            _ = await this.context.SaveChangesAsync();
+
+            AccountLog.LogJwtTokenStored(this.logger, user.UserName ?? userId);
+            return true;
         }
         catch (Exception ex)
         {

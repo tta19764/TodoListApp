@@ -27,4 +27,6 @@ public class RegisterViewModel
     [DataType(DataType.Password)]
     [Display(Name = "Confirm password")]
     public string ConfirmPassword { get; set; } = null!;
+
+    public Uri ReturnUrl { get; set; } = new Uri("/", UriKind.Relative);
 }

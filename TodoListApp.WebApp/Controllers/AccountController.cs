@@ -277,6 +277,190 @@ public class AccountController : Controller
         }
     }
 
+    [HttpGet]
+    [Route("Register")]
+    [AllowAnonymous]
+    public async Task<IActionResult> Register(Uri? returnUrl = null)
+    {
+        try
+        {
+            _ = this.ModelState.IsValid;
+
+            returnUrl ??= new Uri("/", UriKind.Relative);
+
+            AccountLog.LogRegisterPageAccessed(this.logger, returnUrl);
+
+            // Clear the existing external cookie to ensure a clean login process
+            await this.HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
+
+            return this.View(new RegisterViewModel
+            {
+                ReturnUrl = returnUrl,
+            });
+        }
+        catch (Exception ex)
+        {
+            AccountLog.LogUnexpectedErrorDuringRegister(this.logger, "Anonymous", ex);
+            throw;
+        }
+    }
+
+    [HttpPost]
+    [Route("Register")]
+    [AllowAnonymous]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Register(RegisterViewModel registerViewModel)
+    {
+        if (registerViewModel == null)
+        {
+            AccountLog.LogNullRegisterViewModel(this.logger);
+            throw new ArgumentNullException(nameof(registerViewModel));
+        }
+
+        try
+        {
+            if (!this.ModelState.IsValid)
+            {
+                AccountLog.LogInvalidModelState(this.logger);
+                return this.View(registerViewModel);
+            }
+
+            // Sign out any existing sessions
+            await this.HttpContext.SignOutAsync(IdentityConstants.ApplicationScheme);
+            await this.signInManager.SignOutAsync();
+
+            AppUser user = new AppUser
+            {
+                FirstName = registerViewModel.FirstName,
+                LastName = registerViewModel.LastName,
+                Email = registerViewModel.Email,
+                UserName = registerViewModel.Login,
+            };
+
+            // Sign in with Identity
+            IdentityResult result;
+            try
+            {
+                result = await this.userManager.CreateAsync(user, registerViewModel.Password);
+            }
+            catch (Exception ex)
+            {
+                AccountLog.LogIdentityRegisterFailed(this.logger, registerViewModel.Login, ex);
+                throw;
+            }
+
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                AccountLog.LogRegistrationFailedWithErrors(this.logger, registerViewModel.Login, errors);
+
+                foreach (var error in result.Errors)
+                {
+                    this.ModelState.AddModelError(string.Empty, error.Description);
+                }
+
+                return this.View(registerViewModel);
+            }
+
+            // User created successfully
+            AccountLog.LogUserRegistered(this.logger, registerViewModel.Login);
+
+            // Authenticate with API to get JWT token
+            var userDto = new UserDto()
+            {
+                Username = registerViewModel.Login,
+                Password = registerViewModel.Password,
+            };
+
+            TokenResponseDto? tokenResult = null;
+
+            try
+            {
+                tokenResult = await this.authService.LoginAsync(userDto);
+            }
+            catch (Exception ex)
+            {
+                AccountLog.LogApiAuthenticationFailed(this.logger, registerViewModel.Login);
+                AccountLog.LogUnexpectedErrorDuringLogin(this.logger, registerViewModel.Login, ex);
+
+                this.ModelState.AddModelError(string.Empty, "Account created successfully, but unable to connect to authentication service. Please try logging in.");
+                return this.View(registerViewModel);
+                throw;
+            }
+
+            if (tokenResult == null)
+            {
+                AccountLog.LogApiAuthenticationFailed(this.logger, registerViewModel.Login);
+                this.ModelState.AddModelError(string.Empty, "Account created successfully, but authentication failed. Please try logging in.");
+                return this.View(registerViewModel);
+            }
+
+            // Sign in the newly registered user
+            Microsoft.AspNetCore.Identity.SignInResult signInResult;
+            try
+            {
+                signInResult = await this.signInManager.PasswordSignInAsync(
+                    registerViewModel.Login,
+                    registerViewModel.Password,
+                    isPersistent: false,
+                    lockoutOnFailure: false);
+            }
+            catch (Exception ex)
+            {
+                AccountLog.LogIdentitySignInFailed(this.logger, registerViewModel.Login, ex);
+                this.ModelState.AddModelError(string.Empty, "Account created successfully, but sign-in failed. Please try logging in.");
+                return this.View(registerViewModel);
+                throw;
+            }
+
+            if (!signInResult.Succeeded)
+            {
+                AccountLog.LogIdentitySignInFailed(this.logger, registerViewModel.Login, null);
+                this.ModelState.AddModelError(string.Empty, "Account created successfully, but sign-in failed. Please try logging in.");
+                return this.View(registerViewModel);
+            }
+
+            AccountLog.LogUserLoggedIn(this.logger, registerViewModel.Login);
+
+            // Store JWT token
+            var createdUser = await this.userManager.FindByNameAsync(registerViewModel.Login);
+            if (createdUser != null)
+            {
+                try
+                {
+                    var tokenSaveResult = await this.tokenStorageService.SaveToken(
+                        createdUser.Id.ToString(CultureInfo.InvariantCulture),
+                        tokenResult.AccessToken);
+
+                    if (!tokenSaveResult)
+                    {
+                        AccountLog.LogJwtTokenStoreFailed(this.logger, registerViewModel.Login);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    AccountLog.LogUnexpectedErrorStoringToken(this.logger, createdUser.Id.ToString(CultureInfo.InvariantCulture), ex);
+                    throw;
+                }
+            }
+
+            var returnUrl = string.IsNullOrEmpty(registerViewModel.ReturnUrl.ToString())
+            ? "~/"
+            : registerViewModel.ReturnUrl.ToString();
+
+            return this.LocalRedirect(returnUrl);
+        }
+        catch (ArgumentNullException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            AccountLog.LogUnexpectedErrorDuringRegister(this.logger, registerViewModel.Login ?? "unknown", ex);
+            throw;
+        }
+    }
+
     private async Task PerformLocalLogout()
     {
         try
