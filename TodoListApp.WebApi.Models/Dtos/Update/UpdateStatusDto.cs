@@ -5,6 +5,10 @@ namespace TodoListApp.WebApi.Models.Dtos.Update;
 /// </summary>
 public class UpdateStatusDto
 {
+    public UpdateStatusDto()
+    {
+    }
+
     /// <summary>
     /// Initializes a new instance of the <see cref="UpdateStatusDto"/> class.
     /// </summary>

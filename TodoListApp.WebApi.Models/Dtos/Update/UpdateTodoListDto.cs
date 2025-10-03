@@ -5,6 +5,10 @@ namespace TodoListApp.WebApi.Models.Dtos.Update;
 /// </summary>
 public class UpdateTodoListDto
 {
+    public UpdateTodoListDto()
+    {
+    }
+
     /// <summary>
     /// Initializes a new instance of the <see cref="UpdateTodoListDto"/> class.
     /// </summary>
@@ -12,7 +16,7 @@ public class UpdateTodoListDto
     /// <param name="title">The list's title.</param>
     /// <param name="description">The list's description.</param>
     /// <param name="ownerId">The unique identifier of the owner.</param>
-    public UpdateTodoListDto(int id, string title, string description, int ownerId)
+    public UpdateTodoListDto(int id, string title, string? description, int ownerId)
     {
         this.Id = id;
         this.Title = title;
@@ -28,12 +32,12 @@ public class UpdateTodoListDto
     /// <summary>
     /// Gets or sets the title of the list.
     /// </summary>
-    public string Title { get; set; }
+    public string Title { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the description of the list.
     /// </summary>
-    public string Description { get; set; }
+    public string? Description { get; set; }
 
     /// <summary>
     /// Gets or sets the unique identifier of the owner.

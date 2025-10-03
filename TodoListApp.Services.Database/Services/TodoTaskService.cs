@@ -365,10 +365,7 @@ public class TodoTaskService : ITodoTaskService
         {
             foreach (var taskComment in entity.Comments)
             {
-                if (taskComment.UserId == userId)
-                {
-                    taskCommetns.Add(new CommentModel(taskComment.Text, taskComment.TaskId, taskComment.UserId));
-                }
+                taskCommetns.Add(new CommentModel(taskComment.Id, taskComment.Text, taskComment.TaskId, taskComment.UserId));
             }
         }
 

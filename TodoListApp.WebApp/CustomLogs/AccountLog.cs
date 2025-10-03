@@ -53,7 +53,7 @@ public static class AccountLog
     private static readonly Action<ILogger, string, Exception?> UserRegistered =
         LoggerMessage.Define<string>(
             LogLevel.Information,
-            new EventId(1001, nameof(UserRegistered)),
+            new EventId(1009, nameof(UserRegistered)),
             "User {Username} regesterd successfully with Identity");
 
     // Warning level logs - Expected failures

@@ -7,7 +7,7 @@ using TodoListApp.Services.Interfaces.Servicies;
 using TodoListApp.Services.JWT;
 using TodoListApp.WebApp.CustomLogs;
 using TodoListApp.WebApp.Data;
-using TodoListApp.WebApp.Models;
+using TodoListApp.WebApp.Models.Account;
 
 namespace TodoListApp.WebApp.Controllers;
 

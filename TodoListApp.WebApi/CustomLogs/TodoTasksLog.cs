@@ -9,171 +9,171 @@ public static class TodoTasksLog
     private static readonly Action<ILogger, int, int?, string, Exception?> TaskNotFoundForUser =
         LoggerMessage.Define<int, int?, string>(
             LogLevel.Warning,
-            new EventId(1001, nameof(TaskNotFoundForUser)),
+            new EventId(1301, nameof(TaskNotFoundForUser)),
             "Task with ID {TaskId} not found for user {UserId}: {Message}");
 
     private static readonly Action<ILogger, int, int?, string, Exception?> ListNotFoundForUser =
         LoggerMessage.Define<int, int?, string>(
             LogLevel.Warning,
-            new EventId(1002, nameof(ListNotFoundForUser)),
+            new EventId(1302, nameof(ListNotFoundForUser)),
             "List with ID {ListId} not found for user {UserId}: {Message}");
 
     private static readonly Action<ILogger, int, int?, string, Exception?> UnauthorizedTaskAccess =
         LoggerMessage.Define<int, int?, string>(
             LogLevel.Warning,
-            new EventId(1003, nameof(UnauthorizedTaskAccess)),
+            new EventId(1303, nameof(UnauthorizedTaskAccess)),
             "Unauthorized access attempt for task {TaskId} by user {UserId}: {Message}");
 
     private static readonly Action<ILogger, int, int?, string, Exception?> UnauthorizedListAccess =
         LoggerMessage.Define<int, int?, string>(
             LogLevel.Warning,
-            new EventId(1004, nameof(UnauthorizedListAccess)),
+            new EventId(1304, nameof(UnauthorizedListAccess)),
             "Unauthorized access attempt for list {ListId} by user {UserId}: {Message}");
 
     private static readonly Action<ILogger, int?, string, Exception?> UnauthorizedTasksAccess =
         LoggerMessage.Define<int?, string>(
             LogLevel.Warning,
-            new EventId(1005, nameof(UnauthorizedTasksAccess)),
+            new EventId(1305, nameof(UnauthorizedTasksAccess)),
             "Unauthorized access attempt by user {UserId}: {Message}");
 
     private static readonly Action<ILogger, int, int?, string, Exception?> UnauthorizedTaskDeletion =
         LoggerMessage.Define<int, int?, string>(
             LogLevel.Warning,
-            new EventId(1006, nameof(UnauthorizedTaskDeletion)),
+            new EventId(1306, nameof(UnauthorizedTaskDeletion)),
             "Unauthorized deletion attempt for task {TaskId} by user {UserId}: {Message}");
 
     private static readonly Action<ILogger, int, int?, string, Exception?> UnauthorizedTaskUpdate =
         LoggerMessage.Define<int, int?, string>(
             LogLevel.Warning,
-            new EventId(1007, nameof(UnauthorizedTaskUpdate)),
+            new EventId(1307, nameof(UnauthorizedTaskUpdate)),
             "Unauthorized update attempt for task {TaskId} by user {UserId}: {Message}");
 
     private static readonly Action<ILogger, int, int?, string, Exception?> UnauthorizedTaskStatusUpdate =
         LoggerMessage.Define<int, int?, string>(
             LogLevel.Warning,
-            new EventId(1008, nameof(UnauthorizedTaskStatusUpdate)),
+            new EventId(1308, nameof(UnauthorizedTaskStatusUpdate)),
             "Unauthorized status update attempt for task {TaskId} by user {UserId}: {Message}");
 
     private static readonly Action<ILogger, int, int, Exception?> InvalidPaginationParameters =
         LoggerMessage.Define<int, int>(
             LogLevel.Warning,
-            new EventId(1009, nameof(InvalidPaginationParameters)),
+            new EventId(1309, nameof(InvalidPaginationParameters)),
             "Invalid pagination parameters: pageNumber={PageNumber}, rowCount={RowCount}");
 
     private static readonly Action<ILogger, string, Exception?> InvalidTaskDataProvided =
         LoggerMessage.Define<string>(
             LogLevel.Warning,
-            new EventId(1010, nameof(InvalidTaskDataProvided)),
+            new EventId(1310, nameof(InvalidTaskDataProvided)),
             "Invalid task data provided: {Message}");
 
     private static readonly Action<ILogger, string, Exception?> InvalidStatusDataProvided =
         LoggerMessage.Define<string>(
             LogLevel.Warning,
-            new EventId(1011, nameof(InvalidStatusDataProvided)),
+            new EventId(1311, nameof(InvalidStatusDataProvided)),
             "Invalid status data provided: {Message}");
 
     private static readonly Action<ILogger, string, Exception?> ReferencedEntityNotFound =
         LoggerMessage.Define<string>(
             LogLevel.Warning,
-            new EventId(1012, nameof(ReferencedEntityNotFound)),
+            new EventId(1312, nameof(ReferencedEntityNotFound)),
             "Referenced entity not found during task creation: {Message}");
 
     // Error level logs
     private static readonly Action<ILogger, int, int?, string, Exception?> UnableToDeleteTask =
         LoggerMessage.Define<int, int?, string>(
             LogLevel.Error,
-            new EventId(2001, nameof(UnableToDeleteTask)),
+            new EventId(2301, nameof(UnableToDeleteTask)),
             "Unable to delete task {TaskId} for user {UserId}: {Message}");
 
     private static readonly Action<ILogger, int, int?, string, Exception?> UnableToUpdateTask =
         LoggerMessage.Define<int, int?, string>(
             LogLevel.Error,
-            new EventId(2002, nameof(UnableToUpdateTask)),
+            new EventId(2302, nameof(UnableToUpdateTask)),
             "Unable to update task {TaskId} for user {UserId}: {Message}");
 
     private static readonly Action<ILogger, int, int?, string, Exception?> UnableToUpdateTaskStatus =
         LoggerMessage.Define<int, int?, string>(
             LogLevel.Error,
-            new EventId(2003, nameof(UnableToUpdateTaskStatus)),
+            new EventId(2303, nameof(UnableToUpdateTaskStatus)),
             "Unable to update task status {TaskId} for user {UserId}: {Message}");
 
     private static readonly Action<ILogger, int, Exception?> UnexpectedErrorRetrievingTask =
         LoggerMessage.Define<int>(
             LogLevel.Error,
-            new EventId(2004, nameof(UnexpectedErrorRetrievingTask)),
+            new EventId(2304, nameof(UnexpectedErrorRetrievingTask)),
             "Unexpected error occurred while retrieving task {TaskId}");
 
     private static readonly Action<ILogger, int, Exception?> UnexpectedErrorRetrievingListTasks =
         LoggerMessage.Define<int>(
             LogLevel.Error,
-            new EventId(2005, nameof(UnexpectedErrorRetrievingListTasks)),
+            new EventId(2305, nameof(UnexpectedErrorRetrievingListTasks)),
             "Unexpected error occurred while retrieving tasks for list {ListId}");
 
     private static readonly Action<ILogger, int, Exception?> UnexpectedErrorRetrievingPaginatedListTasks =
         LoggerMessage.Define<int>(
             LogLevel.Error,
-            new EventId(2006, nameof(UnexpectedErrorRetrievingPaginatedListTasks)),
+            new EventId(2306, nameof(UnexpectedErrorRetrievingPaginatedListTasks)),
             "Unexpected error occurred while retrieving paginated tasks for list {ListId}");
 
     private static readonly Action<ILogger, int?, Exception?> UnexpectedErrorRetrievingUserTasks =
         LoggerMessage.Define<int?>(
             LogLevel.Error,
-            new EventId(2007, nameof(UnexpectedErrorRetrievingUserTasks)),
+            new EventId(2307, nameof(UnexpectedErrorRetrievingUserTasks)),
             "Unexpected error occurred while retrieving tasks for user {UserId}");
 
     private static readonly Action<ILogger, int?, Exception?> UnexpectedErrorRetrievingPaginatedUserTasks =
         LoggerMessage.Define<int?>(
             LogLevel.Error,
-            new EventId(2008, nameof(UnexpectedErrorRetrievingPaginatedUserTasks)),
+            new EventId(2308, nameof(UnexpectedErrorRetrievingPaginatedUserTasks)),
             "Unexpected error occurred while retrieving paginated tasks for user {UserId}");
 
     private static readonly Action<ILogger, int, Exception?> UnexpectedErrorDeletingTask =
         LoggerMessage.Define<int>(
             LogLevel.Error,
-            new EventId(2009, nameof(UnexpectedErrorDeletingTask)),
+            new EventId(2309, nameof(UnexpectedErrorDeletingTask)),
             "Unexpected error occurred while deleting task {TaskId}");
 
     private static readonly Action<ILogger, Exception?> UnexpectedErrorCreatingTask =
         LoggerMessage.Define(
             LogLevel.Error,
-            new EventId(2010, nameof(UnexpectedErrorCreatingTask)),
+            new EventId(2310, nameof(UnexpectedErrorCreatingTask)),
             "Unexpected error occurred while creating task");
 
     private static readonly Action<ILogger, int, Exception?> UnexpectedErrorUpdatingTask =
         LoggerMessage.Define<int>(
             LogLevel.Error,
-            new EventId(2011, nameof(UnexpectedErrorUpdatingTask)),
+            new EventId(2311, nameof(UnexpectedErrorUpdatingTask)),
             "Unexpected error occurred while updating task {TaskId}");
 
     private static readonly Action<ILogger, int, Exception?> UnexpectedErrorUpdatingTaskStatus =
         LoggerMessage.Define<int>(
             LogLevel.Error,
-            new EventId(2012, nameof(UnexpectedErrorUpdatingTaskStatus)),
+            new EventId(2312, nameof(UnexpectedErrorUpdatingTaskStatus)),
             "Unexpected error occurred while updating task status {TaskId}");
 
     // Information level logs
     private static readonly Action<ILogger, int, int?, Exception?> TaskDeletedSuccessfully =
         LoggerMessage.Define<int, int?>(
             LogLevel.Information,
-            new EventId(3001, nameof(TaskDeletedSuccessfully)),
+            new EventId(3301, nameof(TaskDeletedSuccessfully)),
             "Task {TaskId} deleted successfully by user {UserId}");
 
     private static readonly Action<ILogger, int, int?, Exception?> TaskCreatedSuccessfully =
         LoggerMessage.Define<int, int?>(
             LogLevel.Information,
-            new EventId(3002, nameof(TaskCreatedSuccessfully)),
+            new EventId(3302, nameof(TaskCreatedSuccessfully)),
             "Task {TaskId} created successfully by user {UserId}");
 
     private static readonly Action<ILogger, int, int?, Exception?> TaskUpdatedSuccessfully =
         LoggerMessage.Define<int, int?>(
             LogLevel.Information,
-            new EventId(3003, nameof(TaskUpdatedSuccessfully)),
+            new EventId(3303, nameof(TaskUpdatedSuccessfully)),
             "Task {TaskId} updated successfully by user {UserId}");
 
     private static readonly Action<ILogger, int, int?, Exception?> TaskStatusUpdatedSuccessfully =
         LoggerMessage.Define<int, int?>(
             LogLevel.Information,
-            new EventId(3004, nameof(TaskStatusUpdatedSuccessfully)),
+            new EventId(3304, nameof(TaskStatusUpdatedSuccessfully)),
             "Task {TaskId} status updated successfully by user {UserId}");
 
     // Public methods for Warning level logs

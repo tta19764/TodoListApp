@@ -1,7 +1,8 @@
 namespace TodoListApp.Services.Models;
-public class CommentModel
+public class CommentModel : AbstractModel
 {
-    public CommentModel(string text, int taskId, int userId)
+    public CommentModel(int id, string text, int taskId, int userId)
+        : base(id)
     {
         this.Text = text;
         this.TaskId = taskId;

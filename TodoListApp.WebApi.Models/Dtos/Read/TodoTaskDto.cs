@@ -3,15 +3,22 @@ using System.Collections.ObjectModel;
 namespace TodoListApp.WebApi.Models.Dtos.Read;
 public class TodoTaskDto
 {
-    public TodoTaskDto(int id, string title, string? description, DateTime creationDate, DateTime dueDate, string ownerUserName, string status, ReadOnlyCollection<string>? tags = null, ReadOnlyCollection<string>? comments = null)
+    public TodoTaskDto()
+    {
+    }
+
+    public TodoTaskDto(int id, string title, string? description, DateTime creationDate, DateTime dueDate, string assigneeFirstName, string assigneeLastName, int assigneeId, string status, int listId, ReadOnlyCollection<string>? tags = null, ReadOnlyCollection<string>? comments = null)
     {
         this.Id = id;
         this.Title = title;
         this.Description = description;
         this.CreationDate = creationDate;
         this.DueDate = dueDate;
-        this.OwnerUserName = ownerUserName;
+        this.AssigneeFirstName = assigneeFirstName;
+        this.AssigneeLastName = assigneeLastName;
+        this.AssigneeId = assigneeId;
         this.Status = status;
+        this.ListId = listId;
         if (tags != null)
         {
             foreach (var tag in tags)
@@ -37,7 +44,7 @@ public class TodoTaskDto
     /// <summary>
     /// Gets or sets the title of the task.
     /// </summary>
-    public string Title { get; set; }
+    public string Title { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the description of the task.
@@ -47,22 +54,37 @@ public class TodoTaskDto
     /// <summary>
     /// Gets or sets the date of task creation.
     /// </summary>
-    public DateTime CreationDate { get; set; }
+    public DateTime CreationDate { get; set; } = DateTime.MinValue;
 
     /// <summary>
     /// Gets or sets the task due date.
     /// </summary>
-    public DateTime DueDate { get; set; }
+    public DateTime DueDate { get; set; } = DateTime.MinValue;
 
     /// <summary>
-    /// Gets or sets the task owner.
+    /// Gets or sets the assigne first name.
     /// </summary>
-    public string OwnerUserName { get; set; }
+    public string AssigneeFirstName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the assigne last name.
+    /// </summary>
+    public string AssigneeLastName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the unique identifier of the task assignee.
+    /// </summary>
+    public int AssigneeId { get; set; }
 
     /// <summary>
     /// Gets or sets the task status.
     /// </summary>
-    public string Status { get; set; }
+    public string Status { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the unique identifier of the list containing the task.
+    /// </summary>
+    public int ListId { get; set; }
 
     /// <summary>
     /// Gets user's tags.

@@ -10,67 +10,67 @@ public static class JwtLog
     private static readonly Action<ILogger, string, Exception?> TokenMismatch =
     LoggerMessage.Define<string>(
         LogLevel.Warning,
-        new EventId(1004, nameof(TokenMismatch)),
+        new EventId(1101, nameof(TokenMismatch)),
         "Token mismatch detected for user ID: {UserId}");
 
     private static readonly Action<ILogger, string, Exception?> UserNotFound =
         LoggerMessage.Define<string>(
             LogLevel.Warning,
-            new EventId(1005, nameof(UserNotFound)),
+            new EventId(1102, nameof(UserNotFound)),
             "User not found for username/ID: {UserIdentifier}");
 
     private static readonly Action<ILogger, string, Exception?> InvalidPassword =
         LoggerMessage.Define<string>(
             LogLevel.Warning,
-            new EventId(1006, nameof(InvalidPassword)),
+            new EventId(1103, nameof(InvalidPassword)),
             "Invalid password provided for username: {Username}");
 
     private static readonly Action<ILogger, string, Exception?> RefreshTokenExpired =
         LoggerMessage.Define<string>(
             LogLevel.Warning,
-            new EventId(1007, nameof(RefreshTokenExpired)),
+            new EventId(1104, nameof(RefreshTokenExpired)),
             "Refresh token expired for user ID: {UserId}");
 
     private static readonly Action<ILogger, string, Exception?> FailedToCreateToken =
         LoggerMessage.Define<string>(
             LogLevel.Error,
-            new EventId(2001, nameof(FailedToCreateToken)),
+            new EventId(2101, nameof(FailedToCreateToken)),
             "Failed to create authentication token for user ID: {UserId}");
 
     private static readonly Action<ILogger, string, Exception?> FailedToRemoveRefreshToken =
         LoggerMessage.Define<string>(
             LogLevel.Error,
-            new EventId(2002, nameof(FailedToRemoveRefreshToken)),
+            new EventId(2102, nameof(FailedToRemoveRefreshToken)),
             "Failed to remove refresh token for user ID: {UserId}");
 
     private static readonly Action<ILogger, string, Exception?> FailedToSaveRefreshToken =
         LoggerMessage.Define<string>(
             LogLevel.Error,
-            new EventId(2003, nameof(FailedToSaveRefreshToken)),
+            new EventId(2103, nameof(FailedToSaveRefreshToken)),
             "Failed to save refresh token for user ID: {UserId}");
 
     private static readonly Action<ILogger, Exception?> NullUserLoginOrPassword =
         LoggerMessage.Define(
             LogLevel.Error,
-            new EventId(2007, nameof(NullUserLoginOrPassword)),
+            new EventId(2104, nameof(NullUserLoginOrPassword)),
             "User login or password not set to an instance");
 
     private static readonly Action<ILogger, string, Exception?> JwtTokenCreated =
         LoggerMessage.Define<string>(
             LogLevel.Information,
-            new EventId(3004, nameof(JwtTokenCreated)),
+            new EventId(3101, nameof(JwtTokenCreated)),
             "JWT token created for user ID: {UserId}");
 
     private static readonly Action<ILogger, string, Exception?> RefreshTokenCreated =
         LoggerMessage.Define<string>(
             LogLevel.Information,
-            new EventId(3005, nameof(RefreshTokenCreated)),
+            new EventId(3102, nameof(RefreshTokenCreated)),
             "Refresh token created for user ID: {UserId}");
 
     private static readonly Action<ILogger, string, Exception?> RefreshTokenRemoved =
         LoggerMessage.Define<string>(
             LogLevel.Information,
-            new EventId(3006, nameof(RefreshTokenRemoved)),
+            new EventId(3103, nameof(RefreshTokenRemoved)),
             "Refresh token removed for user ID: {UserId}");
 
     public static void LogTokenMismatch(ILogger logger, string userId, Exception? exception = null) =>

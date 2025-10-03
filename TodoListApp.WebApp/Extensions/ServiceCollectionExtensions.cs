@@ -1,4 +1,6 @@
 using System.Net.Http.Headers;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.EntityFrameworkCore;
 using TodoListApp.Services.Interfaces.Servicies;
 using TodoListApp.Services.WebApi.Servicies;
@@ -35,9 +37,21 @@ internal static class ServiceCollectionExtensions
         _ = services.AddTransient<JwtTokenHandler>()
             .AddTransient<ITokenStorageService, IdentityTokenStorageService>();
 
-        _ = services.AddControllersWithViews();
+        _ = services.AddControllersWithViews(options =>
+        {
+            var policy = new AuthorizationPolicyBuilder()
+                .RequireAuthenticatedUser()
+                .Build();
+            options.Filters.Add(new AuthorizeFilter(policy));
+        });
 
-        _ = services.AddHttpClient<IAuthService, AuthService>((provider, client) =>
+        _ = services.ConfigureApplicationCookie(options =>
+        {
+            options.LoginPath = "/Account/Login";
+            options.AccessDeniedPath = "/Account/Login";
+        });
+
+        _ = services.AddHttpClient<IAuthService, AuthApiService>((provider, client) =>
         {
             var apiUrl = configuration["ApiSettings:ApiBaseUrl"];
             var controllerUrl = configuration["ApiSettings:ApiAuthController"];
@@ -50,6 +64,34 @@ internal static class ServiceCollectionExtensions
             client.DefaultRequestHeaders.Accept.Add(
                 new MediaTypeWithQualityHeaderValue("application/json"));
         });
+
+        _ = services.AddHttpClient<ITodoListService, TodoListApiService>((provider, client) =>
+        {
+            var apiUrl = configuration["ApiSettings:ApiBaseUrl"];
+            var controllerUrl = configuration["ApiSettings:ApiTodoListsController"];
+            if (!string.IsNullOrWhiteSpace(apiUrl))
+            {
+                client.BaseAddress = new Uri(apiUrl + controllerUrl);
+            }
+
+            client.Timeout = TimeSpan.FromSeconds(30);
+            client.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+        }).AddHttpMessageHandler<JwtTokenHandler>();
+
+        _ = services.AddHttpClient<ITodoTaskService, TodoTaskApiService>((provider, client) =>
+        {
+            var apiUrl = configuration["ApiSettings:ApiBaseUrl"];
+            var controllerUrl = configuration["ApiSettings:ApiTodoTasksController"];
+            if (!string.IsNullOrWhiteSpace(apiUrl))
+            {
+                client.BaseAddress = new Uri(apiUrl + controllerUrl);
+            }
+
+            client.Timeout = TimeSpan.FromSeconds(30);
+            client.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+        }).AddHttpMessageHandler<JwtTokenHandler>();
 
         _ = services.AddHttpContextAccessor();
 

@@ -1,8 +1,41 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@{
+	ViewData["Title"] = "Welcome";
+	Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="main-page d-flex flex-column justify-content-center align-items-center">
+	<h1 class="mb-4">Welcome to To-Do List App</h1>
+	<p class="lead text-muted mb-5">Organize your tasks and boost your productivity</p>
+
+	<div class="container">
+		<div class="row text-center">
+			<div class="col-md-6 mb-4">
+				<a asp-controller="TodoLists" asp-action="Index" class="main-btn btn-blue">
+					To-do Lists
+				</a>
+				<p class="mt-2 text-muted">Create and manage your lists.</p>
+			</div>
+			<div class="col-md-6 mb-4">
+				<a asp-controller="TodoTasks" asp-action="Index" class="main-btn btn-green">
+					Assigned Tasks
+				</a>
+				<p class="mt-2 text-muted">See what’s assigned to you.</p>
+			</div>
+		</div>
+
+		<div class="row text-center">
+			<div class="col-md-6 mb-4">
+				<a asp-controller="Tags" asp-action="Index" class="main-btn btn-orange">
+					Tags
+				</a>
+				<p class="mt-2 text-muted">Organize with custom tags.</p>
+			</div>
+			<div class="col-md-6 mb-4">
+				<a asp-controller="Search" asp-action="Index" class="main-btn btn-purple">
+					Search
+				</a>
+				<p class="mt-2 text-muted">Find tasks quickly.</p>
+			</div>
+		</div>
+	</div>
 </div>

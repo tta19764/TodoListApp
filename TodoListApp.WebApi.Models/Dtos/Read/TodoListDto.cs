@@ -5,6 +5,10 @@ namespace TodoListApp.WebApi.Models.Dtos.Read;
 /// </summary>
 public class TodoListDto
 {
+    public TodoListDto()
+    {
+    }
+
     /// <summary>
     /// Initializes a new instance of the <see cref="TodoListDto"/> class.
     /// </summary>
@@ -14,7 +18,7 @@ public class TodoListDto
     /// <param name="ownerName">The name of the list owner.</param>
     /// <param name="listRole">The list rol of the user.</param>
     /// <param name="pendingTasks">The number of pending tasks.</param>
-    public TodoListDto(int id, string title, string? description, string ownerName, string listRole, int pendingTasks = 0)
+    public TodoListDto(int id, string title, string? description, string ownerName, string listRole, int listOwnerId, int pendingTasks = 0)
     {
         this.Id = id;
         this.Title = title;
@@ -22,6 +26,7 @@ public class TodoListDto
         this.OwnerName = ownerName;
         this.ListRole = listRole;
         this.PendingTasks = pendingTasks;
+        this.ListOwnerId = listOwnerId;
     }
 
     /// <summary>
@@ -32,7 +37,7 @@ public class TodoListDto
     /// <summary>
     /// Gets or sets the title of the list.
     /// </summary>
-    public string Title { get; set; }
+    public string Title { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the description of the list.
@@ -42,15 +47,20 @@ public class TodoListDto
     /// <summary>
     /// Gets or sets the name of the list owner.
     /// </summary>
-    public string OwnerName { get; set; }
+    public string OwnerName { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the role of the user in the list.
     /// </summary>
-    public string ListRole { get; set; }
+    public string ListRole { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the number of pending tasks in the list.
     /// </summary>
     public int PendingTasks { get; set; }
+
+    /// <summary>
+    /// Gets or sets the unique identifier of the list owner.
+    /// </summary>
+    public int ListOwnerId { get; set; }
 }

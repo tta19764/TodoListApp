@@ -1,21 +1,25 @@
 namespace TodoListApp.WebApi.Models.Dtos.Create;
 public class CreateTodoTaskDto
 {
-    public CreateTodoTaskDto(string title, string? description, DateTime? creationDate, DateTime dueDate, int statusId, int ownerUserId, int listId)
+    public CreateTodoTaskDto()
+    {
+    }
+
+    public CreateTodoTaskDto(string title, string? description, DateTime? creationDate, DateTime dueDate, int statusId, int asssignee, int listId)
     {
         this.Title = title;
         this.Description = description;
         this.CreationDate = creationDate;
         this.DueDate = dueDate;
         this.StatusId = statusId;
-        this.OwnerUserId = ownerUserId;
+        this.AssigneeId = asssignee;
         this.ListId = listId;
     }
 
     /// <summary>
     /// Gets or sets the title of the task.
     /// </summary>
-    public string Title { get; set; }
+    public string Title { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the description of the task.
@@ -30,7 +34,7 @@ public class CreateTodoTaskDto
     /// <summary>
     /// Gets or sets the task due date.
     /// </summary>
-    public DateTime DueDate { get; set; }
+    public DateTime DueDate { get; set; } = DateTime.MinValue;
 
     /// <summary>
     /// Gets or sets the unique identifier of the task status.
@@ -38,9 +42,9 @@ public class CreateTodoTaskDto
     public int StatusId { get; set; }
 
     /// <summary>
-    /// Gets or sets the unique identifier of the task owner.
+    /// Gets or sets the unique identifier of the task assignee.
     /// </summary>
-    public int OwnerUserId { get; set; }
+    public int AssigneeId { get; set; }
 
     /// <summary>
     /// Gets or sets the unique identifier of the list.

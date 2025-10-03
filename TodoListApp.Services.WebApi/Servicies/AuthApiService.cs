@@ -10,18 +10,18 @@ namespace TodoListApp.Services.WebApi.Servicies;
 /// <summary>
 /// Service for handling authentication-related operations such as login, logout, and token refresh via HTTP requests.
 /// </summary>
-public class AuthService : IAuthService
+public class AuthApiService : IAuthService
 {
     private readonly HttpClient httpClient;
-    private readonly ILogger<AuthService> logger;
+    private readonly ILogger<AuthApiService> logger;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="AuthService"/> class.
+    /// Initializes a new instance of the <see cref="AuthApiService"/> class.
     /// </summary>
     /// <param name="httpClient">The request http client.</param>
     /// <param name="logger">The logger.</param>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="httpClient"/> or <paramref name="logger"/> is null.</exception>
-    public AuthService(HttpClient httpClient, ILogger<AuthService> logger)
+    public AuthApiService(HttpClient httpClient, ILogger<AuthApiService> logger)
     {
         this.httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));

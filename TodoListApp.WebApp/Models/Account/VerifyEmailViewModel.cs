@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace TodoListApp.WebApp.Models;
+namespace TodoListApp.WebApp.Models.Account;
 
 public class VerifyEmailViewModel
 {

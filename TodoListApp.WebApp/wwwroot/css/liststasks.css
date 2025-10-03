@@ -1,0 +1,115 @@
+:root {
+    --core-green: #28a745; /* Bootstrap green */
+    --core-green-dark: #218838;
+    --core-green-light: #f0faf3; /* very light green background */
+    --core-grey: #6c757d; /* Bootstrap grey */
+}
+
+.todo-list-item {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.todo-list-item:hover {
+    background-color: #f8f9fa;
+}
+
+.todo-list-item.active {
+    color: #212529;
+    background-color: #e7f3ff;
+    border-left: 4px solid #0d6efd;
+}
+
+.task-item {
+    border-left: 4px solid #dee2e6;
+    transition: all 0.2s ease;
+}
+
+.task-item:hover {
+    background-color: #f8f9fa;
+    border-left-color: #0d6efd;
+}
+
+.task-item.completed .task-title {
+    text-decoration: line-through;
+}
+
+.status-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.status-notstarted {
+    background-color: #6c757d;
+}
+
+.status-inprogress {
+    background-color: #0dcaf0;
+}
+
+.status-completed {
+    background-color: #198754;
+}
+
+.task-item.completed {
+    background-color: rgba(25, 135, 84, 0.05); /* subtle green tint */
+    border-left: 4px solid #198754;
+}
+
+/* --- HEADER (MY LISTS) --- */
+.card-header.bg-primary {
+    background-color: var(--core-green) !important;
+    color: #fff !important;
+}
+
+/* --- LEFT PANEL LISTS --- */
+.list-group-item-action {
+    border-left: 4px solid transparent;
+    transition: background-color 0.2s, border-left 0.2s;
+}
+
+.list-group-item-action:hover {
+    background-color: var(--core-green-light);
+    border-left: 4px solid var(--core-green);
+}
+
+.list-group-item.active {
+    background-color: var(--core-green-light) !important; /* subtle green tint */
+    border-left: 4px solid var(--core-green);
+    color: var(--core-green-dark);
+}
+
+.list-group-item.active h6,
+.list-group-item.active small {
+    color: var(--core-green-dark) !important;
+    font-weight: 600;
+}
+/* Make badge always visible */
+.list-group-item .badge {
+    background-color: var(--core-green-dark);
+    color: #fff;
+}
+
+.list-group-item.active .badge {
+    background-color: var(--core-green);
+    color: #fff;
+}
+
+/* --- TASK STATUS FILTER TABS --- */
+.nav-tabs .nav-link {
+    color: var(--core-grey);
+    border: none;
+    border-bottom: 2px solid transparent;
+    transition: border-color 0.2s, color 0.2s;
+}
+
+.nav-tabs .nav-link:hover {
+    color: var(--core-green);
+    border-bottom: 2px solid var(--core-green);
+}
+
+.nav-tabs .nav-link.active {
+    color: var(--core-green-dark) !important;
+    border-bottom: 3px solid var(--core-green);
+    font-weight: bold;
+}

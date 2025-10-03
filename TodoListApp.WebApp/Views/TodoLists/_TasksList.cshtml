@@ -1,0 +1,200 @@
+@using Microsoft.AspNetCore.Http.Extensions
+@using TodoListApp.Services.WebApi.Enums
+@model TodoTasksListViewModel
+
+@if (Model != null && Model.Tasks.Any())
+{
+	@foreach (var task in Model.Tasks)
+	{
+		var statusClass = task.Status.ToLower().Replace(" ", "");
+		var isCompleted = task.Status.Equals("Completed", StringComparison.OrdinalIgnoreCase);
+
+		<div class="card task-item mb-3 @(isCompleted ? "completed" : "")">
+			<div class="card-body">
+				<div class="d-flex justify-content-between align-items-start">
+					<a asp-controller="TodoTasks"
+					   asp-action="Details"
+					   asp-route-id="@task.TaskId"
+					   asp-route-listId="@task.ListId"
+					   asp-route-returnUrl="@(new Uri(Context.Request.GetEncodedUrl(), UriKind.Absolute))"
+					   class="flex-grow-1 text-decoration-none text-dark task-clickable">
+						<h6 class="task-title mb-2">@task.Title</h6>
+						@if (!string.IsNullOrEmpty(task.Description))
+						{
+							<p class="text-muted mb-2">@task.Description</p>
+						}
+						else
+						{
+							<p class="text-muted mb-2"><em>No description</em></p>
+						}
+						<div class="d-flex gap-2 align-items-center flex-wrap">
+							<span class="badge status-badge status-@statusClass">@task.Status</span>
+							@{
+								var isOverdue = task.DueDate < DateTime.Now && !isCompleted;
+								<small class="text-@(isOverdue ? "danger" : "muted")">
+									<i class="bi bi-calendar"></i>
+									@task.DueDate.ToString("MMM dd, yyyy")
+									@if (isOverdue)
+									{
+										<span class="badge bg-danger">Overdue</span>
+									}
+								</small>
+							}
+							<small class="text-muted">
+								<i class="bi bi-person"></i> @task.OwnerName
+							</small>
+							@if (task.Tags != null && task.Tags.Any())
+							{
+								@foreach (var tag in task.Tags)
+								{
+									<span class="badge bg-info">@tag</span>
+								}
+							}
+						</div>
+					</a>
+					<div class="dropdown ms-2">
+						<button class="btn btn-sm btn-outline-secondary"
+								type="button"
+								data-bs-toggle="dropdown"
+								aria-expanded="false">
+							<i class="bi bi-three-dots-vertical"></i>
+						</button>
+						@{
+							if (Model.RoleName == "Owner" || Model.RoleName == "Editor")
+							{
+								<ul class="dropdown-menu dropdown-menu-end">
+									<li>
+										<a class="dropdown-item"
+										   asp-controller="TodoTasks"
+										   asp-action="Edit"
+										   asp-route-id="@task.TaskId"
+										   asp-route-returnUrl="@(new Uri(Context.Request.GetEncodedUrl(), UriKind.Absolute))">
+											<i class="bi bi-pencil"></i> Edit
+										</a>
+									</li>
+
+									@if (task.Status.Equals("Not Started", StringComparison.OrdinalIgnoreCase))
+									{
+										<li>
+											<form asp-controller="TodoTasks"
+												  asp-action="UpdateStatus"
+												  asp-route-id="@task.TaskId"
+												  asp-route-status="@((int)TodoTaskStatus.InProgress)"
+												  asp-route-returnUrl="@(new Uri(Context.Request.GetEncodedUrl(), UriKind.Absolute))"
+												  method="post"
+												  class="d-inline">
+												<button type="submit" class="dropdown-item">
+													<i class="bi bi-hourglass-split"></i> Mark In Progress
+												</button>
+											</form>
+										</li>
+										<li>
+											<form asp-controller="TodoTasks"
+												  asp-action="UpdateStatus"
+												  asp-route-id="@task.TaskId"
+												  asp-route-status="@((int)TodoTaskStatus.Completed)"
+												  asp-route-returnUrl="@(new Uri(Context.Request.GetEncodedUrl(), UriKind.Absolute))"
+												  method="post"
+												  class="d-inline">
+												<button type="submit" class="dropdown-item">
+													<i class="bi bi-check-circle-fill"></i> Mark Completed
+												</button>
+											</form>
+										</li>
+									}
+									else if (task.Status.Equals("In Progress", StringComparison.OrdinalIgnoreCase))
+									{
+										<li>
+											<form asp-controller="TodoTasks"
+												  asp-action="UpdateStatus"
+												  asp-route-id="@task.TaskId"
+												  asp-route-status="@((int)TodoTaskStatus.NotStarted)"
+												  asp-route-returnUrl="@(new Uri(Context.Request.GetEncodedUrl(), UriKind.Absolute))"
+												  method="post"
+												  class="d-inline">
+												<button type="submit" class="dropdown-item">
+													<i class="bi bi-circle"></i> Mark Not Started
+												</button>
+											</form>
+										</li>
+										<li>
+											<form asp-controller="TodoTasks"
+												  asp-action="UpdateStatus"
+												  asp-route-id="@task.TaskId"
+												  asp-route-status="@((int)TodoTaskStatus.Completed)"
+												  asp-route-returnUrl="@(new Uri(Context.Request.GetEncodedUrl(), UriKind.Absolute))"
+												  method="post"
+												  class="d-inline">
+												<button type="submit" class="dropdown-item">
+													<i class="bi bi-check-circle-fill"></i> Mark Completed
+												</button>
+											</form>
+										</li>
+									}
+									else
+									{
+										<li>
+											<form asp-controller="TodoTasks"
+												  asp-action="UpdateStatus"
+												  asp-route-id="@task.TaskId"
+												  asp-route-status="@((int)TodoTaskStatus.NotStarted)"
+												  asp-route-returnUrl="@(new Uri(Context.Request.GetEncodedUrl(), UriKind.Absolute))"
+												  method="post"
+												  class="d-inline">
+												<button type="submit" class="dropdown-item">
+													<i class="bi bi-circle"></i> Mark Not Started
+												</button>
+											</form>
+										</li>
+										<li>
+											<form asp-controller="TodoTasks"
+												  asp-action="UpdateStatus"
+												  asp-route-id="@task.TaskId"
+												  asp-route-status="@((int)TodoTaskStatus.InProgress)"
+												  asp-route-returnUrl="@(new Uri(Context.Request.GetEncodedUrl(), UriKind.Absolute))"
+												  method="post"
+												  class="d-inline">
+												<button type="submit" class="dropdown-item">
+													<i class="bi bi-hourglass-split"></i> Mark In Progress
+												</button>
+											</form>
+										</li>
+									}
+
+									<li><hr class="dropdown-divider"></li>
+									<li>
+										<form asp-controller="TodoTasks"
+											  asp-action="Delete"
+											  asp-route-id="@task.TaskId"
+											  asp-route-listId="@task.ListId"
+											  asp-route-returnUrl="@(new Uri(Context.Request.GetEncodedUrl(), UriKind.Absolute))"
+											  method="post"
+											  onsubmit="return confirm('Are you sure you want to delete this task?');"
+											  class="d-inline">
+											<button type="submit" class="dropdown-item text-danger">
+												<i class="bi bi-trash"></i> Delete
+											</button>
+										</form>
+									</li>
+								</ul>
+							}
+						}
+					</div>
+				</div>
+			</div>
+		</div>
+	}
+}
+else
+{
+	<div class="text-center py-5">
+		<i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+		<p class="text-muted mt-3">No tasks found</p>
+		<a asp-controller="TodoTasks"
+		   asp-action="Create"
+		   asp-route-listId="@ViewContext.RouteData.Values["listId"]"
+		   class="btn btn-primary btn-sm">
+			Create First Task
+		</a>
+	</div>
+}

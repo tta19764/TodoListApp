@@ -54,7 +54,7 @@ public class TodoListsController : ControllerBase
                 return this.Unauthorized("Invalid user identifier.");
             }
 
-            var todoList = await this.service.GetByIdAsync(listId, userId.Value);
+            var todoList = await this.service.GetByIdAsync(userId.Value, listId);
 
             if (todoList == null)
             {
@@ -393,16 +393,14 @@ public class TodoListsController : ControllerBase
 
     private static TodoListDto MapToDto(TodoListModel model)
     {
-        var ownerName = $"{(string.IsNullOrEmpty(model.ListOwner?.FirstName) ? EmptyName : model.ListOwner.FirstName)} {(string.IsNullOrEmpty(model.ListOwner?.LastName) ? string.Empty : model.ListOwner.LastName[0])}.";
-        var activeTasksCount = model.TodoTasks?.Count(t => t.Status?.StatusTitle != "Completed") ?? 0;
-
         return new TodoListDto(
             model.Id,
             model.Title,
             model.Description,
-            ownerName,
-            model.UserRole?.RoleName ?? "Unknown",
-            activeTasksCount);
+            model.OwnerFullName ?? EmptyName,
+            model.UserRole,
+            model.OwnerId,
+            model.ActiveTasks);
     }
 
     private int? GetCurrentUserId()

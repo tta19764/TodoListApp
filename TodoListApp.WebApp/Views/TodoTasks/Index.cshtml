@@ -1,0 +1,209 @@
+@using Microsoft.AspNetCore.Http.Extensions
+@model AssignedTasksViewModel
+@{
+	ViewData["Title"] = "My Assigned Tasks";
+	Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid mt-4">
+	<div class="row">
+		<div class="col-12">
+			<div class="card shadow-sm">
+				<div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+					<div>
+						<h4 class="mb-0">
+							<i class="bi bi-person-check"></i> My Assigned Tasks
+						</h4>
+						<small>Total: @Model.TotalTasks tasks</small>
+					</div>
+					<a asp-controller="TodoTasks"
+					   asp-action="Index"
+					   asp-route-taskFilter="@Model.TaskFilter"
+					   asp-route-sortBy="@Model.SortBy"
+					   asp-route-sortOrder="@Model.SortOrder"
+					   class="btn btn-light btn-sm">
+						<i class="bi bi-arrow-clockwise"></i> Refresh
+					</a>
+				</div>
+				<div class="card-body">
+					<div class="row mb-3">
+						<!-- Filter Tabs -->
+						<div class="col-md-6">
+							<ul class="nav nav-tabs nav-fill mb-3">
+								<li class="nav-item">
+									<a class="nav-link @(Model.TaskFilter == "active" || string.IsNullOrEmpty(Model.TaskFilter) ? "active" : "")"
+									   asp-controller="TodoTasks"
+									   asp-action="Index"
+									   asp-route-taskFilter="active"
+									   asp-route-sortBy="@Model.SortBy"
+									   asp-route-sortOrder="@Model.SortOrder">
+										Active
+									</a>
+								</li>
+								<li class="nav-item">
+									<a class="nav-link @(Model.TaskFilter == "notstarted" ? "active" : "")"
+									   asp-controller="TodoTasks"
+									   asp-action="Index"
+									   asp-route-taskFilter="notstarted"
+									   asp-route-sortBy="@Model.SortBy"
+									   asp-route-sortOrder="@Model.SortOrder">
+										Not Started
+									</a>
+								</li>
+								<li class="nav-item">
+									<a class="nav-link @(Model.TaskFilter == "inprogress" ? "active" : "")"
+									   asp-controller="TodoTasks"
+									   asp-action="Index"
+									   asp-route-taskFilter="inprogress"
+									   asp-route-sortBy="@Model.SortBy"
+									   asp-route-sortOrder="@Model.SortOrder">
+										In Progress
+									</a>
+								</li>
+								<li class="nav-item">
+									<a class="nav-link @(Model.TaskFilter == "completed" ? "active" : "")"
+									   asp-controller="TodoTasks"
+									   asp-action="Index"
+									   asp-route-taskFilter="completed"
+									   asp-route-sortBy="@Model.SortBy"
+									   asp-route-sortOrder="@Model.SortOrder">
+										Completed
+									</a>
+								</li>
+								<li class="nav-item">
+									<a class="nav-link @(Model.TaskFilter == "all" ? "active" : "")"
+									   asp-controller="TodoTasks"
+									   asp-action="Index"
+									   asp-route-taskFilter="all"
+									   asp-route-sortBy="@Model.SortBy"
+									   asp-route-sortOrder="@Model.SortOrder">
+										All
+									</a>
+								</li>
+							</ul>
+						</div>
+
+						<!-- Sort Options -->
+						<div class="col-md-6">
+							<div class="d-flex justify-content-end gap-2 align-items-center">
+								<label class="mb-0 me-2"><strong>Sort by:</strong></label>
+								<div class="btn-group">
+									<a class="btn btn-sm @(Model.SortBy == "Id" ? "btn-primary" : "btn-outline-primary")"
+									   asp-controller="TodoTasks"
+									   asp-action="Index"
+									   asp-route-taskFilter="@Model.TaskFilter"
+									   asp-route-sortBy="Id"
+									   asp-route-sortOrder="@Model.SortOrder">
+										ID
+									</a>
+									<a class="btn btn-sm @(Model.SortBy == "Title" ? "btn-primary" : "btn-outline-primary")"
+									   asp-controller="TodoTasks"
+									   asp-action="Index"
+									   asp-route-taskFilter="@Model.TaskFilter"
+									   asp-route-sortBy="Title"
+									   asp-route-sortOrder="@Model.SortOrder">
+										Title
+									</a>
+									<a class="btn btn-sm @(Model.SortBy == "DueDate" ? "btn-primary" : "btn-outline-primary")"
+									   asp-controller="TodoTasks"
+									   asp-action="Index"
+									   asp-route-taskFilter="@Model.TaskFilter"
+									   asp-route-sortBy="DueDate"
+									   asp-route-sortOrder="@Model.SortOrder">
+										Due Date
+									</a>
+								</div>
+
+								<!-- Sort Direction -->
+								<a class="btn btn-sm btn-outline-secondary"
+								   asp-controller="TodoTasks"
+								   asp-action="Index"
+								   asp-route-taskFilter="@Model.TaskFilter"
+								   asp-route-sortBy="@Model.SortBy"
+								   asp-route-sortOrder="@(Model.SortOrder == "asc" ? "desc" : "asc")"
+								   title="@(Model.SortOrder == "asc" ? "Sort Descending" : "Sort Ascending")">
+									@if (Model.SortOrder == "asc")
+									{
+										<i class="bi bi-sort-up"></i>
+									}
+									else
+									{
+										<i class="bi bi-sort-down"></i>
+									}
+								</a>
+							</div>
+						</div>
+					</div>
+
+					<hr class="my-3" />
+
+					<!-- Tasks List -->
+					<div id="tasksContainer">
+						@if (Model.Tasks != null && Model.Tasks.Any())
+						{
+							@foreach (var task in Model.Tasks)
+							{
+								var statusClass = task.Status.ToLower().Replace(" ", "");
+								var isCompleted = task.Status.Equals("Completed", StringComparison.OrdinalIgnoreCase);
+
+								<div class="card task-item mb-3 @(isCompleted ? "completed" : "")">
+									<div class="card-body">
+										<div class="d-flex justify-content-between align-items-start">
+											<a asp-controller="TodoTasks"
+											   asp-action="Details"
+											   asp-route-id="@task.TaskId"
+											   asp-route-listId="@task.ListId"
+											   asp-route-returnUrl="@Context.Request.GetEncodedUrl()"
+											   class="flex-grow-1 text-decoration-none text-dark task-clickable">
+												<h6 class="task-title mb-2">@task.Title</h6>
+												@if (!string.IsNullOrEmpty(task.Description))
+												{
+													<p class="text-muted mb-2">@task.Description</p>
+												}
+												else
+												{
+													<p class="text-muted mb-2"><em>No description</em></p>
+												}
+												<div class="d-flex gap-2 align-items-center flex-wrap">
+													<span class="badge status-badge status-@statusClass">@task.Status</span>
+													@{
+														var isOverdue = task.DueDate < DateTime.Now && !isCompleted;
+														<small class="text-@(isOverdue ? "danger" : "muted")">
+															<i class="bi bi-calendar"></i>
+															@task.DueDate.ToString("MMM dd, yyyy")
+															@if (isOverdue)
+															{
+																<span class="badge bg-danger">Overdue</span>
+															}
+														</small>
+													}
+													<small class="text-muted">
+														<i class="bi bi-person"></i> @task.OwnerName
+													</small>
+													@if (task.Tags != null && task.Tags.Any())
+													{
+														@foreach (var tag in task.Tags)
+														{
+															<span class="badge bg-info">@tag</span>
+														}
+													}
+												</div>
+											</a>
+										</div>
+									</div>
+								</div>
+							}
+						}
+						else
+						{
+							<div class="text-center py-5">
+								<i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+								<p class="text-muted mt-3">No tasks found matching your filters</p>
+							</div>
+						}
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

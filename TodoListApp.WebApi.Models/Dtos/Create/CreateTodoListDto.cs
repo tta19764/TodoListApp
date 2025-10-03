@@ -5,6 +5,10 @@ namespace TodoListApp.WebApi.Models.Dtos.Create;
 /// </summary>
 public class CreateTodoListDto
 {
+    public CreateTodoListDto()
+    {
+    }
+
     /// <summary>
     /// Initializes a new instance of the <see cref="CreateTodoListDto"/> class.
     /// </summary>
@@ -21,7 +25,7 @@ public class CreateTodoListDto
     /// <summary>
     /// Gets or sets the title of the to-do list.
     /// </summary>
-    public string Title { get; set; }
+    public string Title { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the description of the to-do list.

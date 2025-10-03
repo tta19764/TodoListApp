@@ -1,32 +1,15 @@
-using System.Collections.ObjectModel;
-
 namespace TodoListApp.Services.Models;
 public class TodoListModel : AbstractModel
 {
-    public TodoListModel(int id, int ownerId, string title, string? description = null, UserModel? listOwner = null, TodoListUserRoleModel? userRole = null, ReadOnlyCollection<TodoTaskModel>? tasks = null)
+    public TodoListModel(int id, int ownerId, string title, string? description = null, int activeTasks = 0, string? ownerFullName = null, string userRole = "No role")
         : base(id)
     {
         this.OwnerId = ownerId;
         this.Title = title;
         this.Description = description;
-        this.ListOwner = listOwner;
-
-        if (userRole == null)
-        {
-            this.UserRole = new TodoListUserRoleModel(0, 0, this.OwnerId, "Owner");
-        }
-        else
-        {
-            this.UserRole = userRole;
-        }
-
-        if (tasks is not null)
-        {
-            foreach (TodoTaskModel t in tasks)
-            {
-                this.TodoTasks.Add(t);
-            }
-        }
+        this.OwnerFullName = ownerFullName;
+        this.ActiveTasks = activeTasks;
+        this.UserRole = userRole;
     }
 
     /// <summary>
@@ -47,15 +30,15 @@ public class TodoListModel : AbstractModel
     /// <summary>
     /// Gets or sets the list owner.
     /// </summary>
-    public UserModel? ListOwner { get; set; }
+    public string? OwnerFullName { get; set; }
 
     /// <summary>
     /// Gets or sets the list user role.
     /// </summary>
-    public TodoListUserRoleModel UserRole { get; set; }
+    public string UserRole { get; set; }
 
     /// <summary>
-    /// Gets the list of tasks.
+    /// Gets or sets the number of active tasks in the list.
     /// </summary>
-    public IList<TodoTaskModel> TodoTasks { get; private set; } = new List<TodoTaskModel>();
+    public int ActiveTasks { get; set; }
 }

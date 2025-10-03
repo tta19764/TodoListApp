@@ -1,4 +1,3 @@
-using System.Collections.ObjectModel;
 using Microsoft.EntityFrameworkCore;
 using TodoListApp.Services.Database.Data;
 using TodoListApp.Services.Database.Entities;
@@ -159,7 +158,7 @@ public class TodoListService : ITodoListService
         {
             throw new EntityNotFoundException(nameof(entity), id);
         }
-        else if (entity.TodoListUserRoles.Any(lur => lur.UserId != userId) || entity.OwnerId != userId)
+        else if (!entity.TodoListUserRoles.Any(lur => lur.UserId == userId && lur.ListRole.RoleName == "Editor") && entity.OwnerId != userId)
         {
             throw new UnauthorizedAccessException("You do not have permission to see this list.");
         }
@@ -205,59 +204,44 @@ public class TodoListService : ITodoListService
 
     private static TodoListModel EntityToModel(TodoList entity, int userId)
     {
-        TodoListUserRoleModel? userRole = null;
+        string? userRole = null;
 
-        if (entity.OwnerId != userId)
+        if (entity.OwnerId == userId)
+        {
+            userRole = "Owner";
+        }
+        else
         {
             var role = entity.TodoListUserRoles.FirstOrDefault(r => r.UserId == userId);
             if (role != null)
             {
-                userRole = new TodoListUserRoleModel(role.Id, role.TodoListRoleId, userId, role.ListRole.RoleName);
+                userRole = role.ListRole.RoleName;
             }
             else
             {
-                userRole = new TodoListUserRoleModel(0, 0, userId, "Unknown");
+                userRole = "No role";
             }
         }
 
-        var tasks = new List<TodoTaskModel>();
+        var activeTasks = 0;
         if (entity.TodoTasks != null)
         {
-            foreach (var task in entity.TodoTasks)
-            {
-                UserModel? ownerUser = null;
-
-                if (task.OwnerUser != null)
-                {
-                    ownerUser = new UserModel(task.OwnerUserId, task.OwnerUser.FirstName, task.OwnerUser.LastName);
-                }
-
-                StatusModel? statusModel = null;
-
-                if (task.Status != null)
-                {
-                    statusModel = new StatusModel(task.StatusId, task.Status.StatusTitle);
-                }
-
-                ReadOnlyCollection<TagModel>? tagModels = null;
-                if (task.TaskTags != null)
-                {
-                    var tags = new List<TagModel>();
-                    foreach (var tag in task.TaskTags)
-                    {
-                        tags.Add(new TagModel(tag.Tag.Id, tag.Tag.Label, tag.TaskId, tag.Tag.UserId));
-                    }
-
-                    tagModels = new ReadOnlyCollection<TagModel>(tags);
-                }
-
-                tasks.Add(new TodoTaskModel(task.Id, task.Title, task.Description, task.CreationDate, task.DueDate, task.StatusId, task.OwnerUserId, task.ListId, ownerUser, statusModel, tagModels));
-            }
+            activeTasks = (from task in entity.TodoTasks
+                           where task.Status != null && task.Status.StatusTitle != "Completed"
+                           select task).Count();
         }
 
-        var userModel = (entity.ListOwner is null) ? null : new UserModel(entity.OwnerId, entity.ListOwner.FirstName, entity.ListOwner.LastName);
+        string userLastName = string.Empty;
+        if (entity.ListOwner != null && !string.IsNullOrEmpty(entity.ListOwner.LastName))
+        {
+            userLastName = $" {entity.ListOwner.LastName[0]}.";
+        }
 
-        return new TodoListModel(entity.Id, entity.OwnerId, entity.Title, entity.Description, userModel, userRole, new ReadOnlyCollection<TodoTaskModel>(tasks));
+        var userFullName = (entity.ListOwner is null) ?
+            null :
+            string.Concat(entity.ListOwner.FirstName, userLastName);
+
+        return new TodoListModel(entity.Id, entity.OwnerId, entity.Title, entity.Description, activeTasks, userFullName, userRole);
     }
 
     private static TodoList ModelToEntity(TodoListModel model)

@@ -27,44 +27,44 @@ public static class AuthLog
     private static readonly Action<ILogger, Exception?> NullLoginRequest =
         LoggerMessage.Define(
             LogLevel.Warning,
-            new EventId(1008, nameof(NullLoginRequest)),
+            new EventId(1004, nameof(NullLoginRequest)),
             "Null login request received");
 
     private static readonly Action<ILogger, Exception?> NullLogoutRequest =
         LoggerMessage.Define(
             LogLevel.Warning,
-            new EventId(1009, nameof(NullLogoutRequest)),
+            new EventId(1005, nameof(NullLogoutRequest)),
             "Null logout request received");
 
     private static readonly Action<ILogger, Exception?> NullRefreshTokenRequest =
         LoggerMessage.Define(
             LogLevel.Warning,
-            new EventId(1010, nameof(NullRefreshTokenRequest)),
+            new EventId(1006, nameof(NullRefreshTokenRequest)),
             "Null refresh token request received");
 
     // Error level logs - System failures
     private static readonly Action<ILogger, string, Exception?> UnexpectedErrorDuringLogin =
         LoggerMessage.Define<string>(
             LogLevel.Error,
-            new EventId(2004, nameof(UnexpectedErrorDuringLogin)),
+            new EventId(2001, nameof(UnexpectedErrorDuringLogin)),
             "Unexpected error occurred during login for username: {Username}");
 
     private static readonly Action<ILogger, string, Exception?> UnexpectedErrorDuringLogout =
         LoggerMessage.Define<string>(
             LogLevel.Error,
-            new EventId(2005, nameof(UnexpectedErrorDuringLogout)),
+            new EventId(2002, nameof(UnexpectedErrorDuringLogout)),
             "Unexpected error occurred during logout for user ID: {UserId}");
 
     private static readonly Action<ILogger, string, Exception?> UnexpectedErrorDuringRefresh =
         LoggerMessage.Define<string>(
             LogLevel.Error,
-            new EventId(2006, nameof(UnexpectedErrorDuringRefresh)),
+            new EventId(2003, nameof(UnexpectedErrorDuringRefresh)),
             "Unexpected error occurred during token refresh for user ID: {UserId}");
 
     private static readonly Action<ILogger, Exception?> NullUserLoginOrPassword =
         LoggerMessage.Define(
             LogLevel.Error,
-            new EventId(2007, nameof(NullUserLoginOrPassword)),
+            new EventId(2004, nameof(NullUserLoginOrPassword)),
             "User login or password not set to an instance");
 
     // Information level logs - Successful operations

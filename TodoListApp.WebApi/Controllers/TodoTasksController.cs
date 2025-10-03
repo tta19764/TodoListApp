@@ -22,7 +22,6 @@ namespace TodoListApp.WebApi.Controllers;
 [Authorize]
 public class TodoTasksController : ControllerBase
 {
-    private const string EmptyName = "N/A";
     private readonly ITodoTaskService service;
     private readonly ILogger<TodoTasksController> logger;
 
@@ -160,9 +159,9 @@ public class TodoTasksController : ControllerBase
     /// <param name="sortBy">The property to sort the list.</param>
     /// <param name="sortOrder">The sorting order.</param>
     /// <returns>A list of tasks assigned to the current user.</returns>
-    [HttpGet]
+    [HttpGet("Assigned")]
     [Authorize]
-    public async Task<ActionResult<List<TodoTaskDto>>> GetTasks(
+    public async Task<ActionResult<List<TodoTaskDto>>> GetAssignedTasks(
         [FromQuery] TaskFilter filter = TaskFilter.Active,
         [FromQuery] string? sortBy = null,
         [FromQuery] string? sortOrder = null)
@@ -207,9 +206,9 @@ public class TodoTasksController : ControllerBase
     /// <param name="sortBy">The property to sort the list.</param>
     /// <param name="sortOrder">The sorting order.</param>
     /// <returns>A paginated list of tasks assigned to the current user.</returns>
-    [HttpGet("{pageNumber:min(1)}/{rowCount:min(1)}")]
+    [HttpGet("Assigned/{pageNumber:min(1)}/{rowCount:min(1)}")]
     [Authorize]
-    public async Task<ActionResult<List<TodoTaskDto>>> GetTasksPaginated(
+    public async Task<ActionResult<List<TodoTaskDto>>> GetAssignedTasksPaginated(
         int pageNumber,
         int rowCount,
         [FromQuery] TaskFilter filter = TaskFilter.Active,
@@ -225,6 +224,93 @@ public class TodoTasksController : ControllerBase
             }
 
             var tasks = await this.service.GetAllByAuthorAsync(userId.Value, filter, sortBy, sortOrder, pageNumber, rowCount);
+
+            if (tasks == null || !tasks.Any())
+            {
+                return this.Ok(new List<TodoTaskDto>());
+            }
+
+            var taskDtos = tasks.Select(MapToDto).ToList();
+            return this.Ok(taskDtos);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            TodoTasksLog.LogUnauthorizedTasksAccess(this.logger, this.GetCurrentUserId(), ex.Message);
+            return this.Forbid("You don't have permission to access these tasks.");
+        }
+        catch (ArgumentOutOfRangeException ex) when (ex.ParamName == "pageNumber" || ex.ParamName == "rowCount")
+        {
+            TodoTasksLog.LogInvalidPaginationParameters(this.logger, pageNumber, rowCount);
+            return this.BadRequest("Invalid pagination parameters. Page number and row count must be positive integers.");
+        }
+        catch (Exception ex)
+        {
+            TodoTasksLog.LogUnexpectedErrorRetrievingPaginatedUserTasks(this.logger, this.GetCurrentUserId(), ex);
+            return this.StatusCode(500, "An unexpected error occurred while retrieving tasks.");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets all tasks the cyrrent user has access to.
+    /// </summary>
+    /// <returns>A list of tasks assigned to the current user.</returns>
+    [HttpGet]
+    [Authorize]
+    public async Task<ActionResult<List<TodoTaskDto>>> GetTasks()
+    {
+        try
+        {
+            var userId = this.GetCurrentUserId();
+            if (userId == null)
+            {
+                return this.Unauthorized("Invalid user identifier.");
+            }
+
+            var tasks = await this.service.GetAllAsync(userId.Value);
+
+            if (tasks == null || !tasks.Any())
+            {
+                return this.Ok(new List<TodoTaskDto>());
+            }
+
+            var taskDtos = tasks.Select(MapToDto).ToList();
+            return this.Ok(taskDtos);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            TodoTasksLog.LogUnauthorizedTasksAccess(this.logger, this.GetCurrentUserId(), ex.Message);
+            return this.Forbid("You don't have permission to access these tasks.");
+        }
+        catch (Exception ex)
+        {
+            TodoTasksLog.LogUnexpectedErrorRetrievingUserTasks(this.logger, this.GetCurrentUserId(), ex);
+            return this.StatusCode(500, "An unexpected error occurred while retrieving tasks.");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets all tasks the cyrrent user has access to.
+    /// </summary>
+    /// <param name="pageNumber">The page number.</param>
+    /// <param name="rowCount">The number of tasks in the page.</param>
+    /// <returns>A paginated list of tasks assigned to the current user.</returns>
+    [HttpGet("{pageNumber:min(1)}/{rowCount:min(1)}")]
+    [Authorize]
+    public async Task<ActionResult<List<TodoTaskDto>>> GetTasksPaginated(
+        int pageNumber,
+        int rowCount)
+    {
+        try
+        {
+            var userId = this.GetCurrentUserId();
+            if (userId == null)
+            {
+                return this.Unauthorized("Invalid user identifier.");
+            }
+
+            var tasks = await this.service.GetAllAsync(userId.Value, pageNumber, rowCount);
 
             if (tasks == null || !tasks.Any())
             {
@@ -364,7 +450,7 @@ public class TodoTasksController : ControllerBase
                 return this.Unauthorized("Invalid user identifier.");
             }
 
-            var model = new TodoTaskModel(0, dto.Title, dto.Description, null, dto.DueDate, dto.StatusId, dto.OwnerUserId, dto.ListId);
+            var model = new TodoTaskModel(0, dto.Title, dto.Description, null, dto.DueDate, dto.StatusId, dto.AssigneeId, dto.ListId);
             var createdTask = await this.service.AddAsync(model);
 
             TodoTasksLog.LogTaskCreatedSuccessfully(this.logger, createdTask.Id, userId);
@@ -412,7 +498,7 @@ public class TodoTasksController : ControllerBase
                 return this.Unauthorized("Invalid user identifier.");
             }
 
-            var model = new TodoTaskModel(dto.Id, dto.Title, dto.Description, null, dto.DueDate, dto.StatusId, dto.OwnerUserId, dto.ListId);
+            var model = new TodoTaskModel(dto.Id, dto.Title, dto.Description, null, dto.DueDate, dto.StatusId, dto.AssigneeId, dto.ListId);
             var updatedTask = await this.service.UpdateAsync(userId.Value, model);
 
             TodoTasksLog.LogTaskUpdatedSuccessfully(this.logger, dto.Id, userId);
@@ -513,8 +599,11 @@ public class TodoTasksController : ControllerBase
             model.Description,
             model.CreationDate ?? DateTime.MinValue,
             model.DueDate,
-            $"{(string.IsNullOrEmpty(model.OwnerUser?.FirstName) ? EmptyName : model.OwnerUser.FirstName)} {(string.IsNullOrEmpty(model.OwnerUser?.LastName) ? string.Empty : model.OwnerUser.LastName[0])}.",
+            model.OwnerUser!.FirstName,
+            model.OwnerUser!.LastName,
+            model.OwnerUser!.Id,
             model.Status?.StatusTitle ?? "Unknown",
+            model.ListId,
             new ReadOnlyCollection<string>(model.UsersTags?.Select(ut => ut.StatusTitle).ToList() ?? new List<string>()),
             new ReadOnlyCollection<string>(model.UserComments?.Select(uc => uc.Text).ToList() ?? new List<string>()));
     }

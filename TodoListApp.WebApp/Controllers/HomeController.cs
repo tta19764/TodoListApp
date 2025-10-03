@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using TodoListApp.WebApp.Models;
+using TodoListApp.WebApp.Models.Error;
 
 namespace TodoListApp.WebApp.Controllers;
 public class HomeController : Controller
