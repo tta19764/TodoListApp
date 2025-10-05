@@ -3,7 +3,7 @@ namespace TodoListApp.WebApi.CustomLogs;
 /// <summary>
 /// Custom logging class for TodoLists operations.
 /// </summary>
-public static class TodoListsLog
+internal static class TodoListsLog
 {
     // Information level logs
     private static readonly Action<ILogger, int, int?, Exception?> ListDeletedSuccessfully =
@@ -39,8 +39,26 @@ public static class TodoListsLog
     private static readonly Action<ILogger, int, int, int, int?, Exception?> PaginatedListsRetrievedSuccessfully =
         LoggerMessage.Define<int, int, int, int?>(
             LogLevel.Information,
-            new EventId(2201, nameof(PaginatedListsRetrievedSuccessfully)),
+            new EventId(2206, nameof(PaginatedListsRetrievedSuccessfully)),
             "Retrieved {Count} paginated lists (page {PageNumber}, rows {RowCount}) successfully for user {UserId}");
+
+    private static readonly Action<ILogger, int, int?, Exception?> UserListsCountRetrievedSuccessfully =
+        LoggerMessage.Define<int, int?>(
+            LogLevel.Information,
+            new EventId(1207, nameof(UserListsCountRetrievedSuccessfully)),
+            "{Count} user lists number retrieved successfully for user {UserId}");
+
+    private static readonly Action<ILogger, int, int?, Exception?> AuthorListsCountRetrievedSuccessfully =
+        LoggerMessage.Define<int, int?>(
+            LogLevel.Information,
+            new EventId(1208, nameof(AuthorListsCountRetrievedSuccessfully)),
+            "{Count} author lists number retrieved successfully for user {UserId}");
+
+    private static readonly Action<ILogger, int, int?, Exception?> SharedListsCountRetrievedSuccessfully =
+        LoggerMessage.Define<int, int?>(
+            LogLevel.Information,
+            new EventId(1209, nameof(SharedListsCountRetrievedSuccessfully)),
+            "{Count} chared lists number retrieved successfully for user {UserId}");
 
     // Warning level logs
     private static readonly Action<ILogger, int, int?, string, Exception?> ListNotFoundForUser =
@@ -185,6 +203,15 @@ public static class TodoListsLog
 
     public static void LogInvalidUserIdentifier(ILogger logger, int? userId, Exception? exception = null) =>
         InvalidUserIdentifier(logger, userId, exception);
+
+    public static void LogUserListsCountRetrievedSuccessfully(ILogger logger, int count, int? userId) =>
+        UserListsCountRetrievedSuccessfully(logger, count, userId, null);
+
+    public static void LogAuthorListsCountRetrievedSuccessfully(ILogger logger, int count, int? userId) =>
+        AuthorListsCountRetrievedSuccessfully(logger, count, userId, null);
+
+    public static void LogSharedListsCountRetrievedSuccessfully(ILogger logger, int count, int? userId) =>
+        SharedListsCountRetrievedSuccessfully(logger, count, userId, null);
 
     // Public methods for Error level logs
     public static void LogUnableToDeleteList(ILogger logger, int listId, int? userId, string message, Exception? exception = null) =>

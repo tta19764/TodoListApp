@@ -1,3 +1,6 @@
+using TodoListApp.Services.Enums;
+using TodoListApp.WebApp.Models.Tag;
+
 namespace TodoListApp.WebApp.Models.Task;
 
 /// <summary>
@@ -21,11 +24,16 @@ public class TodoTaskDetailsViewModel
 
     public string OwnerName { get; set; } = null!;
 
-    public List<string> Tags { get; set; } = new List<string>();
+    public List<TagViewModel> Tags { get; set; } = new List<TagViewModel>();
 
     public List<string> Comments { get; set; } = new List<string>();
 
     public int? ListId { get; set; }
+
+    /// <summary>
+    /// Gets or sets the role of the user in relation to the list.
+    /// </summary>
+    public ListRole Role { get; set; } = ListRole.None;
 
     public Uri ReturnUrl { get; set; } = null!;
 }

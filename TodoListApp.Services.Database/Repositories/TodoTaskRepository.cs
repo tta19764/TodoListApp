@@ -98,6 +98,34 @@ public class TodoTaskRepository : AbstractRepository, ITodoTaskRepository
     }
 
     /// <summary>
+    /// Updates an existing <see cref="TodoTask"/> entity in the repository.
+    /// </summary>
+    /// <param name="entity">The <see cref="TodoTask"/> entity to update.</param>
+    /// <returns>Updated <see cref="TodoTask"/> entity.</returns>
+    public async Task<TodoTask?> UpdateAsync(TodoTask entity)
+    {
+        ArgumentNullException.ThrowIfNull(entity);
+
+        var existing = await this.dbSet.FindAsync(entity.Id);
+        if (existing is null)
+        {
+            return null;
+        }
+
+        this.Context.Entry(existing).CurrentValues.SetValues(entity);
+        _ = await this.Context.SaveChangesAsync();
+
+        return await this.dbSet
+            .Include(t => t.TodoList)
+            .Include(t => t.OwnerUser)
+            .Include(t => t.Status)
+            .Include(t => t.TaskTags)
+                .ThenInclude(tt => tt.Tag)
+            .Include(t => t.Comments)
+            .FirstOrDefaultAsync(t => t.Id == existing.Id);
+    }
+
+    /// <summary>
     /// Asynchronously gets all <see cref="TodoTask"/> entities.
     /// </summary>
     /// <returns>
@@ -215,7 +243,7 @@ public class TodoTaskRepository : AbstractRepository, ITodoTaskRepository
     public async Task<IReadOnlyList<TodoTask>> GetAllUserTasksAsync(int userId)
     {
         return await this.dbSet
-            .Where(t => t.OwnerUserId == userId)
+            .Where(t => t.OwnerUserId == userId || t.TodoList.TodoListUserRoles.Any(lur => lur.UserId == userId))
             .Include(t => t.TodoList)
             .Include(t => t.OwnerUser)
             .Include(t => t.Status)
@@ -238,7 +266,7 @@ public class TodoTaskRepository : AbstractRepository, ITodoTaskRepository
     public async Task<IReadOnlyList<TodoTask>> GetAllUserTasksAsync(int userId, int pageNumber, int rowCount)
     {
         return await this.dbSet
-            .Where(t => t.OwnerUserId == userId)
+            .Where(t => t.OwnerUserId == userId || t.TodoList.TodoListUserRoles.Any(lur => lur.UserId == userId))
             .Include(t => t.TodoList)
             .Include(t => t.OwnerUser)
             .Include(t => t.Status)
@@ -273,30 +301,78 @@ public class TodoTaskRepository : AbstractRepository, ITodoTaskRepository
     }
 
     /// <summary>
-    /// Updates an existing <see cref="TodoTask"/> entity in the repository.
+    /// Searches for tasks based on optional criteria: title, creation date, and due date.
     /// </summary>
-    /// <param name="entity">The <see cref="TodoTask"/> entity to update.</param>
-    /// <returns>Updated <see cref="TodoTask"/> entity.</returns>
-    public async Task<TodoTask?> UpdateAsync(TodoTask entity)
+    /// <param name="userId">The unique identifier of the user.</param>
+    /// <param name="title">The task title.</param>
+    /// <param name="creationDate">The task creation date.</param>
+    /// <param name="dueDate">The task due date.</param>
+    /// <returns>A read-only list of TodoTask entities.</returns>
+    public async Task<IReadOnlyList<TodoTask>> SerchTasksAsync(int userId, string? title, DateTime? creationDate, DateTime? dueDate)
     {
-        ArgumentNullException.ThrowIfNull(entity);
-
-        var existing = await this.dbSet.FindAsync(entity.Id);
-        if (existing is null)
-        {
-            return null;
-        }
-
-        this.Context.Entry(existing).CurrentValues.SetValues(entity);
-        _ = await this.Context.SaveChangesAsync();
-
-        return await this.dbSet
+        return await ApplySearch(
+            this.dbSet
+            .Where(t => t.OwnerUserId == userId || t.TodoList.TodoListUserRoles.Any(lur => lur.UserId == userId)),
+            title,
+            creationDate,
+            dueDate)
             .Include(t => t.TodoList)
             .Include(t => t.OwnerUser)
             .Include(t => t.Status)
             .Include(t => t.TaskTags)
                 .ThenInclude(tt => tt.Tag)
             .Include(t => t.Comments)
-            .FirstOrDefaultAsync(t => t.Id == existing.Id);
+            .AsSplitQuery()
+            .ToListAsync();
+    }
+
+    /// <summary>
+    /// Searches for tasks based on optional criteria: title, creation date, and due date with pagination.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user.</param>
+    /// <param name="title">The task title.</param>
+    /// <param name="creationDate">The task creation date.</param>
+    /// <param name="dueDate">The task due date.</param>
+    /// <param name="pageNumber">The page number.</param>
+    /// <param name="rowCount">The number of tasks on the page.</param>
+    /// <returns>A read-only list of TodoTask entities.</returns>
+    public async Task<IReadOnlyList<TodoTask>> SerchTasksAsync(int userId, string? title, DateTime? creationDate, DateTime? dueDate, int pageNumber, int rowCount)
+    {
+        return await ApplySearch(
+            this.dbSet
+            .Where(t => t.OwnerUserId == userId || t.TodoList.TodoListUserRoles.Any(lur => lur.UserId == userId)),
+            title,
+            creationDate,
+            dueDate)
+            .Include(t => t.TodoList)
+            .Include(t => t.OwnerUser)
+            .Include(t => t.Status)
+            .Include(t => t.TaskTags)
+                .ThenInclude(tt => tt.Tag)
+            .Include(t => t.Comments)
+            .AsSplitQuery()
+            .Skip((pageNumber - 1) * rowCount)
+            .Take(rowCount)
+            .ToListAsync();
+    }
+
+    private static IQueryable<TodoTask> ApplySearch(IQueryable<TodoTask> tasks, string? title, DateTime? creationDate, DateTime? dueDate)
+    {
+        if (title != null)
+        {
+            tasks = tasks.Where(t => t.Title.Contains(title));
+        }
+
+        if (creationDate != null)
+        {
+            tasks = tasks.Where(t => t.CreationDate.Date == creationDate.Value.Date);
+        }
+
+        if (dueDate != null)
+        {
+            tasks = tasks.Where(t => t.DueDate.Date == dueDate.Value.Date);
+        }
+
+        return tasks;
     }
 }

@@ -3,7 +3,7 @@ namespace TodoListApp.WebApi.CustomLogs;
 /// <summary>
 /// Static class for authentication-related logging.
 /// </summary>
-public static class AuthLog
+internal static class AuthLog
 {
     // Warning level logs - Authentication failures
     private static readonly Action<ILogger, string, Exception?> InvalidLoginAttempt =

@@ -93,7 +93,9 @@
 									   asp-action="Index"
 									   asp-route-taskFilter="@Model.TaskFilter"
 									   asp-route-sortBy="Id"
-									   asp-route-sortOrder="@Model.SortOrder">
+									   asp-route-sortOrder="@Model.SortOrder"
+									   asp-route-pageNumber="@(Model.PageNumber)"
+									   asp-route-rowCount="@Model.RowCount">
 										ID
 									</a>
 									<a class="btn btn-sm @(Model.SortBy == "Title" ? "btn-primary" : "btn-outline-primary")"
@@ -101,7 +103,9 @@
 									   asp-action="Index"
 									   asp-route-taskFilter="@Model.TaskFilter"
 									   asp-route-sortBy="Title"
-									   asp-route-sortOrder="@Model.SortOrder">
+									   asp-route-sortOrder="@Model.SortOrder"
+									   asp-route-pageNumber="@(Model.PageNumber)"
+									   asp-route-rowCount="@Model.RowCount">
 										Title
 									</a>
 									<a class="btn btn-sm @(Model.SortBy == "DueDate" ? "btn-primary" : "btn-outline-primary")"
@@ -109,7 +113,9 @@
 									   asp-action="Index"
 									   asp-route-taskFilter="@Model.TaskFilter"
 									   asp-route-sortBy="DueDate"
-									   asp-route-sortOrder="@Model.SortOrder">
+									   asp-route-sortOrder="@Model.SortOrder"
+									   asp-route-pageNumber="@(Model.PageNumber)"
+									   asp-route-rowCount="@Model.RowCount">
 										Due Date
 									</a>
 								</div>
@@ -121,6 +127,8 @@
 								   asp-route-taskFilter="@Model.TaskFilter"
 								   asp-route-sortBy="@Model.SortBy"
 								   asp-route-sortOrder="@(Model.SortOrder == "asc" ? "desc" : "asc")"
+								   asp-route-pageNumber="@(Model.PageNumber)"
+								   asp-route-rowCount="@Model.RowCount"
 								   title="@(Model.SortOrder == "asc" ? "Sort Descending" : "Sort Ascending")">
 									@if (Model.SortOrder == "asc")
 									{
@@ -193,6 +201,46 @@
 									</div>
 								</div>
 							}
+							<nav aria-label="Task pagination" class="mt-4">
+								<ul class="pagination justify-content-center">
+									<!-- Previous -->
+									<li class="page-item @(Model.PageNumber <= 1 ? "disabled" : "")">
+										<a class="page-link"
+										   asp-controller="TodoTasks"
+										   asp-action="Index"
+										   asp-route-taskFilter="@Model.TaskFilter"
+										   asp-route-sortBy="@Model.SortBy"
+										   asp-route-sortOrder="@Model.SortOrder"
+										   asp-route-pageNumber="@(Model.PageNumber - 1)"
+										   asp-route-rowCount="@Model.RowCount"
+										   aria-label="Previous">
+											<i class="bi bi-chevron-left"></i> Previous
+										</a>
+									</li>
+
+									<!-- Page info -->
+									<li class="page-item disabled">
+										<span class="page-link">
+											Page @Model.PageNumber of @Model.TotalPages (Total: @Model.TotalTasks tasks)
+										</span>
+									</li>
+
+									<!-- Next -->
+									<li class="page-item @(Model.PageNumber >= Model.TotalPages ? "disabled" : "")">
+										<a class="page-link"
+										   asp-controller="TodoTasks"
+										   asp-action="Index"
+										   asp-route-taskFilter="@Model.TaskFilter"
+										   asp-route-sortBy="@Model.SortBy"
+										   asp-route-sortOrder="@Model.SortOrder"
+										   asp-route-pageNumber="@(Model.PageNumber + 1)"
+										   asp-route-rowCount="@Model.RowCount"
+										   aria-label="Next">
+											Next <i class="bi bi-chevron-right"></i>
+										</a>
+									</li>
+								</ul>
+							</nav>
 						}
 						else
 						{

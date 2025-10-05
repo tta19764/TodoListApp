@@ -6,6 +6,7 @@ using TodoListApp.Services.Enums;
 using TodoListApp.Services.Interfaces.Servicies;
 using TodoListApp.Services.Models;
 using TodoListApp.Services.WebApi.CustomLogs;
+using TodoListApp.Services.WebApi.Helpers;
 using TodoListApp.WebApi.Models.Dtos.Create;
 using TodoListApp.WebApi.Models.Dtos.Read;
 using TodoListApp.WebApi.Models.Dtos.Update;
@@ -45,7 +46,7 @@ public class TodoTaskApiService : ITodoTaskService
                 if (result != null)
                 {
                     TodoTaskLog.LogTaskCreated(this.logger, result.Id);
-                    return MapToModel(result);
+                    return MapToModel.MapToTodoTaskModel(result);
                 }
 
                 TodoTaskLog.LogNullResponse(this.logger, "create");
@@ -121,7 +122,7 @@ public class TodoTaskApiService : ITodoTaskService
                 if (tasks != null)
                 {
                     TodoTaskLog.LogTodoTasksRetrievedByUser(this.logger, tasks.Count, userId);
-                    return tasks.Select(t => MapToModel(t)).ToList();
+                    return tasks.Select(t => MapToModel.MapToTodoTaskModel(t)).ToList();
                 }
 
                 TodoTaskLog.LogNullResponse(this.logger, "get all by user");
@@ -162,7 +163,7 @@ public class TodoTaskApiService : ITodoTaskService
                 if (tasks != null)
                 {
                     TodoTaskLog.LogTodoTasksPageRetrievedByUser(this.logger, tasks.Count, pageNumber, userId);
-                    return tasks.Select(t => MapToModel(t)).ToList();
+                    return tasks.Select(t => MapToModel.MapToTodoTaskModel(t)).ToList();
                 }
 
                 TodoTaskLog.LogNullResponse(this.logger, "get all by user");
@@ -190,48 +191,36 @@ public class TodoTaskApiService : ITodoTaskService
         }
     }
 
-    public async Task<IReadOnlyList<TodoTaskModel>> GetAllByAuthorAsync(int userId, TaskFilter filter = TaskFilter.Active, string? sortBy = "DueDate", string? sortOrder = "asc", int? pageNumber = null, int? rowCount = null)
+    public async Task<int> GetAllByListIdCountAsync(int id, int userId, TaskFilter filter = TaskFilter.Active)
     {
         try
         {
-            Uri baseUri = new Uri(this.httpClient.BaseAddress + "Assigned/");
-            Uri uri = BuildUri(baseUri, filter, sortBy, sortOrder, pageNumber, rowCount);
+            var uri = new Uri($"{this.httpClient.BaseAddress}Lists/{id}/Count", UriKind.Absolute);
+            var builder = new UriBuilder(uri);
+            var query = System.Web.HttpUtility.ParseQueryString(builder.Query);
+            query["filter"] = filter.ToString();
 
-            using var response = await this.httpClient.GetAsync(uri);
-
+            builder.Query = query.ToString();
+            using var response = await this.httpClient.GetAsync(builder.Uri);
             if (response.IsSuccessStatusCode)
             {
-                var tasks = await response.Content.ReadFromJsonAsync<List<TodoTaskDto>>();
-                if (tasks != null)
+                var countString = await response.Content.ReadAsStringAsync();
+                if (int.TryParse(countString, out int count))
                 {
-                    if (pageNumber != null && rowCount != null)
-                    {
-                        TodoTaskLog.LogTodoTasksPageRetrievedByOwner(this.logger, tasks.Count, pageNumber.Value, userId);
-                    }
-                    else
-                    {
-                        TodoTaskLog.LogTodoTasksRetrievedByOwner(this.logger, tasks.Count, userId);
-                    }
-
-                    return tasks.Select(t => MapToModel(t)).ToList();
+                    return count;
                 }
 
-                TodoTaskLog.LogNullResponse(this.logger, "get all by assigne");
-                throw new InvalidOperationException($"Todo tasks for user {userId} were not found");
+                TodoListLog.LogNullResponse(this.logger, "get all by list id count");
+                return 0;
             }
 
             var errorContent = await response.Content.ReadAsStringAsync();
-            TodoTaskLog.LogTaskFailed(this.logger, "get all by assigne", 0, (int)response.StatusCode, errorContent);
-            throw new HttpRequestException($"Failed to retrieve todo tasks for assigne: {response.StatusCode}");
+            TodoTaskLog.LogTaskFailed(this.logger, "get all by list id count", 0, (int)response.StatusCode, errorContent);
+            throw new HttpRequestException($"Failed to retrieve todo tasks by list id count: {response.StatusCode}");
         }
         catch (HttpRequestException ex)
         {
             TodoTaskLog.LogHttpRequestError(this.logger, ex);
-            throw;
-        }
-        catch (JsonException ex)
-        {
-            TodoTaskLog.LogJsonParsingError(this.logger, ex);
             throw;
         }
         catch (Exception ex)
@@ -246,7 +235,7 @@ public class TodoTaskApiService : ITodoTaskService
         try
         {
             Uri baseUri = new Uri(this.httpClient.BaseAddress + $"Lists/{id}/");
-            Uri uri = BuildUri(baseUri, filter, sortBy, sortOrder, pageNumber, rowCount);
+            Uri uri = TasksUriBuilder.BuildUri(baseUri, filter, sortBy, sortOrder, pageNumber, rowCount);
 
             using var response = await this.httpClient.GetAsync(uri);
 
@@ -264,7 +253,7 @@ public class TodoTaskApiService : ITodoTaskService
                         TodoTaskLog.LogTodoTasksRetrievedByListId(this.logger, tasks.Count, id, userId);
                     }
 
-                    return tasks.Select(t => MapToModel(t)).ToList();
+                    return tasks.Select(t => MapToModel.MapToTodoTaskModel(t)).ToList();
                 }
 
                 TodoTaskLog.LogNullResponse(this.logger, "get all by list");
@@ -305,7 +294,7 @@ public class TodoTaskApiService : ITodoTaskService
                 if (task != null)
                 {
                     TodoTaskLog.LogTaskRetrieved(this.logger, id, userId);
-                    return MapToModel(task);
+                    return MapToModel.MapToTodoTaskModel(task);
                 }
 
                 TodoTaskLog.LogNullResponse(this.logger, "get by id");
@@ -366,7 +355,7 @@ public class TodoTaskApiService : ITodoTaskService
                 if (result != null)
                 {
                     TodoTaskLog.LogTaskUpdated(this.logger, model.Id);
-                    return MapToModel(result);
+                    return MapToModel.MapToTodoTaskModel(result);
                 }
 
                 TodoTaskLog.LogNullResponse(this.logger, "update");
@@ -421,7 +410,7 @@ public class TodoTaskApiService : ITodoTaskService
                 if (result != null)
                 {
                     TodoTaskLog.LogTaskUpdated(this.logger, taskId);
-                    return MapToModel(result);
+                    return MapToModel.MapToTodoTaskModel(result);
                 }
 
                 TodoTaskLog.LogNullResponse(this.logger, "update");
@@ -457,50 +446,5 @@ public class TodoTaskApiService : ITodoTaskService
             TodoTaskLog.LogUnexpectedError(this.logger, ex);
             throw;
         }
-    }
-
-    private static TodoTaskModel MapToModel(TodoTaskDto dto)
-    {
-        return new TodoTaskModel(
-            id: dto.Id,
-            title: dto.Title,
-            description: dto.Description ?? string.Empty,
-            creationDate: dto.CreationDate,
-            dueDate: dto.DueDate,
-            statusId: 0,
-            ownerUserId: dto.AssigneeId,
-            listId: dto.ListId,
-            owner: new UserModel(dto.AssigneeId, dto.AssigneeFirstName, dto.AssigneeLastName),
-            status: new StatusModel(0, dto.Status));
-    }
-
-    private static Uri BuildUri(Uri baseUri, TaskFilter filter = TaskFilter.Active, string? sortBy = "DueDate", string? sortOrder = "asc", int? pageNumber = null, int? rowCount = null)
-    {
-        Uri uri;
-        if (pageNumber.HasValue && rowCount.HasValue)
-        {
-            uri = new Uri(baseUri + $"{pageNumber.Value}/{rowCount.Value}", UriKind.Absolute);
-        }
-        else
-        {
-            uri = baseUri;
-        }
-
-        var builder = new UriBuilder(uri);
-        var query = System.Web.HttpUtility.ParseQueryString(builder.Query);
-        query["filter"] = filter.ToString();
-        if (sortBy != null)
-        {
-            query["sortBy"] = sortBy;
-        }
-
-        if (sortOrder != null)
-        {
-            query["sortOrder"] = sortOrder;
-        }
-
-        builder.Query = query.ToString();
-
-        return builder.Uri;
     }
 }

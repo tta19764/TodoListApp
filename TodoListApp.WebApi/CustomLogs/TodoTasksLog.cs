@@ -3,7 +3,7 @@ namespace TodoListApp.WebApi.CustomLogs;
 /// <summary>
 /// Custom logging class for TodoTasks related operations.
 /// </summary>
-public static class TodoTasksLog
+internal static class TodoTasksLog
 {
     // Warning level logs
     private static readonly Action<ILogger, int, int?, string, Exception?> TaskNotFoundForUser =
@@ -78,6 +78,24 @@ public static class TodoTasksLog
             new EventId(1312, nameof(ReferencedEntityNotFound)),
             "Referenced entity not found during task creation: {Message}");
 
+    private static readonly Action<ILogger, int, int?, string, Exception?> TagNotFoundForUser =
+        LoggerMessage.Define<int, int?, string>(
+            LogLevel.Warning,
+            new EventId(1313, nameof(TagNotFoundForUser)),
+            "Tag with ID {TagId} not found for user {UserId}: {Message}");
+
+    private static readonly Action<ILogger, int, int, int?, string, Exception?> UnauthorizedTagOperation =
+        LoggerMessage.Define<int, int, int?, string>(
+            LogLevel.Warning,
+            new EventId(1314, nameof(UnauthorizedTagOperation)),
+            "Unauthorized tag operation for task {TaskId}, tag {TagId} by user {UserId}: {Message}");
+
+    private static readonly Action<ILogger, string, Exception?> InvalidTagDataProvided =
+        LoggerMessage.Define<string>(
+            LogLevel.Warning,
+            new EventId(1315, nameof(InvalidTagDataProvided)),
+            "Invalid tag data provided: {Message}");
+
     // Error level logs
     private static readonly Action<ILogger, int, int?, string, Exception?> UnableToDeleteTask =
         LoggerMessage.Define<int, int?, string>(
@@ -151,6 +169,30 @@ public static class TodoTasksLog
             new EventId(2312, nameof(UnexpectedErrorUpdatingTaskStatus)),
             "Unexpected error occurred while updating task status {TaskId}");
 
+    private static readonly Action<ILogger, int?, Exception?> UnexpectedErrorRetrievingTags =
+        LoggerMessage.Define<int?>(
+            LogLevel.Error,
+            new EventId(2313, nameof(UnexpectedErrorRetrievingTags)),
+            "Unexpected error occurred while retrieving tags for user {UserId}");
+
+    private static readonly Action<ILogger, int, int?, Exception?> UnexpectedErrorRetrievingTaggedTasks =
+        LoggerMessage.Define<int, int?>(
+            LogLevel.Error,
+            new EventId(2314, nameof(UnexpectedErrorRetrievingTaggedTasks)),
+            "Unexpected error occurred while retrieving tasks for tag {TagId} and user {UserId}");
+
+    private static readonly Action<ILogger, int, int, Exception?> UnexpectedErrorAddingTag =
+        LoggerMessage.Define<int, int>(
+            LogLevel.Error,
+            new EventId(2315, nameof(UnexpectedErrorAddingTag)),
+            "Unexpected error occurred while adding tag {TagId} to task {TaskId}");
+
+    private static readonly Action<ILogger, int, int, Exception?> UnexpectedErrorRemovingTag =
+        LoggerMessage.Define<int, int>(
+            LogLevel.Error,
+            new EventId(2316, nameof(UnexpectedErrorRemovingTag)),
+            "Unexpected error occurred while removing tag {TagId} from task {TaskId}");
+
     // Information level logs
     private static readonly Action<ILogger, int, int?, Exception?> TaskDeletedSuccessfully =
         LoggerMessage.Define<int, int?>(
@@ -175,6 +217,30 @@ public static class TodoTasksLog
             LogLevel.Information,
             new EventId(3304, nameof(TaskStatusUpdatedSuccessfully)),
             "Task {TaskId} status updated successfully by user {UserId}");
+
+    private static readonly Action<ILogger, int, int?, Exception?> TagsRetrievedSuccessfully =
+        LoggerMessage.Define<int, int?>(
+            LogLevel.Information,
+            new EventId(3305, nameof(TagsRetrievedSuccessfully)),
+            "Retrieved {Count} tags for user {UserId}");
+
+    private static readonly Action<ILogger, int, int, int?, Exception?> TaggedTasksRetrievedSuccessfully =
+        LoggerMessage.Define<int, int, int?>(
+            LogLevel.Information,
+            new EventId(3306, nameof(TaggedTasksRetrievedSuccessfully)),
+            "Retrieved {Count} tasks for tag {TagId} and user {UserId}");
+
+    private static readonly Action<ILogger, int, int, int?, Exception?> TagAddedToTask =
+        LoggerMessage.Define<int, int, int?>(
+            LogLevel.Information,
+            new EventId(3307, nameof(TagAddedToTask)),
+            "Tag {TagId} added to task {TaskId} by user {UserId}");
+
+    private static readonly Action<ILogger, int, int, int?, Exception?> TagRemovedFromTask =
+        LoggerMessage.Define<int, int, int?>(
+            LogLevel.Information,
+            new EventId(3308, nameof(TagRemovedFromTask)),
+            "Tag {TagId} removed from task {TaskId} by user {UserId}");
 
     // Public methods for Warning level logs
     public static void LogTaskNotFoundForUser(ILogger logger, int taskId, int? userId, string message, Exception? exception = null) =>
@@ -213,6 +279,15 @@ public static class TodoTasksLog
     public static void LogReferencedEntityNotFound(ILogger logger, string message, Exception? exception = null) =>
         ReferencedEntityNotFound(logger, message, exception);
 
+    public static void LogTagNotFoundForUser(ILogger logger, int tagId, int? userId, string message, Exception? exception = null) =>
+        TagNotFoundForUser(logger, tagId, userId, message, exception);
+
+    public static void LogUnauthorizedTagOperation(ILogger logger, int taskId, int tagId, int? userId, string message, Exception? exception = null) =>
+        UnauthorizedTagOperation(logger, taskId, tagId, userId, message, exception);
+
+    public static void LogInvalidTagDataProvided(ILogger logger, string message, Exception? exception = null) =>
+        InvalidTagDataProvided(logger, message, exception);
+
     // Public methods for Error level logs
     public static void LogUnableToDeleteTask(ILogger logger, int taskId, int? userId, string message, Exception? exception = null) =>
         UnableToDeleteTask(logger, taskId, userId, message, exception);
@@ -250,6 +325,18 @@ public static class TodoTasksLog
     public static void LogUnexpectedErrorUpdatingTaskStatus(ILogger logger, int taskId, Exception exception) =>
         UnexpectedErrorUpdatingTaskStatus(logger, taskId, exception);
 
+    public static void LogUnexpectedErrorRetrievingTags(ILogger logger, int? userId, Exception exception) =>
+        UnexpectedErrorRetrievingTags(logger, userId, exception);
+
+    public static void LogUnexpectedErrorRetrievingTaggedTasks(ILogger logger, int tagId, int? userId, Exception exception) =>
+        UnexpectedErrorRetrievingTaggedTasks(logger, tagId, userId, exception);
+
+    public static void LogUnexpectedErrorAddingTag(ILogger logger, int taskId, int tagId, Exception exception) =>
+        UnexpectedErrorAddingTag(logger, taskId, tagId, exception);
+
+    public static void LogUnexpectedErrorRemovingTag(ILogger logger, int taskId, int tagId, Exception exception) =>
+        UnexpectedErrorRemovingTag(logger, taskId, tagId, exception);
+
     // Public methods for Information level logs
     public static void LogTaskDeletedSuccessfully(ILogger logger, int taskId, int? userId) =>
         TaskDeletedSuccessfully(logger, taskId, userId, null);
@@ -262,4 +349,16 @@ public static class TodoTasksLog
 
     public static void LogTaskStatusUpdatedSuccessfully(ILogger logger, int taskId, int? userId) =>
         TaskStatusUpdatedSuccessfully(logger, taskId, userId, null);
+
+    public static void LogTagsRetrievedSuccessfully(ILogger logger, int count, int? userId) =>
+        TagsRetrievedSuccessfully(logger, count, userId, null);
+
+    public static void LogTaggedTasksRetrievedSuccessfully(ILogger logger, int count, int tagId, int? userId) =>
+        TaggedTasksRetrievedSuccessfully(logger, count, tagId, userId, null);
+
+    public static void LogTagAddedToTask(ILogger logger, int taskId, int tagId, int? userId) =>
+        TagAddedToTask(logger, tagId, taskId, userId, null);
+
+    public static void LogTagRemovedFromTask(ILogger logger, int taskId, int tagId, int? userId) =>
+        TagRemovedFromTask(logger, tagId, taskId, userId, null);
 }

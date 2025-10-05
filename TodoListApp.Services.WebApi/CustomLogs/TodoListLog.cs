@@ -52,6 +52,18 @@ public static class TodoListLog
             new EventId(1208, nameof(TodoListsPageRetrievedByAuthor)),
             "Retrieved todo lists {Count} (page {PageNumber}) for user {UserId}");
 
+    private static readonly Action<ILogger, int, int, Exception?> TodoListsRetrievedShared =
+        LoggerMessage.Define<int, int>(
+            LogLevel.Information,
+            new EventId(1209, nameof(TodoListsRetrievedShared)),
+            "Retrieved todo lists {Count} shared with {UserId}");
+
+    private static readonly Action<ILogger, int, int, int, Exception?> TodoListsPageRetrievedShared =
+        LoggerMessage.Define<int, int, int>(
+            LogLevel.Information,
+            new EventId(1210, nameof(TodoListsPageRetrievedShared)),
+            "Retrieved todo lists {Count} (page {PageNumber}) shared with {UserId}");
+
     // Warning level logs
     private static readonly Action<ILogger, string, Exception?> NullResponse =
         LoggerMessage.Define<string>(
@@ -116,6 +128,12 @@ public static class TodoListLog
 
     public static void LogTodoListsPageRetrievedByAuthor(ILogger logger, int count, int pageNumber, int userId) =>
         TodoListsPageRetrievedByAuthor(logger, count, pageNumber, userId, null);
+
+    public static void LogTodoListsRetrievedShared(ILogger logger, int count, int userId) =>
+        TodoListsRetrievedShared(logger, count, userId, null);
+
+    public static void LogTodoListsPageRetrievedShared(ILogger logger, int count, int pageNumber, int userId) =>
+        TodoListsPageRetrievedShared(logger, count, pageNumber, userId, null);
 
     // Warning
     public static void LogNullResponse(ILogger logger, string operation) =>

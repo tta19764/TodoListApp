@@ -1,3 +1,5 @@
+using TodoListApp.Services.Enums;
+
 namespace TodoListApp.WebApp.Models.List;
 
 /// <summary>
@@ -23,7 +25,7 @@ public class TodoListViewModel
     /// <summary>
     /// Gets or sets the name of the list owner.
     /// </summary>
-    public string UserRole { get; set; } = null!;
+    public ListRole UserRole { get; set; } = ListRole.None;
 
     /// <summary>
     /// Gets or sets the number of not completed tasks.

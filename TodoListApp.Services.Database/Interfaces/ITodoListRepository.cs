@@ -38,4 +38,20 @@ public interface ITodoListRepository : IRepository<TodoList>
     /// <param name="rowCount">The number of entities on the page.</param>
     /// <returns>A read-only list of TodoLists.</returns>
     Task<IReadOnlyList<TodoList>> GetAllByAuthorAsync(int authorId, int pageNumber, int rowCount);
+
+    /// <summary>
+    /// Retrieves all TodoLists shared with the user.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user.</param>
+    /// <returns>A read-only list of TodoLists.</returns>
+    Task<IReadOnlyList<TodoList>> GetAllSharedAsync(int userId);
+
+    /// <summary>
+    /// Retrieves a paginated list of TodoLists shared with the user.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user.</param>
+    /// <param name="pageNumber">The page number.</param>
+    /// <param name="rowCount">The number of entities on the page.</param>
+    /// <returns>A read-only list of TodoLists.</returns>
+    Task<IReadOnlyList<TodoList>> GetAllSharedAsync(int userId, int pageNumber, int rowCount);
 }

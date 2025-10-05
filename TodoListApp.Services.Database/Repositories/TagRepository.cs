@@ -99,6 +99,7 @@ public class TagRepository : AbstractRepository, ITagRepository
     public async Task<IReadOnlyList<Tag>> GetAllAsync()
     {
         return await this.dbSet
+            .Include(t => t.TaskTags)
             .ToListAsync();
     }
 
@@ -123,6 +124,7 @@ public class TagRepository : AbstractRepository, ITagRepository
         }
 
         return await this.dbSet
+            .Include(t => t.TaskTags)
             .Skip((pageNumber - 1) * rowCount)
             .Take(rowCount)
             .ToListAsync();

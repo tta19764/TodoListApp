@@ -83,33 +83,47 @@ public class TodoListService : ITodoListService
     }
 
     /// <summary>
-    /// Gets all to-do lists created by a specific author.
-    /// </summary>
-    /// <param name="authorId">The unique identifier of the user.</param>
-    /// <returns>A read-only list of to-do list models.</returns>
-    public async Task<IReadOnlyList<TodoListModel>> GetAllByAuthorAsync(int authorId)
-    {
-        var todoLists = await this.repository.GetAllByAuthorAsync(authorId);
-        return todoLists
-            .Select(l =>
-            EntityToModel(l, authorId))
-            .ToList();
-    }
-
-    /// <summary>
     /// Gets a paginated list of to-do lists created by a specific author.
     /// </summary>
     /// <param name="authorId">The unique identifier of the user.</param>
     /// <param name="pageNumber">The page number.</param>
     /// <param name="rowCount">The number of models on the list.</param>
     /// <returns>A read-only list of to-do list models.</returns>
-    public async Task<IReadOnlyList<TodoListModel>> GetAllByAuthorAsync(int authorId, int pageNumber, int rowCount)
+    public async Task<IReadOnlyList<TodoListModel>> GetAllByAuthorAsync(int authorId, int? pageNumber = null, int? rowCount = null)
     {
-        var todoLists = await this.repository.GetAllByAuthorAsync(authorId, pageNumber, rowCount);
-        return todoLists
-            .Select(l =>
-            EntityToModel(l, authorId))
-            .ToList();
+        if (pageNumber != null && rowCount != null)
+        {
+            int page = pageNumber > 0 ? (int)pageNumber : 1;
+            int row = rowCount > 0 ? (int)rowCount : 1;
+
+            return (await this.repository.GetAllByAuthorAsync(authorId, page, row)).Select(l => EntityToModel(l, authorId)).ToList();
+        }
+        else
+        {
+            return (await this.repository.GetAllByAuthorAsync(authorId)).Select(l => EntityToModel(l, authorId)).ToList();
+        }
+    }
+
+    /// <summary>
+    /// Gets a paginated list of to-do lists created by a specific author.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user.</param>
+    /// <param name="pageNumber">The page number.</param>
+    /// <param name="rowCount">The number of models on the list.</param>
+    /// <returns>A read-only list of to-do list models.</returns>
+    public async Task<IReadOnlyList<TodoListModel>> GetAllSharedAsync(int userId, int? pageNumber = null, int? rowCount = null)
+    {
+        if (pageNumber != null && rowCount != null)
+        {
+            int page = pageNumber > 0 ? (int)pageNumber : 1;
+            int row = rowCount > 0 ? (int)rowCount : 1;
+
+            return (await this.repository.GetAllSharedAsync(userId, page, row)).Select(l => EntityToModel(l, userId)).ToList();
+        }
+        else
+        {
+            return (await this.repository.GetAllSharedAsync(userId)).Select(l => EntityToModel(l, userId)).ToList();
+        }
     }
 
     /// <summary>
@@ -200,6 +214,36 @@ public class TodoListService : ITodoListService
         {
             throw new UnableToUpdateException(nameof(existing), model.Id, ex);
         }
+    }
+
+    /// <summary>
+    /// Gets the total count of to-do lists a user has access to (either as owner or collaborator).
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user.</param>
+    /// <returns>The total count of to-do lists.</returns>
+    public async Task<int> AllByUserCount(int userId)
+    {
+        return (await this.repository.GetAllByUserAsync(userId)).Count;
+    }
+
+    /// <summary>
+    /// Gets the total count of to-do lists created by a specific author.
+    /// </summary>
+    /// <param name="authorId">The unique identifier of the author.</param>
+    /// <returns>The total count of to-do lists.</returns>
+    public async Task<int> AllByAuthorCount(int authorId)
+    {
+        return (await this.repository.GetAllByAuthorAsync(authorId)).Count;
+    }
+
+    /// <summary>
+    /// Gets the total count of to-do lists shared with a specific user.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user.</param>
+    /// <returns>The total count of to-do lists.</returns>
+    public async Task<int> AllSharedCount(int userId)
+    {
+        return (await this.repository.GetAllByUserAsync(userId)).Count(l => l.TodoListUserRoles.Any(lur => lur.UserId == userId));
     }
 
     private static TodoListModel EntityToModel(TodoList entity, int userId)

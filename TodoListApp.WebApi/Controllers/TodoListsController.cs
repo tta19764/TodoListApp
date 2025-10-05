@@ -37,6 +37,93 @@ public class TodoListsController : ControllerBase
     }
 
     /// <summary>
+    /// Retrieves the count of to-do lists accessible to the current user.
+    /// </summary>
+    /// <returns>The count of to-do lists.</returns>
+    [Authorize]
+    [HttpGet("Count")]
+    public async Task<ActionResult<int>> GetCount()
+    {
+        try
+        {
+            var userId = this.GetCurrentUserId();
+            if (userId == null)
+            {
+                TodoListsLog.LogInvalidUserIdentifier(this.logger, userId);
+                return this.Unauthorized("Invalid user identifier.");
+            }
+
+            var count = await this.service.AllByUserCount(userId.Value);
+
+            TodoListsLog.LogUserListsCountRetrievedSuccessfully(this.logger, count, userId);
+            return this.Ok(count);
+        }
+        catch (Exception ex)
+        {
+            TodoListsLog.LogUnexpectedErrorRetrievingLists(this.logger, this.GetCurrentUserId(), ex);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Retrieves the count of to-do lists created by the current user.
+    /// </summary>
+    /// <returns>The count of to-do lists.</returns>
+    [Authorize]
+    [HttpGet("UserLists/Count")]
+    public async Task<ActionResult<int>> GetAuthorCount()
+    {
+        try
+        {
+            var userId = this.GetCurrentUserId();
+            if (userId == null)
+            {
+                TodoListsLog.LogInvalidUserIdentifier(this.logger, userId);
+                return this.Unauthorized("Invalid user identifier.");
+            }
+
+            var count = await this.service.AllByAuthorCount(userId.Value);
+
+            TodoListsLog.LogAuthorListsCountRetrievedSuccessfully(this.logger, count, userId);
+            return this.Ok(count);
+        }
+        catch (Exception ex)
+        {
+            TodoListsLog.LogUnexpectedErrorRetrievingLists(this.logger, this.GetCurrentUserId(), ex);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Retrieves the count of to-do lists shared with the current user.
+    /// </summary>
+    /// <returns>The count of to-do lists.</returns>
+    [Authorize]
+    [HttpGet("Shared/Count")]
+    public async Task<ActionResult<int>> GetSharedCount()
+    {
+        try
+        {
+            var userId = this.GetCurrentUserId();
+            if (userId == null)
+            {
+                TodoListsLog.LogInvalidUserIdentifier(this.logger, userId);
+                return this.Unauthorized("Invalid user identifier.");
+            }
+
+            var count = await this.service.AllSharedCount(userId.Value);
+
+            TodoListsLog.LogSharedListsCountRetrievedSuccessfully(this.logger, count, userId);
+            return this.Ok(count);
+        }
+        catch (Exception ex)
+        {
+            TodoListsLog.LogUnexpectedErrorRetrievingLists(this.logger, this.GetCurrentUserId(), ex);
+            throw;
+        }
+    }
+
+    /// <summary>
     /// Retrieves a to-do list by its ID.
     /// </summary>
     /// <param name="listId">The unique identifier of the list.</param>
@@ -215,6 +302,83 @@ public class TodoListsController : ControllerBase
             }
 
             var todoLists = await this.service.GetAllByAuthorAsync(userId.Value, pageNumber, rowCount);
+            var results = todoLists.Select(MapToDto).ToList();
+
+            TodoListsLog.LogPaginatedListsRetrievedSuccessfully(this.logger, results.Count, pageNumber, rowCount, userId);
+            return this.Ok(results);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            TodoListsLog.LogUnauthorizedListsAccess(this.logger, this.GetCurrentUserId(), ex.Message);
+            return this.Forbid("You don't have permission to access these lists.");
+        }
+        catch (ArgumentOutOfRangeException ex) when (ex.ParamName == "pageNumber" || ex.ParamName == "rowCount")
+        {
+            TodoListsLog.LogInvalidPaginationParameters(this.logger, pageNumber, rowCount);
+            return this.BadRequest("Invalid pagination parameters. Page number and row count must be positive integers.");
+        }
+        catch (Exception ex)
+        {
+            TodoListsLog.LogUnexpectedErrorRetrievingPaginatedUserLists(this.logger, this.GetCurrentUserId(), ex);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Retrieves all to-do lists shared with the user.
+    /// </summary>
+    /// <returns>A list of to-do lists if found; otherwise, an appropriate error response.</returns>
+    [Authorize]
+    [HttpGet("Shared")]
+    public async Task<ActionResult<List<TodoListDto>>> GetSharedLists()
+    {
+        try
+        {
+            var userId = this.GetCurrentUserId();
+            if (userId == null)
+            {
+                TodoListsLog.LogInvalidUserIdentifier(this.logger, userId);
+                return this.Unauthorized("Invalid user identifier.");
+            }
+
+            var todoLists = await this.service.GetAllSharedAsync(userId.Value);
+            var results = todoLists.Select(MapToDto).ToList();
+
+            TodoListsLog.LogListsRetrievedSuccessfully(this.logger, results.Count, userId);
+            return this.Ok(results);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            TodoListsLog.LogUnauthorizedListsAccess(this.logger, this.GetCurrentUserId(), ex.Message);
+            return this.Forbid("You don't have permission to access these lists.");
+        }
+        catch (Exception ex)
+        {
+            TodoListsLog.LogUnexpectedErrorRetrievingUserLists(this.logger, this.GetCurrentUserId(), ex);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Retrieves a paginated list of to-do lists shared with the user.
+    /// </summary>
+    /// <param name="pageNumber">The page number.</param>
+    /// <param name="rowCount">The number of lists on the page.</param>
+    /// <returns>A paginated list of to-do lists if found; otherwise, an appropriate error response.</returns>
+    [Authorize]
+    [HttpGet("Shared/{pageNumber:min(1)}/{rowCount:min(1)}")]
+    public async Task<ActionResult<List<TodoListDto>>> GetSharedListsPaginated(int pageNumber, int rowCount)
+    {
+        try
+        {
+            var userId = this.GetCurrentUserId();
+            if (userId == null)
+            {
+                TodoListsLog.LogInvalidUserIdentifier(this.logger, userId);
+                return this.Unauthorized("Invalid user identifier.");
+            }
+
+            var todoLists = await this.service.GetAllSharedAsync(userId.Value, pageNumber, rowCount);
             var results = todoLists.Select(MapToDto).ToList();
 
             TodoListsLog.LogPaginatedListsRetrievedSuccessfully(this.logger, results.Count, pageNumber, rowCount, userId);

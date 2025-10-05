@@ -19,27 +19,16 @@ public class Tag : BaseEntity
     /// <param name="id">The unique identifier of the tag.</param>
     /// <param name="lable">The tag lable.</param>
     /// <param name="userId">The unique identifier of the tag owner.</param>
-    public Tag(int id, string lable, int userId)
+    public Tag(int id, string lable)
         : base(id)
     {
         this.Label = lable;
-        this.UserId = userId;
     }
 
     /// <summary>
     /// Gets or sets the tag lable.
     /// </summary>
     public string Label { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Gets or sets the unique identifier of the tag owner.
-    /// </summary>
-    public int UserId { get; set; }
-
-    /// <summary>
-    /// Gets or sets the tag owner.
-    /// </summary>
-    public User TagAuthor { get; set; } = null!;
 
     /// <summary>
     /// Gets the list of task tags associated with the tag.

@@ -64,6 +64,18 @@ public static class TodoTaskLog
             new EventId(1310, nameof(TodoTasksPageRetrievedByUser)),
             "Retrieved todo tasks {Count} (page {PageNumber}) for user {UserId}");
 
+    private static readonly Action<ILogger, int, int, Exception?> TodoTasksRetrievedBySearch =
+        LoggerMessage.Define<int, int>(
+            LogLevel.Information,
+            new EventId(1311, nameof(TodoTasksRetrievedBySearch)),
+            "Retrieved search todo tasks {Count} for user {UserId}");
+
+    private static readonly Action<ILogger, int, int, int, Exception?> TodoTasksPageRetrievedBySearch =
+        LoggerMessage.Define<int, int, int>(
+            LogLevel.Information,
+            new EventId(1313, nameof(TodoTasksPageRetrievedBySearch)),
+            "Retrieved search todo tasks {Count} (page {PageNumber}) for user {UserId}");
+
     // Warnings
     private static readonly Action<ILogger, string, Exception?> NullResponse =
         LoggerMessage.Define<string>(
@@ -129,6 +141,12 @@ public static class TodoTaskLog
     public static void LogTodoTasksPageRetrievedByUser(ILogger logger, int count, int pageNumber, int userId) =>
         TodoTasksPageRetrievedByUser(logger, count, pageNumber, userId, null);
 
+    public static void LogTodoTasksRetrievedBySearch(ILogger logger, int count, int userId) =>
+        TodoTasksRetrievedBySearch(logger, count, userId, null);
+
+    public static void LogTodoTasksPageRetrievedBySearch(ILogger logger, int count, int pageNumber, int userId) =>
+        TodoTasksPageRetrievedBySearch(logger, count, pageNumber, userId, null);
+
     public static void LogNullResponse(ILogger logger, string operation) => NullResponse(logger, operation, null);
 
     public static void LogTaskNotFound(ILogger logger, int taskId) => TaskNotFound(logger, taskId, null);
@@ -141,5 +159,4 @@ public static class TodoTaskLog
     public static void LogJsonParsingError(ILogger logger, Exception ex) => JsonParsingError(logger, ex);
 
     public static void LogUnexpectedError(ILogger logger, Exception ex) => UnexpectedError(logger, ex);
-
 }
