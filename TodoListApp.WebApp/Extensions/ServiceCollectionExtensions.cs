@@ -93,6 +93,62 @@ internal static class ServiceCollectionExtensions
                 new MediaTypeWithQualityHeaderValue("application/json"));
         }).AddHttpMessageHandler<JwtTokenHandler>();
 
+        _ = services.AddHttpClient<ISearchTasksService, SearchTasksApiService>((provider, client) =>
+        {
+            var apiUrl = configuration["ApiSettings:ApiBaseUrl"];
+            var controllerUrl = configuration["ApiSettings:ApiSearchTasksController"];
+            if (!string.IsNullOrWhiteSpace(apiUrl))
+            {
+                client.BaseAddress = new Uri(apiUrl + controllerUrl);
+            }
+
+            client.Timeout = TimeSpan.FromSeconds(30);
+            client.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+        }).AddHttpMessageHandler<JwtTokenHandler>();
+
+        _ = services.AddHttpClient<IAssignedTasksService, AssignedTasksApiService>((provider, client) =>
+        {
+            var apiUrl = configuration["ApiSettings:ApiBaseUrl"];
+            var controllerUrl = configuration["ApiSettings:ApiAssignedTasksController"];
+            if (!string.IsNullOrWhiteSpace(apiUrl))
+            {
+                client.BaseAddress = new Uri(apiUrl + controllerUrl);
+            }
+
+            client.Timeout = TimeSpan.FromSeconds(30);
+            client.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+        }).AddHttpMessageHandler<JwtTokenHandler>();
+
+        _ = services.AddHttpClient<ITagService, TagApiService>((provider, client) =>
+        {
+            var apiUrl = configuration["ApiSettings:ApiBaseUrl"];
+            var controllerUrl = configuration["ApiSettings:ApiTagsController"];
+            if (!string.IsNullOrWhiteSpace(apiUrl))
+            {
+                client.BaseAddress = new Uri(apiUrl + controllerUrl);
+            }
+
+            client.Timeout = TimeSpan.FromSeconds(30);
+            client.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+        }).AddHttpMessageHandler<JwtTokenHandler>();
+
+        _ = services.AddHttpClient<ITaskTagService, TaskTagApiService>((provider, client) =>
+        {
+            var apiUrl = configuration["ApiSettings:ApiBaseUrl"];
+            var controllerUrl = configuration["ApiSettings:ApiTaskTagsController"];
+            if (!string.IsNullOrWhiteSpace(apiUrl))
+            {
+                client.BaseAddress = new Uri(apiUrl + controllerUrl);
+            }
+
+            client.Timeout = TimeSpan.FromSeconds(30);
+            client.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+        }).AddHttpMessageHandler<JwtTokenHandler>();
+
         _ = services.AddHttpContextAccessor();
 
         return services;

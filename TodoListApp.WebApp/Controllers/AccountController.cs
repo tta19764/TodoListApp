@@ -461,6 +461,36 @@ public class AccountController : Controller
         }
     }
 
+    [HttpGet]
+    [Route("ForgotPassword")]
+    [AllowAnonymous]
+    public IActionResult ForgotPassword()
+    {
+        AccountLog.LogForgotPasswordPageAccessed(this.logger);
+        return this.View(new ForgotPasswordViewModel());
+    }
+
+    [HttpPost]
+    [AllowAnonymous]
+    [Route("ForgotPassword")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
+    {
+        if (model == null)
+        {
+            AccountLog.LogNullForgotPasswordViewModel(this.logger);
+            return this.View(new ForgotPasswordViewModel());
+        }
+
+        if (!this.ModelState.IsValid)
+        {
+            AccountLog.LogInvalidModelState(this.logger);
+            return this.View(model);
+        }
+
+        throw new NotImplementedException("Forgot password functionality is not implemented yet.");
+    }
+
     private async Task PerformLocalLogout()
     {
         try

@@ -1,7 +1,7 @@
-using System.Collections.ObjectModel;
 using Microsoft.EntityFrameworkCore;
 using TodoListApp.Services.Database.Data;
 using TodoListApp.Services.Database.Entities;
+using TodoListApp.Services.Database.Helpers;
 using TodoListApp.Services.Database.Repositories;
 using TodoListApp.Services.Database.ServiceExeptions;
 using TodoListApp.Services.Enums;
@@ -47,7 +47,7 @@ public class TodoTaskService : ITodoTaskService
         {
             model.CreationDate = null;
             TodoTask newTask = await this.repository.AddAsync(ModelToEntity(model));
-            return EntityToModel(newTask, model.OwnerUserId);
+            return EntityToModelConverter.ToTodoTaskModel(newTask);
         }
         catch (DbUpdateException ex)
         {
@@ -101,7 +101,7 @@ public class TodoTaskService : ITodoTaskService
         var lists = await this.repository.GetAllUserTasksAsync(userId);
         return lists
             .Select(l =>
-            EntityToModel(l, userId))
+            EntityToModelConverter.ToTodoTaskModel(l))
             .ToList();
     }
 
@@ -117,7 +117,7 @@ public class TodoTaskService : ITodoTaskService
         var lists = await this.repository.GetAllUserTasksAsync(userId, pageNumber, rowCount);
         return lists
             .Select(l =>
-            EntityToModel(l, userId))
+            EntityToModelConverter.ToTodoTaskModel(l))
             .ToList();
     }
 
@@ -143,7 +143,7 @@ public class TodoTaskService : ITodoTaskService
             throw new UnauthorizedAccessException("You do not have permission to see this task.");
         }
 
-        return EntityToModel(entity, userId);
+        return EntityToModelConverter.ToTodoTaskModel(entity);
     }
 
     /// <summary>
@@ -176,7 +176,7 @@ public class TodoTaskService : ITodoTaskService
             TodoTask? updated = await this.repository.UpdateAsync(ModelToEntity(model));
             return updated is null ?
                 throw new UnableToUpdateException(nameof(existing), model.Id) :
-                EntityToModel(updated, userId);
+                EntityToModelConverter.ToTodoTaskModel(updated);
         }
         catch (DbUpdateException ex)
         {
@@ -224,51 +224,32 @@ public class TodoTaskService : ITodoTaskService
             _ => tasks
         };
 
-        var sortedTasks = ApplySorting(filteredTasks.AsQueryable(), sortBy!, sortOrder!);
-        return sortedTasks.Select(t => EntityToModel(t, userId)).ToList();
+        var sortedTasks = Sorters.ApplyTasksSorting(filteredTasks.AsQueryable(), sortBy!, sortOrder!);
+        return sortedTasks.Select(t => EntityToModelConverter.ToTodoTaskModel(t)).ToList();
     }
 
     /// <summary>
-    /// Gets all to-do tasks created by the specified user with filtering, sorting, and pagination.
+    /// Gets the count of to-do tasks by the list ID with filtering.
     /// </summary>
+    /// <param name="id">The unique identifier of the list.</param>
     /// <param name="userId">The unique identifier of the user.</param>
-    /// <param name="filter">The filtering by task status.</param>
-    /// <param name="sortBy">The sorting property.</param>
-    /// <param name="sortOrder">The sortyng direction.</param>
-    /// <param name="pageNumber">The page number.</param>
-    /// <param name="rowCount">The number of tasks on the page.</param>
-    /// <returns>A read-only list of to-do task models.</returns>
-    public async Task<IReadOnlyList<TodoTaskModel>> GetAllByAuthorAsync(int userId, TaskFilter filter = TaskFilter.Active, string? sortBy = "DueDate", string? sortOrder = "asc", int? pageNumber = null, int? rowCount = null)
+    /// <param name="filter">The task status filter.</param>
+    /// <returns>The count of to-do tasks.</returns>
+    public async Task<int> GetAllByListIdCountAsync(int id, int userId, TaskFilter filter = TaskFilter.Active)
     {
-        sortOrder = string.Equals(sortOrder, "desc", StringComparison.OrdinalIgnoreCase) ? sortOrder : "asc";
-        sortBy = string.Equals(sortBy, "Title", StringComparison.OrdinalIgnoreCase) ? sortBy : "DueDate";
+        var tasks = await this.repository.GetAllByListIdAsync(id);
 
-        IReadOnlyList<TodoTask>? tasks;
-
-        if (pageNumber != null && rowCount != null)
+        int count = filter switch
         {
-            int page = pageNumber > 0 ? (int)pageNumber : 1;
-            int row = rowCount > 0 ? (int)rowCount : 1;
-
-            tasks = await this.repository.GetAllUserTasksAsync(userId, page, row);
-        }
-        else
-        {
-            tasks = await this.repository.GetAllUserTasksAsync(userId);
-        }
-
-        var filteredTasks = filter switch
-        {
-            TaskFilter.InProgress => tasks.Where(t => t.StatusId == 2),
-            TaskFilter.NotStarted => tasks.Where(t => t.StatusId == 1),
-            TaskFilter.Completed => tasks.Where(t => t.StatusId == 3),
-            TaskFilter.Active => tasks.Where(t => t.StatusId != 3),
-            TaskFilter.All => tasks,
-            _ => tasks
+            TaskFilter.InProgress => tasks.Count(t => t.StatusId == 2),
+            TaskFilter.NotStarted => tasks.Count(t => t.StatusId == 1),
+            TaskFilter.Completed => tasks.Count(t => t.StatusId == 3),
+            TaskFilter.Active => tasks.Count(t => t.StatusId != 3),
+            TaskFilter.All => tasks.Count,
+            _ => tasks.Count
         };
 
-        var sortedTasks = ApplySorting(filteredTasks.AsQueryable(), sortBy!, sortOrder!);
-        return sortedTasks.Select(t => EntityToModel(t, userId)).ToList();
+        return count;
     }
 
     /// <summary>
@@ -297,36 +278,16 @@ public class TodoTaskService : ITodoTaskService
         try
         {
             existing.StatusId = statusId;
-            var model = EntityToModel(existing, userId);
+            var model = EntityToModelConverter.ToTodoTaskModel(existing);
             TodoTask? updated = await this.repository.UpdateAsync(ModelToEntity(model));
             return updated is null ?
                 throw new UnableToUpdateException(nameof(existing), model.Id) :
-                EntityToModel(updated, userId);
+                EntityToModelConverter.ToTodoTaskModel(updated);
         }
         catch (DbUpdateException ex)
         {
             throw new UnableToUpdateException(nameof(existing), taskId, ex);
         }
-    }
-
-    private static IQueryable<TodoTask> ApplySorting(IQueryable<TodoTask> query, string sortBy, string sortOrder)
-    {
-        var isAsc = string.Equals(sortOrder, "asc", StringComparison.OrdinalIgnoreCase);
-
-        return sortBy.ToUpperInvariant() switch
-        {
-            "TITLE" => isAsc
-                ? query.OrderBy(t => t.Title)
-                : query.OrderByDescending(t => t.Title),
-
-            "DUEDATE" => isAsc
-                ? query.OrderBy(t => t.DueDate)
-                : query.OrderByDescending(t => t.DueDate),
-
-            _ => isAsc
-                ? query.OrderBy(t => t.Id)
-                : query.OrderByDescending(t => t.Id)
-        };
     }
 
     private static TodoTask ModelToEntity(TodoTaskModel model)
@@ -344,45 +305,5 @@ public class TodoTaskService : ITodoTaskService
         };
 
         return entity;
-    }
-
-    private static TodoTaskModel EntityToModel(TodoTask entity, int userId)
-    {
-        var tasktags = new List<TagModel>();
-        if (entity.TaskTags != null)
-        {
-            foreach (var taskTag in entity.TaskTags)
-            {
-                if (taskTag.Tag.UserId == userId)
-                {
-                    tasktags.Add(new TagModel(taskTag.TagId, taskTag.Tag.Label, taskTag.Tag.UserId, taskTag.TaskId));
-                }
-            }
-        }
-
-        var taskCommetns = new List<CommentModel>();
-        if (entity.Comments != null)
-        {
-            foreach (var taskComment in entity.Comments)
-            {
-                taskCommetns.Add(new CommentModel(taskComment.Id, taskComment.Text, taskComment.TaskId, taskComment.UserId));
-            }
-        }
-
-        var model = new TodoTaskModel(
-            entity.Id,
-            entity.Title,
-            entity.Description,
-            entity.CreationDate,
-            entity.DueDate,
-            entity.StatusId,
-            entity.OwnerUserId,
-            entity.ListId,
-            new UserModel(entity.OwnerUserId, entity.OwnerUser.FirstName, entity.OwnerUser.LastName),
-            new StatusModel(entity.StatusId, entity.Status.StatusTitle),
-            new ReadOnlyCollection<TagModel>(tasktags),
-            new ReadOnlyCollection<CommentModel>(taskCommetns));
-
-        return model;
     }
 }

@@ -1,10 +1,27 @@
 namespace TodoListApp.WebApi.Models.Dtos.Create;
+
+/// <summary>
+/// Data transfer object for creating a to-do task.
+/// </summary>
 public class CreateTodoTaskDto
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CreateTodoTaskDto"/> class.
+    /// </summary>
     public CreateTodoTaskDto()
     {
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CreateTodoTaskDto"/> class.
+    /// </summary>
+    /// <param name="title">The task title.</param>
+    /// <param name="description">The task description.</param>
+    /// <param name="creationDate">The task creation date.</param>
+    /// <param name="dueDate">The task due date.</param>
+    /// <param name="statusId">The task status id.</param>
+    /// <param name="asssignee">The user that the task is assigned to.</param>
+    /// <param name="listId">The task list id.</param>
     public CreateTodoTaskDto(string title, string? description, DateTime? creationDate, DateTime dueDate, int statusId, int asssignee, int listId)
     {
         this.Title = title;

@@ -29,7 +29,7 @@ public class TodoListsController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Index(int? listId, string? listFilter, string? taskFilter)
+    public async Task<IActionResult> Index(int? listId, string? listFilter, string? taskFilter, int? listPageNumber, int? listRowCount, int? taskPageNumber, int? taskRowCount)
     {
         _ = this.ModelState.IsValid;
 
@@ -41,27 +41,46 @@ public class TodoListsController : Controller
                 return this.RedirectToAction("Login", "Account");
             }
 
+            // count depending on filter
+            int totalCount;
+            if (listFilter == "owned")
+            {
+                totalCount = await this.todoListService.AllByAuthorCount(userId.Value);
+            }
+            else if (listFilter == "shared")
+            {
+                totalCount = await this.todoListService.AllSharedCount(userId.Value);
+            }
+            else
+            {
+                totalCount = await this.todoListService.AllByUserCount(userId.Value);
+            }
+
             var viewModel = new TodoListsPageViewModel
             {
                 SelectedListId = listId,
                 ListFilter = listFilter ?? "all",
                 TaskFilter = taskFilter ?? "active",
+                ListPageNumber = listPageNumber ?? 1,
+                ListRowCount = listRowCount ?? 5,
             };
 
-            IReadOnlyList<TodoListModel> lists;
+            viewModel.ListTotalPages = (int)Math.Ceiling(totalCount / (double)viewModel.ListRowCount);
 
+            // load lists with paging
+            IReadOnlyList<TodoListModel> lists;
             if (listFilter == "owned")
             {
-                lists = await this.todoListService.GetAllByAuthorAsync(userId.Value);
+                lists = await this.todoListService.GetAllByAuthorAsync(userId.Value, viewModel.ListPageNumber, viewModel.ListRowCount);
             }
             else if (listFilter == "shared")
             {
-                var allLists = await this.todoListService.GetAllAsync(userId.Value);
-                lists = allLists.Where(l => l.OwnerId != userId.Value).ToList();
+                // you may need a GetAllSharedAsync(userId, page, rowCount)
+                lists = await this.todoListService.GetAllSharedAsync(userId.Value, viewModel.ListPageNumber, viewModel.ListRowCount);
             }
             else
             {
-                lists = await this.todoListService.GetAllAsync(userId.Value);
+                lists = await this.todoListService.GetAllAsync(userId.Value, viewModel.ListPageNumber, viewModel.ListRowCount);
             }
 
             TodoListsLog.LogListsRetrievedForUser(this.logger, lists.Count, userId.Value);
@@ -72,8 +91,18 @@ public class TodoListsController : Controller
             // If a list is selected, load its tasks
             if (listId.HasValue)
             {
+                TodoListModel? selectedList = null;
+
                 // Get the selected list details
-                var selectedList = lists.FirstOrDefault(l => l.Id == listId.Value);
+                if (listId.Value != viewModel.SelectedListId)
+                {
+                    selectedList = lists.FirstOrDefault(l => l.Id == listId.Value);
+                }
+                else
+                {
+                    selectedList = await this.todoListService.GetByIdAsync(userId.Value, listId.Value);
+                }
+
                 if (selectedList != null)
                 {
                     viewModel.SelectedList = MapToListViewModel(selectedList);
@@ -81,11 +110,19 @@ public class TodoListsController : Controller
                     // Parse task filter
                     var filter = ParseTaskFilter(taskFilter);
 
+                    viewModel.TaskPageNumber = taskPageNumber ?? 1;
+                    viewModel.TaskRowCount = taskRowCount ?? 10;
+
+                    totalCount = await this.todoTaskService.GetAllByListIdCountAsync(listId.Value, userId.Value, filter);
+                    viewModel.TaskTotalPages = (int)Math.Ceiling(totalCount / (double)viewModel.TaskRowCount);
+
                     // Load tasks
                     var tasks = await this.todoTaskService.GetAllByListIdAsync(
                         listId.Value,
                         userId.Value,
-                        filter);
+                        filter,
+                        pageNumber: viewModel.TaskPageNumber,
+                        rowCount: viewModel.TaskRowCount);
 
                     TodoListsLog.LogTasksRetrievedForList(this.logger, tasks.Count, listId.Value, userId.Value);
 
@@ -325,8 +362,19 @@ public class TodoListsController : Controller
             ListId = model.Id,
             Title = model.Title,
             Description = model.Description,
-            UserRole = model.UserRole ?? "Unknown",
+            UserRole = StringToRoleEnum(model.UserRole),
             PendingTasks = model.ActiveTasks,
+        };
+    }
+
+    private static ListRole StringToRoleEnum(string roleName)
+    {
+        return roleName.ToUpperInvariant() switch
+        {
+            "OWNER" => ListRole.Owner,
+            "EDITOR" => ListRole.Editor,
+            "VIEWER" => ListRole.Viewer,
+            _ => ListRole.None,
         };
     }
 
@@ -342,7 +390,7 @@ public class TodoListsController : Controller
             Status = model.Status?.StatusTitle ?? "Unknown",
             ListId = model.ListId,
             OwnerName = FormatOwnerName(model.OwnerUser?.FirstName, model.OwnerUser?.LastName),
-            Tags = model.UsersTags?.Select(tag => tag.StatusTitle) ?? Enumerable.Empty<string>(),
+            Tags = model.UsersTags?.Select(tag => tag.Title) ?? Enumerable.Empty<string>(),
             Comments = model.UserComments?.Select(c => c.Text) ?? Enumerable.Empty<string>(),
         };
     }

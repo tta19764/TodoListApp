@@ -1,4 +1,5 @@
 @using Microsoft.AspNetCore.Http.Extensions
+@using TodoListApp.Services.Enums
 @model TodoListsPageViewModel
 @{
 	ViewData["Title"] = "My Todo Lists";
@@ -19,29 +20,35 @@
 					@if (Model.TodoLists != null && Model.TodoLists.Any())
 					{
 						<div class="list-group list-group-flush">
-						@foreach (var list in Model.TodoLists)
-						{
-							<a asp-controller="TodoLists"
-							   asp-action="Index"
-							   asp-route-listId="@list.ListId"
-							   class="list-group-item list-group-item-action todo-list-item @(Model.SelectedListId == list.ListId ? "active" : "")">
-								<div class="d-flex w-100 justify-content-between align-items-start">
-									<div class="flex-grow-1">
-										<h6 class="mb-1">@list.Title</h6>
-								@if (!string.IsNullOrEmpty(list.Description))
-								{
-									<small class="text-muted">@list.Description</small>
-								}
+							@foreach (var list in Model.TodoLists)
+							{
+								<a asp-controller="TodoLists"
+								   asp-action="Index"
+								   asp-route-listId="@list.ListId"
+								   asp-route-listFilter="@Model.ListFilter"
+								   asp-route-taskFilter="@Model.TaskFilter"
+								   asp-route-listPageNumber="@Model.ListPageNumber"
+								   asp-route-listRowCount="@Model.ListRowCount"
+								   asp-route-taskPageNumber="1"
+								   asp-route-taskRowCount="@Model.TaskRowCount"
+								   class="list-group-item list-group-item-action todo-list-item @(Model.SelectedListId == list.ListId ? "active" : "")">
+									<div class="d-flex w-100 justify-content-between align-items-start">
+										<div class="flex-grow-1">
+											<h6 class="mb-1">@list.Title</h6>
+											@if (!string.IsNullOrEmpty(list.Description))
+											{
+												<small class="text-muted">@list.Description</small>
+											}
+										</div>
+										<span class="badge bg-secondary rounded-pill">@list.PendingTasks</span>
 									</div>
-									<span class="badge bg-secondary rounded-pill">@list.PendingTasks</span>
-								</div>
-								<div class="mt-2">
-									<small class="text-muted">
-										<i class="bi bi-shield"></i> @list.UserRole
-									</small>
-								</div>
-							</a>
-						}
+									<div class="mt-2">
+										<small class="text-muted">
+											<i class="bi bi-shield"></i> @list.UserRole
+										</small>
+									</div>
+								</a>
+							}
 						</div>
 					}
 					else
@@ -49,13 +56,75 @@
 						<div class="text-center py-5">
 							<i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
 							<p class="text-muted mt-3">No lists yet. Create your first one!</p>
-							<a asp-controller="TodoLists" asp-action="Create" class="btn btn-primary btn-sm">
+							<a asp-controller="TodoLists"
+							   asp-action="Create"
+							   asp-route-returnUrl="@Url.Action("Index", new {
+                   listFilter = Model.ListFilter,
+                   listPageNumber = Model.ListPageNumber,
+                   listRowCount = Model.ListRowCount
+               })"
+							   class="btn btn-primary btn-sm">
 								Create List
 							</a>
 						</div>
 					}
 				</div>
 			</div>
+
+			<nav aria-label="List pagination">
+				<ul class="pagination justify-content-center mt-3">
+					<!-- Previous -->
+					<li class="page-item @(Model.ListPageNumber <= 1 ? "disabled" : "")">
+						<a class="page-link d-flex align-items-center"
+						   asp-controller="TodoLists"
+						   asp-action="Index"
+						   asp-route-listPageNumber="@(Model.ListPageNumber - 1)"
+						   asp-route-listRowCount="@Model.ListRowCount"
+						   asp-route-listFilter="@Model.ListFilter"
+						   asp-route-taskFilter="@Model.TaskFilter"
+						   asp-route-listId="@Model.SelectedListId"
+						   asp-route-taskPageNumber="@Model.TaskPageNumber"
+						   asp-route-taskRowCount="@Model.TaskRowCount"
+						   aria-label="Previous">
+							<i class="bi bi-chevron-left"></i>
+						</a>
+					</li>
+
+					<!-- Page Numbers -->
+					@for (var i = 1; i <= Model.ListTotalPages; i++)
+					{
+						<li class="page-item @(i == Model.ListPageNumber ? "active" : "")">
+							<a class="page-link"
+							   asp-controller="TodoLists"
+							   asp-action="Index"
+							   asp-route-listPageNumber="@i"
+							   asp-route-listRowCount="@Model.ListRowCount"
+							   asp-route-listFilter="@Model.ListFilter"
+							   asp-route-taskFilter="@Model.TaskFilter"
+							   asp-route-listId="@Model.SelectedListId"
+							   asp-route-taskPageNumber="@Model.TaskPageNumber"
+							   asp-route-taskRowCount="@Model.TaskRowCount">@i</a>
+						</li>
+					}
+
+					<!-- Next -->
+					<li class="page-item @(Model.ListPageNumber >= Model.ListTotalPages ? "disabled" : "")">
+						<a class="page-link d-flex align-items-center"
+						   asp-controller="TodoLists"
+						   asp-action="Index"
+						   asp-route-listPageNumber="@(Model.ListPageNumber + 1)"
+						   asp-route-listRowCount="@Model.ListRowCount"
+						   asp-route-listFilter="@Model.ListFilter"
+						   asp-route-taskFilter="@Model.TaskFilter"
+						   asp-route-listId="@Model.SelectedListId"
+						   asp-route-taskPageNumber="@Model.TaskPageNumber"
+						   asp-route-taskRowCount="@Model.TaskRowCount"
+						   aria-label="Next">
+							<i class="bi bi-chevron-right"></i>
+						</a>
+					</li>
+				</ul>
+			</nav>
 
 			<!-- Filter Section -->
 			<div class="card shadow-sm mt-3">
@@ -100,22 +169,22 @@
 					<div>
 						@if (Model.SelectedListId.HasValue && Model.SelectedList != null)
 						{
-								<h5 class="mb-0">@Model.SelectedList.Title</h5>
+							<h5 class="mb-0">@Model.SelectedList.Title</h5>
 							@if (!string.IsNullOrEmpty(Model.SelectedList.Description))
 							{
-										<small class="text-muted">@Model.SelectedList.Description</small>
+								<small class="text-muted">@Model.SelectedList.Description</small>
 							}
 						}
 						else
 						{
-								<h5 class="mb-0">Select a list to view tasks</h5>
+							<h5 class="mb-0">Select a list to view tasks</h5>
 						}
 					</div>
 					@if (Model.SelectedListId.HasValue)
 					{
 						<div class="d-flex gap-2">
 							@{
-								if (Model.SelectedList != null && (Model.SelectedList.UserRole == "Owner" || Model.SelectedList.UserRole == "Editor"))
+								if (Model.SelectedList != null && (Model.SelectedList.UserRole == ListRole.Owner || Model.SelectedList.UserRole == ListRole.Editor))
 								{
 									<a asp-controller="TodoTasks"
 									   asp-action="Create"
@@ -142,7 +211,8 @@
 													<i class="bi bi-pencil"></i> Edit List
 												</a>
 											</li>
-											@if (Model.SelectedList.UserRole == "Owner"){
+											@if (Model.SelectedList.UserRole == ListRole.Owner)
+											{
 												<li><hr class="dropdown-divider"></li>
 												<li>
 													<form asp-controller="TodoLists"
@@ -185,7 +255,11 @@
 								   asp-action="Index"
 								   asp-route-listId="@Model.SelectedListId"
 								   asp-route-listFilter="@Model.ListFilter"
-								   asp-route-taskFilter="active">
+								   asp-route-taskFilter="active"
+								   asp-route-listPageNumber="@Model.ListPageNumber"
+								   asp-route-listRowCount="@Model.ListRowCount"
+								   asp-route-taskPageNumber="1"
+								   asp-route-taskRowCount="@Model.TaskRowCount">
 									Active
 								</a>
 							</li>
@@ -195,7 +269,11 @@
 								   asp-action="Index"
 								   asp-route-listId="@Model.SelectedListId"
 								   asp-route-listFilter="@Model.ListFilter"
-								   asp-route-taskFilter="notstarted">
+								   asp-route-taskFilter="notstarted"
+								   asp-route-listPageNumber="@Model.ListPageNumber"
+								   asp-route-listRowCount="@Model.ListRowCount"
+								   asp-route-taskPageNumber="1"
+								   asp-route-taskRowCount="@Model.TaskRowCount">
 									Not Started
 								</a>
 							</li>
@@ -205,7 +283,11 @@
 								   asp-action="Index"
 								   asp-route-listId="@Model.SelectedListId"
 								   asp-route-listFilter="@Model.ListFilter"
-								   asp-route-taskFilter="inprogress">
+								   asp-route-taskFilter="inprogress"
+								   asp-route-listPageNumber="@Model.ListPageNumber"
+								   asp-route-listRowCount="@Model.ListRowCount"
+								   asp-route-taskPageNumber="1"
+								   asp-route-taskRowCount="@Model.TaskRowCount">
 									In Progress
 								</a>
 							</li>
@@ -215,7 +297,11 @@
 								   asp-action="Index"
 								   asp-route-listId="@Model.SelectedListId"
 								   asp-route-listFilter="@Model.ListFilter"
-								   asp-route-taskFilter="completed">
+								   asp-route-taskFilter="completed"
+								   asp-route-listPageNumber="@Model.ListPageNumber"
+								   asp-route-listRowCount="@Model.ListRowCount"
+								   asp-route-taskPageNumber="1"
+								   asp-route-taskRowCount="@Model.TaskRowCount">
 									Completed
 								</a>
 							</li>
@@ -225,13 +311,17 @@
 								   asp-action="Index"
 								   asp-route-listId="@Model.SelectedListId"
 								   asp-route-listFilter="@Model.ListFilter"
-								   asp-route-taskFilter="all">
+								   asp-route-taskFilter="all"
+								   asp-route-listPageNumber="@Model.ListPageNumber"
+								   asp-route-listRowCount="@Model.ListRowCount"
+								   asp-route-taskPageNumber="1"
+								   asp-route-taskRowCount="@Model.TaskRowCount">
 									All
 								</a>
 							</li>
 						</ul>
 						<div id="tasksContainer">
-							<partial name="_TasksList" model="new TodoTasksListViewModel { Tasks = Model.Tasks, RoleName = Model.SelectedList == null ? string.Empty : Model.SelectedList.UserRole }" />
+							<partial name="_TasksList" model="new TodoTasksListViewModel { Tasks = Model.Tasks, Role = Model.SelectedList == null ? ListRole.None : Model.SelectedList.UserRole }" />
 						</div>
 					}
 					else
@@ -240,6 +330,53 @@
 							<i class="bi bi-list-task text-muted" style="font-size: 4rem;"></i>
 							<p class="text-muted mt-3">Select a list from the left panel to view tasks</p>
 						</div>
+					}
+					@if (Model.SelectedListId.HasValue && Model.Tasks != null && Model.Tasks.Any())
+					{
+						<nav aria-label="Task pagination" class="mt-3">
+							<ul class="pagination justify-content-center">
+								<!-- Previous -->
+								<li class="page-item @(Model.TaskPageNumber <= 1 ? "disabled" : "")">
+									<a class="page-link"
+									   asp-controller="TodoLists"
+									   asp-action="Index"
+									   asp-route-listId="@Model.SelectedListId"
+									   asp-route-listFilter="@Model.ListFilter"
+									   asp-route-taskFilter="@Model.TaskFilter"
+									   asp-route-listPageNumber="@Model.ListPageNumber"
+									   asp-route-listRowCount="@Model.ListRowCount"
+									   asp-route-taskPageNumber="@(Model.TaskPageNumber - 1)"
+									   asp-route-taskRowCount="@Model.TaskRowCount"
+									   aria-label="Previous">
+										<i class="bi bi-chevron-left"></i> Previous
+									</a>
+								</li>
+
+								<!-- Page info -->
+								<li class="page-item disabled">
+									<span class="page-link">
+										Page @Model.TaskPageNumber of @Model.TaskTotalPages
+									</span>
+								</li>
+
+								<!-- Next -->
+								<li class="page-item @(Model.TaskPageNumber >= Model.TaskTotalPages ? "disabled" : "")">
+									<a class="page-link"
+									   asp-controller="TodoLists"
+									   asp-action="Index"
+									   asp-route-listId="@Model.SelectedListId"
+									   asp-route-listFilter="@Model.ListFilter"
+									   asp-route-taskFilter="@Model.TaskFilter"
+									   asp-route-listPageNumber="@Model.ListPageNumber"
+									   asp-route-listRowCount="@Model.ListRowCount"
+									   asp-route-taskPageNumber="@(Model.TaskPageNumber + 1)"
+									   asp-route-taskRowCount="@Model.TaskRowCount"
+									   aria-label="Next">
+										Next <i class="bi bi-chevron-right"></i>
+									</a>
+								</li>
+							</ul>
+						</nav>
 					}
 				</div>
 			</div>

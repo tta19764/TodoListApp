@@ -101,7 +101,6 @@ public class TaskTagRepository : AbstractRepository, ITaskTagRepository
         return await this.dbSet
             .Include(tt => tt.Task)
             .Include(tt => tt.Tag)
-            .ThenInclude(t => t.TagAuthor)
             .ToListAsync();
     }
 
@@ -128,7 +127,6 @@ public class TaskTagRepository : AbstractRepository, ITaskTagRepository
         return await this.dbSet
             .Include(tt => tt.Task)
             .Include(tt => tt.Tag)
-            .ThenInclude(t => t.TagAuthor)
             .ToListAsync();
     }
 
@@ -145,7 +143,6 @@ public class TaskTagRepository : AbstractRepository, ITaskTagRepository
         return await this.dbSet
             .Include(tt => tt.Task)
             .Include(tt => tt.Tag)
-            .ThenInclude(t => t.TagAuthor)
             .FirstOrDefaultAsync(t => t.Id == id);
     }
 

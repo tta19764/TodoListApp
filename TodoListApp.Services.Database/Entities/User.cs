@@ -56,11 +56,6 @@ public class User : IdentityUser<int>
     public string LastName { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets the list with user's tags.
-    /// </summary>
-    public virtual IList<Tag> UserTags { get; private set; } = new List<Tag>();
-
-    /// <summary>
     /// Gets the list with list user roles.
     /// </summary>
     public virtual IList<TodoListUserRole> TodoListUserRoles { get; private set; } = new List<TodoListUserRole>();

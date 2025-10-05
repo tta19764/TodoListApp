@@ -183,11 +183,25 @@ public class TodoListApiService : ITodoListService
         }
     }
 
-    public async Task<IReadOnlyList<TodoListModel>> GetAllByAuthorAsync(int authorId)
+    public async Task<IReadOnlyList<TodoListModel>> GetAllByAuthorAsync(int authorId, int? pageNumber = null, int? rowCount = null)
     {
         try
         {
-            var uri = new Uri("UserLists", UriKind.Relative);
+            Uri uri;
+            int page = 0;
+            int row = 0;
+            if (pageNumber != null && rowCount != null)
+            {
+                page = pageNumber > 0 ? (int)pageNumber : 1;
+                row = rowCount > 0 ? (int)rowCount : 1;
+
+                uri = new Uri($"UserLists/{page}/{row}", UriKind.Relative);
+            }
+            else
+            {
+                uri = new Uri("UserLists", UriKind.Relative);
+            }
+
             using var response = await this.httpClient.GetAsync(uri);
 
             if (response.IsSuccessStatusCode)
@@ -195,17 +209,25 @@ public class TodoListApiService : ITodoListService
                 var lists = await response.Content.ReadFromJsonAsync<List<TodoListDto>>();
                 if (lists != null)
                 {
-                    TodoListLog.LogTodoListsRetrievedByAuthor(this.logger, lists.Count, authorId);
+                    if (pageNumber != null && rowCount != null)
+                    {
+                        TodoListLog.LogTodoListsPageRetrievedByAuthor(this.logger, lists.Count, page, authorId);
+                    }
+                    else
+                    {
+                        TodoListLog.LogTodoListsRetrievedByAuthor(this.logger, lists.Count, authorId);
+                    }
+
                     return lists.Select(MapToModel).ToList();
                 }
 
-                TodoListLog.LogNullResponse(this.logger, "get by author");
+                TodoListLog.LogNullResponse(this.logger, "get paginated by author");
                 return new List<TodoListModel>();
             }
 
             var errorContent = await response.Content.ReadAsStringAsync();
-            TodoListLog.LogTodoListFailed(this.logger, "get by author", 0, (int)response.StatusCode, errorContent);
-            throw new HttpRequestException($"Failed to retrieve todo lists by author: {response.StatusCode}");
+            TodoListLog.LogTodoListFailed(this.logger, "get paginated by author", 0, (int)response.StatusCode, errorContent);
+            throw new HttpRequestException($"Failed to retrieve paginated todo lists by author: {response.StatusCode}");
         }
         catch (HttpRequestException ex)
         {
@@ -224,11 +246,25 @@ public class TodoListApiService : ITodoListService
         }
     }
 
-    public async Task<IReadOnlyList<TodoListModel>> GetAllByAuthorAsync(int authorId, int pageNumber, int rowCount)
+    public async Task<IReadOnlyList<TodoListModel>> GetAllSharedAsync(int userId, int? pageNumber = null, int? rowCount = null)
     {
         try
         {
-            var uri = new Uri($"UserLists/{pageNumber}/{rowCount}", UriKind.Relative);
+            Uri uri;
+            int page = 0;
+            int row = 0;
+            if (pageNumber != null && rowCount != null)
+            {
+                page = pageNumber > 0 ? (int)pageNumber : 1;
+                row = rowCount > 0 ? (int)rowCount : 1;
+
+                uri = new Uri($"Shared/{page}/{row}", UriKind.Relative);
+            }
+            else
+            {
+                uri = new Uri("Shared", UriKind.Relative);
+            }
+
             using var response = await this.httpClient.GetAsync(uri);
 
             if (response.IsSuccessStatusCode)
@@ -236,17 +272,25 @@ public class TodoListApiService : ITodoListService
                 var lists = await response.Content.ReadFromJsonAsync<List<TodoListDto>>();
                 if (lists != null)
                 {
-                    TodoListLog.LogTodoListsPageRetrievedByAuthor(this.logger, lists.Count, pageNumber, authorId);
+                    if (pageNumber != null && rowCount != null)
+                    {
+                        TodoListLog.LogTodoListsPageRetrievedShared(this.logger, lists.Count, page, userId);
+                    }
+                    else
+                    {
+                        TodoListLog.LogTodoListsRetrievedShared(this.logger, lists.Count, userId);
+                    }
+
                     return lists.Select(MapToModel).ToList();
                 }
 
-                TodoListLog.LogNullResponse(this.logger, "get paginated by author");
+                TodoListLog.LogNullResponse(this.logger, "get paginated shared");
                 return new List<TodoListModel>();
             }
 
             var errorContent = await response.Content.ReadAsStringAsync();
-            TodoListLog.LogTodoListFailed(this.logger, "get paginated by author", 0, (int)response.StatusCode, errorContent);
-            throw new HttpRequestException($"Failed to retrieve paginated todo lists by author: {response.StatusCode}");
+            TodoListLog.LogTodoListFailed(this.logger, "get paginated shared", 0, (int)response.StatusCode, errorContent);
+            throw new HttpRequestException($"Failed to retrieve paginated shared todo lists: {response.StatusCode}");
         }
         catch (HttpRequestException ex)
         {
@@ -365,6 +409,108 @@ public class TodoListApiService : ITodoListService
         }
         catch (InvalidOperationException)
         {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            TodoListLog.LogUnexpectedError(this.logger, ex);
+            throw;
+        }
+    }
+
+    public async Task<int> AllByUserCount(int userId)
+    {
+        try
+        {
+            var uri = new Uri("Count", UriKind.Relative);
+            using var response = await this.httpClient.GetAsync(uri);
+            if (response.IsSuccessStatusCode)
+            {
+                var countString = await response.Content.ReadAsStringAsync();
+                if (int.TryParse(countString, out int count))
+                {
+                    return count;
+                }
+
+                TodoListLog.LogNullResponse(this.logger, "get all by user count");
+                return 0;
+            }
+
+            var errorContent = await response.Content.ReadAsStringAsync();
+            TodoListLog.LogTodoListFailed(this.logger, "get all by user count", 0, (int)response.StatusCode, errorContent);
+            throw new HttpRequestException($"Failed to retrieve todo lists count: {response.StatusCode}");
+        }
+        catch (HttpRequestException ex)
+        {
+            TodoListLog.LogHttpRequestError(this.logger, ex);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            TodoListLog.LogUnexpectedError(this.logger, ex);
+            throw;
+        }
+    }
+
+    public async Task<int> AllByAuthorCount(int authorId)
+    {
+        try
+        {
+            var uri = new Uri("UserLists/Count", UriKind.Relative);
+            using var response = await this.httpClient.GetAsync(uri);
+            if (response.IsSuccessStatusCode)
+            {
+                var countString = await response.Content.ReadAsStringAsync();
+                if (int.TryParse(countString, out int count))
+                {
+                    return count;
+                }
+
+                TodoListLog.LogNullResponse(this.logger, "get all by author count");
+                return 0;
+            }
+
+            var errorContent = await response.Content.ReadAsStringAsync();
+            TodoListLog.LogTodoListFailed(this.logger, "get all by author count", 0, (int)response.StatusCode, errorContent);
+            throw new HttpRequestException($"Failed to retrieve todo lists by author count: {response.StatusCode}");
+        }
+        catch (HttpRequestException ex)
+        {
+            TodoListLog.LogHttpRequestError(this.logger, ex);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            TodoListLog.LogUnexpectedError(this.logger, ex);
+            throw;
+        }
+    }
+
+    public async Task<int> AllSharedCount(int userId)
+    {
+        try
+        {
+            var uri = new Uri("Shared/Count", UriKind.Relative);
+            using var response = await this.httpClient.GetAsync(uri);
+            if (response.IsSuccessStatusCode)
+            {
+                var countString = await response.Content.ReadAsStringAsync();
+                if (int.TryParse(countString, out int count))
+                {
+                    return count;
+                }
+
+                TodoListLog.LogNullResponse(this.logger, "get all shared count");
+                return 0;
+            }
+
+            var errorContent = await response.Content.ReadAsStringAsync();
+            TodoListLog.LogTodoListFailed(this.logger, "get all shared count", 0, (int)response.StatusCode, errorContent);
+            throw new HttpRequestException($"Failed to retrieve shared todo lists count: {response.StatusCode}");
+        }
+        catch (HttpRequestException ex)
+        {
+            TodoListLog.LogHttpRequestError(this.logger, ex);
             throw;
         }
         catch (Exception ex)

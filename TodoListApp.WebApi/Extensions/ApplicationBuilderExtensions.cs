@@ -42,13 +42,14 @@ internal static class ApplicationBuilderExtensions
     }
 
     /// <summary>
-    /// Seeds the identity data for the TodoList application.
+    /// Seeds the data for the TodoList application.
     /// </summary>
     /// <param name="app">The <see cref="WebApplication"/> instance to configure.</param></param>
     /// <returns>The configured <see cref="WebApplication"/> instance.</returns>
-    public static WebApplication SeedTodoListIdentity(this WebApplication app)
+    public static WebApplication SeedTodoList(this WebApplication app)
     {
         _ = IdentitySeed.EnsurePopulated(app);
+        _ = TagSeed.EnsurePopulated(app);
 
         return app;
     }

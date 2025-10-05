@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Text.Json.Serialization;
 
 namespace TodoListApp.WebApi.Models.Dtos.Read;
 public class TodoTaskDto
@@ -7,7 +8,7 @@ public class TodoTaskDto
     {
     }
 
-    public TodoTaskDto(int id, string title, string? description, DateTime creationDate, DateTime dueDate, string assigneeFirstName, string assigneeLastName, int assigneeId, string status, int listId, ReadOnlyCollection<string>? tags = null, ReadOnlyCollection<string>? comments = null)
+    public TodoTaskDto(int id, string title, string? description, DateTime creationDate, DateTime dueDate, string assigneeFirstName, string assigneeLastName, int assigneeId, string status, int listId, ReadOnlyCollection<TagDto>? tags = null, ReadOnlyCollection<string>? comments = null)
     {
         this.Id = id;
         this.Title = title;
@@ -89,10 +90,12 @@ public class TodoTaskDto
     /// <summary>
     /// Gets user's tags.
     /// </summary>
-    public IList<string> Tags { get; private set; } = new List<string>();
+    [JsonInclude]
+    public IList<TagDto> Tags { get; private set; } = new List<TagDto>();
 
     /// <summary>
     /// Gets user's tags.
     /// </summary>
+    [JsonInclude]
     public IList<string> Comments { get; private set; } = new List<string>();
 }

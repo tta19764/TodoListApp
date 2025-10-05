@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Globalization;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
@@ -7,6 +8,7 @@ using TodoListApp.Services.Interfaces.Servicies;
 using TodoListApp.Services.Models;
 using TodoListApp.Services.WebApi.Enums;
 using TodoListApp.WebApp.CustomLogs;
+using TodoListApp.WebApp.Models.Tag;
 using TodoListApp.WebApp.Models.Task;
 
 namespace TodoListApp.WebApp.Controllers;
@@ -15,20 +17,23 @@ public class TodoTasksController : Controller
 {
     private readonly ITodoTaskService todoTaskService;
     private readonly ITodoListService todoListService;
+    private readonly IAssignedTasksService assignedTasksService;
     private readonly ILogger<TodoTasksController> logger;
 
     public TodoTasksController(
         ITodoTaskService todoTaskService,
         ITodoListService todoListService,
-        ILogger<TodoTasksController> logger)
+        ILogger<TodoTasksController> logger,
+        IAssignedTasksService assignedTasksService)
     {
         this.todoTaskService = todoTaskService ?? throw new ArgumentNullException(nameof(todoTaskService));
         this.todoListService = todoListService ?? throw new ArgumentNullException(nameof(todoListService));
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        this.assignedTasksService = assignedTasksService ?? throw new ArgumentNullException(nameof(assignedTasksService));
     }
 
     [HttpGet]
-    public async Task<IActionResult> Index(string? taskFilter, string? sortBy, string? sortOrder)
+    public async Task<IActionResult> Index(string? taskFilter, string? sortBy, string? sortOrder, int? pageNumber, int? rowCount)
     {
         try
         {
@@ -43,17 +48,24 @@ public class TodoTasksController : Controller
                 TaskFilter = taskFilter ?? "active",
                 SortBy = sortBy ?? "Id",
                 SortOrder = sortOrder ?? "asc",
+                PageNumber = pageNumber ?? 1,
+                RowCount = rowCount ?? 10,
             };
 
             // Parse task filter
             var filter = ParseTaskFilter(taskFilter);
 
+            var totalCount = await this.assignedTasksService.GetAllAssignedCountAsync(userId.Value, filter);
+            viewModel.TotalPages = (int)Math.Ceiling(totalCount / (double)viewModel.RowCount);
+
             // Get all tasks assigned to the user
-            var tasks = await this.todoTaskService.GetAllByAuthorAsync(
+            var tasks = await this.assignedTasksService.GetAllAssignedAsync(
                 userId.Value,
                 filter,
                 viewModel.SortBy,
-                viewModel.SortOrder);
+                viewModel.SortOrder,
+                viewModel.PageNumber,
+                viewModel.RowCount);
 
             // Map to view models
             viewModel.Tasks = tasks.Select(t => MapToTaskViewModel(t)).ToList();
@@ -70,7 +82,6 @@ public class TodoTasksController : Controller
             throw;
         }
     }
-
 
     [HttpGet]
     public async Task<IActionResult> Details(int id, int? listId, Uri? returnUrl)
@@ -89,6 +100,13 @@ public class TodoTasksController : Controller
             if (task == null)
             {
                 TodoTasksLog.LogTaskNotFoundForUser(this.logger, id, userId.Value);
+                return this.NotFound();
+            }
+
+            var list = await this.todoListService.GetByIdAsync(userId.Value, task.ListId);
+            if (list == null)
+            {
+                TodoListsLog.LogListNotFoundForUser(this.logger, id, userId.Value);
                 return this.NotFound();
             }
 
@@ -116,9 +134,10 @@ public class TodoTasksController : Controller
                 Status = task.Status?.StatusTitle ?? "Unknown",
                 StatusId = task.StatusId,
                 OwnerName = FormatOwnerName(task.OwnerUser?.FirstName, task.OwnerUser?.LastName),
-                Tags = task.UsersTags?.Select(t => t.StatusTitle).ToList() ?? new List<string>(),
+                Tags = task.UsersTags?.Select(t => new TagViewModel() { Id = t.Id, Title = t.Title }).ToList() ?? new List<TagViewModel>(),
                 Comments = task.UserComments?.Select(c => c.Text).ToList() ?? new List<string>(),
                 ListId = listId,
+                Role = StringToRoleEnum(list.UserRole ?? "None"),
                 ReturnUrl = returnUrl,
             };
 
@@ -413,7 +432,7 @@ public class TodoTasksController : Controller
             Status = model.Status?.StatusTitle ?? "Unknown",
             ListId = model.ListId,
             OwnerName = FormatOwnerName(model.OwnerUser?.FirstName, model.OwnerUser?.LastName),
-            Tags = model.UsersTags?.Select(tag => tag.StatusTitle) ?? Enumerable.Empty<string>(),
+            Tags = model.UsersTags?.Select(tag => tag.Title) ?? Enumerable.Empty<string>(),
             Comments = model.UserComments?.Select(c => c.Text) ?? Enumerable.Empty<string>(),
         };
     }
@@ -444,5 +463,16 @@ public class TodoTasksController : Controller
         }
 
         return null;
+    }
+
+    private static ListRole StringToRoleEnum(string roleName)
+    {
+        return roleName.ToUpperInvariant() switch
+        {
+            "OWNER" => ListRole.Owner,
+            "EDITOR" => ListRole.Editor,
+            "VIEWER" => ListRole.Viewer,
+            _ => ListRole.None,
+        };
     }
 }

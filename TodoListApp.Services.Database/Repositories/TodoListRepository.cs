@@ -199,6 +199,58 @@ public class TodoListRepository : AbstractRepository, ITodoListRepository
     }
 
     /// <summary>
+    /// Asynchronously gets the list of <see cref="TodoList"/> entities that are shared with the user.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user.</param>
+    /// <returns>
+    /// A task representing the asynchronous operation. The task result contains <see cref="IReadOnlyList{TodoList}"/>.
+    /// </returns>
+    public async Task<IReadOnlyList<TodoList>> GetAllSharedAsync(int userId)
+    {
+        return await this.dbSet
+            .Where(l => l.TodoListUserRoles.Any(lur => lur.UserId == userId))
+            .Include(tl => tl.TodoTasks)
+                .ThenInclude(tt => tt.Status)
+            .Include(tl => tl.ListOwner)
+        .Include(tl => tl.TodoListUserRoles)
+            .ThenInclude(tlur => tlur.ListRole)
+            .AsSplitQuery()
+            .ToListAsync();
+    }
+
+    /// <summary>
+    /// Asynchronously gets the list of <see cref="TodoList"/> entities that are shared with the user.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user.</param>
+    /// <param name="pageNumber">The page number to retrieve (1-based).</param>
+    /// <param name="rowCount">The number of rows per page.</param>
+    /// <returns>A task representing the asynchronous operation. The task result contains <see cref="IReadOnlyList{TodoList}"/>.</returns>
+    public async Task<IReadOnlyList<TodoList>> GetAllSharedAsync(int userId, int pageNumber, int rowCount)
+    {
+        if (pageNumber < 1)
+        {
+            throw new ArgumentException("Page number must be greater than 0.");
+        }
+
+        if (rowCount < 1)
+        {
+            throw new ArgumentException("Row count must be greater than 0.");
+        }
+
+        return await this.dbSet
+            .Where(l => l.TodoListUserRoles.Any(lur => lur.UserId == userId))
+            .Include(tl => tl.TodoTasks)
+                .ThenInclude(tt => tt.Status)
+            .Include(tl => tl.ListOwner)
+        .Include(tl => tl.TodoListUserRoles)
+            .ThenInclude(tlur => tlur.ListRole)
+            .AsSplitQuery()
+            .Skip((pageNumber - 1) * rowCount)
+            .Take(rowCount)
+            .ToListAsync();
+    }
+
+    /// <summary>
     /// Asynchronously gets the list of <see cref="TodoList"/> entities that the user has access to.
     /// </summary>
     /// <param name="userId">The unique identifier of the user.</param>

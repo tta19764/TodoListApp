@@ -1,7 +1,10 @@
+using Microsoft.Extensions.Logging;
+
 namespace TodoListApp.WebApp.CustomLogs;
 
 public static class AccountLog
 {
+    // Information level logs - Successful operations
     private static readonly Action<ILogger, string, Exception?> UserLoggedIn =
         LoggerMessage.Define<string>(
             LogLevel.Information,
@@ -54,7 +57,37 @@ public static class AccountLog
         LoggerMessage.Define<string>(
             LogLevel.Information,
             new EventId(1009, nameof(UserRegistered)),
-            "User {Username} regesterd successfully with Identity");
+            "User {Username} registered successfully with Identity");
+
+    private static readonly Action<ILogger, string, Exception?> PasswordResetTokenGenerated =
+        LoggerMessage.Define<string>(
+            LogLevel.Information,
+            new EventId(1010, nameof(PasswordResetTokenGenerated)),
+            "Password reset token generated for user: {Email}");
+
+    private static readonly Action<ILogger, string, Exception?> PasswordResetEmailSent =
+        LoggerMessage.Define<string>(
+            LogLevel.Information,
+            new EventId(1011, nameof(PasswordResetEmailSent)),
+            "Password reset email sent to: {Email}");
+
+    private static readonly Action<ILogger, string, Exception?> PasswordResetSuccessful =
+        LoggerMessage.Define<string>(
+            LogLevel.Information,
+            new EventId(1012, nameof(PasswordResetSuccessful)),
+            "Password reset successful for user: {Email}");
+
+    private static readonly Action<ILogger, Exception?> ForgotPasswordPageAccessed =
+        LoggerMessage.Define(
+            LogLevel.Information,
+            new EventId(1013, nameof(ForgotPasswordPageAccessed)),
+            "Forgot password page accessed");
+
+    private static readonly Action<ILogger, string, Exception?> ResetPasswordPageAccessed =
+        LoggerMessage.Define<string>(
+            LogLevel.Information,
+            new EventId(1014, nameof(ResetPasswordPageAccessed)),
+            "Reset password page accessed for email: {Email}");
 
     // Warning level logs - Expected failures
     private static readonly Action<ILogger, string, Exception?> JwtTokenStoreFailed =
@@ -97,7 +130,7 @@ public static class AccountLog
         LoggerMessage.Define(
             LogLevel.Warning,
             new EventId(2007, nameof(InvalidModelState)),
-            "Login attempt with invalid model state");
+            "Request with invalid model state");
 
     private static readonly Action<ILogger, Exception?> NullLoginViewModel =
         LoggerMessage.Define(
@@ -130,10 +163,40 @@ public static class AccountLog
             "Null register view model received");
 
     private static readonly Action<ILogger, string, string, Exception?> RegistrationFailedWithErrors =
-    LoggerMessage.Define<string, string>(
-        LogLevel.Warning,
-        new EventId(2013, nameof(RegistrationFailedWithErrors)),
-        "Registration failed for user {Login} with errors: {Errors}");
+        LoggerMessage.Define<string, string>(
+            LogLevel.Warning,
+            new EventId(2013, nameof(RegistrationFailedWithErrors)),
+            "Registration failed for user {Login} with errors: {Errors}");
+
+    private static readonly Action<ILogger, string, Exception?> UserNotFoundForPasswordReset =
+        LoggerMessage.Define<string>(
+            LogLevel.Warning,
+            new EventId(2014, nameof(UserNotFoundForPasswordReset)),
+            "Password reset requested for non-existent email: {Email}");
+
+    private static readonly Action<ILogger, string, Exception?> InvalidPasswordResetToken =
+        LoggerMessage.Define<string>(
+            LogLevel.Warning,
+            new EventId(2015, nameof(InvalidPasswordResetToken)),
+            "Invalid password reset token used for email: {Email}");
+
+    private static readonly Action<ILogger, string, string, Exception?> PasswordResetFailedWithErrors =
+        LoggerMessage.Define<string, string>(
+            LogLevel.Warning,
+            new EventId(2016, nameof(PasswordResetFailedWithErrors)),
+            "Password reset failed for user {Email} with errors: {Errors}");
+
+    private static readonly Action<ILogger, Exception?> NullForgotPasswordViewModel =
+        LoggerMessage.Define(
+            LogLevel.Warning,
+            new EventId(2017, nameof(NullForgotPasswordViewModel)),
+            "Null forgot password view model received");
+
+    private static readonly Action<ILogger, Exception?> NullResetPasswordViewModel =
+        LoggerMessage.Define(
+            LogLevel.Warning,
+            new EventId(2018, nameof(NullResetPasswordViewModel)),
+            "Null reset password view model received");
 
     // Error level logs - System failures
     private static readonly Action<ILogger, string, Exception?> UnexpectedErrorDuringLogin =
@@ -190,6 +253,24 @@ public static class AccountLog
             new EventId(3009, nameof(IdentityRegisterFailed)),
             "Identity register failed for user: {Username}");
 
+    private static readonly Action<ILogger, string, Exception?> UnexpectedErrorGeneratingResetToken =
+        LoggerMessage.Define<string>(
+            LogLevel.Error,
+            new EventId(3010, nameof(UnexpectedErrorGeneratingResetToken)),
+            "Unexpected error occurred while generating password reset token for: {Email}");
+
+    private static readonly Action<ILogger, string, Exception?> UnexpectedErrorSendingResetEmail =
+        LoggerMessage.Define<string>(
+            LogLevel.Error,
+            new EventId(3011, nameof(UnexpectedErrorSendingResetEmail)),
+            "Unexpected error occurred while sending password reset email to: {Email}");
+
+    private static readonly Action<ILogger, string, Exception?> UnexpectedErrorDuringPasswordReset =
+        LoggerMessage.Define<string>(
+            LogLevel.Error,
+            new EventId(3012, nameof(UnexpectedErrorDuringPasswordReset)),
+            "Unexpected error occurred during password reset for: {Email}");
+
     // Public methods for Information level logs
     public static void LogUserLoggedIn(ILogger logger, string username) =>
         UserLoggedIn(logger, username, null);
@@ -217,6 +298,21 @@ public static class AccountLog
 
     public static void LogUserRegistered(ILogger logger, string username) =>
         UserRegistered(logger, username, null);
+
+    public static void LogPasswordResetTokenGenerated(ILogger logger, string email) =>
+        PasswordResetTokenGenerated(logger, email, null);
+
+    public static void LogPasswordResetEmailSent(ILogger logger, string email) =>
+        PasswordResetEmailSent(logger, email, null);
+
+    public static void LogPasswordResetSuccessful(ILogger logger, string email) =>
+        PasswordResetSuccessful(logger, email, null);
+
+    public static void LogForgotPasswordPageAccessed(ILogger logger) =>
+        ForgotPasswordPageAccessed(logger, null);
+
+    public static void LogResetPasswordPageAccessed(ILogger logger, string email) =>
+        ResetPasswordPageAccessed(logger, email, null);
 
     // Public methods for Warning level logs
     public static void LogJwtTokenStoreFailed(ILogger logger, string username) =>
@@ -258,6 +354,21 @@ public static class AccountLog
     public static void LogRegistrationFailedWithErrors(ILogger logger, string login, string errors, Exception? exception = null) =>
         RegistrationFailedWithErrors(logger, login, errors, exception);
 
+    public static void LogUserNotFoundForPasswordReset(ILogger logger, string email) =>
+        UserNotFoundForPasswordReset(logger, email, null);
+
+    public static void LogInvalidPasswordResetToken(ILogger logger, string email) =>
+        InvalidPasswordResetToken(logger, email, null);
+
+    public static void LogPasswordResetFailedWithErrors(ILogger logger, string email, string errors, Exception? exception = null) =>
+        PasswordResetFailedWithErrors(logger, email, errors, exception);
+
+    public static void LogNullForgotPasswordViewModel(ILogger logger) =>
+        NullForgotPasswordViewModel(logger, null);
+
+    public static void LogNullResetPasswordViewModel(ILogger logger) =>
+        NullResetPasswordViewModel(logger, null);
+
     // Public methods for Error level logs
     public static void LogUnexpectedErrorDuringLogin(ILogger logger, string username, Exception exception) =>
         UnexpectedErrorDuringLogin(logger, username, exception);
@@ -285,4 +396,13 @@ public static class AccountLog
 
     public static void LogUnexpectedErrorDuringRegister(ILogger logger, string username, Exception exception) =>
         UnexpectedErrorDuringRegister(logger, username, exception);
+
+    public static void LogUnexpectedErrorGeneratingResetToken(ILogger logger, string email, Exception exception) =>
+        UnexpectedErrorGeneratingResetToken(logger, email, exception);
+
+    public static void LogUnexpectedErrorSendingResetEmail(ILogger logger, string email, Exception exception) =>
+        UnexpectedErrorSendingResetEmail(logger, email, exception);
+
+    public static void LogUnexpectedErrorDuringPasswordReset(ILogger logger, string email, Exception exception) =>
+        UnexpectedErrorDuringPasswordReset(logger, email, exception);
 }

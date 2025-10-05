@@ -132,13 +132,6 @@ namespace TodoListApp.Services.Database.Data
                 .HasForeignKey(c => c.UserId)
                 .OnDelete(DeleteBehavior.ClientCascade);
 
-            // Configure Tag relationships
-            _ = builder.Entity<Tag>()
-                .HasOne(t => t.TagAuthor)
-                .WithMany(u => u.UserTags)
-                .HasForeignKey(t => t.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
-
             // Configure TaskTags relationships
             _ = builder.Entity<TaskTags>()
                 .HasOne(tt => tt.Task)
@@ -160,11 +153,6 @@ namespace TodoListApp.Services.Database.Data
             _ = builder.Entity<TodoTask>()
                 .HasIndex(t => t.StatusId)
                 .HasDatabaseName("IX_TodoTask_StatusId");
-
-            _ = builder.Entity<Tag>()
-                .HasIndex(t => new { t.UserId, t.Label })
-                .IsUnique()
-                .HasDatabaseName("IX_Tag_UserId_Label");
 
             _ = builder.Entity<Status>()
                 .HasData(

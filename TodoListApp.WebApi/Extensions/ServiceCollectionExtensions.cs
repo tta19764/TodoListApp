@@ -36,8 +36,14 @@ internal static class ServiceCollectionExtensions
             .AddEntityFrameworkStores<TodoListDbContext>()
             .AddDefaultTokenProviders();
 
-        _ = services.AddTransient<ITodoListService, TodoListService>();
-        _ = services.AddTransient<ITodoTaskService, TodoTaskService>();
+        _ = services
+            .AddTransient<ITodoListService, TodoListService>()
+            .AddTransient<ITodoTaskService, TodoTaskService>()
+            .AddTransient<ITagService, TagSerivice>()
+            .AddTransient<IAssignedTasksService, AssignedTasksService>()
+            .AddTransient<ISearchTasksService, SearchTasksService>()
+            .AddTransient<ITaskTagService, TaskTagService>()
+            .AddTransient<IAuthService, AuthService>();
 
         _ = services.AddControllers();
 
@@ -73,8 +79,6 @@ internal static class ServiceCollectionExtensions
                 },
             });
         });
-
-        _ = services.AddTransient<IAuthService, AuthService>();
 
         _ = services.AddAuthentication(options =>
         {
