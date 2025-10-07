@@ -86,8 +86,10 @@
 						<!-- Sort Options -->
 						<div class="col-md-6">
 							<div class="d-flex justify-content-end gap-2 align-items-center">
-								<label class="mb-0 me-2"><strong>Sort by:</strong></label>
-								<div class="btn-group">
+								<label class="mb-0 me-2" for="AssignedTasksSorting">
+									<strong>Sort by:</strong>
+								</label>
+								<div class="btn-group" id="AssignedTasksSorting">
 									<a class="btn btn-sm @(Model.SortBy == "Id" ? "btn-primary" : "btn-outline-primary")"
 									   asp-controller="TodoTasks"
 									   asp-action="Index"

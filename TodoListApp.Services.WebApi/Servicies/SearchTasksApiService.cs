@@ -24,7 +24,7 @@ public class SearchTasksApiService : ISearchTasksService
     {
         try
         {
-            var uri = new Uri($"Count", UriKind.Absolute);
+            var uri = new Uri($"{this.httpClient.BaseAddress}Count", UriKind.Absolute);
             var builder = new UriBuilder(uri);
             var query = System.Web.HttpUtility.ParseQueryString(builder.Query);
             if (title != null)
@@ -77,26 +77,9 @@ public class SearchTasksApiService : ISearchTasksService
     {
         try
         {
-            var builder = new UriBuilder(this.httpClient.BaseAddress!);
-            var query = System.Web.HttpUtility.ParseQueryString(builder.Query);
-            if (title != null)
-            {
-                query["title"] = title;
-            }
+            Uri uri = TasksUriBuilder.BuildSearchUri(this.httpClient.BaseAddress!, title, creationDate, dueDate, pageNumber, rowCount);
 
-            if (creationDate != null)
-            {
-                query["creationDate"] = creationDate.Value.ToString("o", CultureInfo.InvariantCulture);
-            }
-
-            if (dueDate != null)
-            {
-                query["dueDate"] = dueDate.Value.ToString("o", CultureInfo.InvariantCulture);
-            }
-
-            builder.Query = query.ToString();
-
-            using var response = await this.httpClient.GetAsync(builder.Uri);
+            using var response = await this.httpClient.GetAsync(uri);
             if (response.IsSuccessStatusCode)
             {
                 var tasks = await response.Content.ReadFromJsonAsync<List<TodoTaskDto>>();

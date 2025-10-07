@@ -1,0 +1,48 @@
+.task-overdue {
+    border-left: 4px solid #dc3545 !important;
+    background-color: #fff5f5;
+}
+
+.task-overdue:hover {
+    background-color: #ffe5e5;
+    box-shadow: 0 0.125rem 0.5rem rgba(220, 53, 69, 0.2) !important;
+}
+
+.task-item {
+    transition: all 0.2s ease;
+    border-left: 4px solid transparent;
+}
+
+.task-item:hover {
+    box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.1);
+    transform: translateX(2px);
+}
+
+.task-item.completed {
+    opacity: 0.7;
+    background-color: #f8f9fa;
+}
+
+.task-clickable {
+    cursor: pointer;
+}
+
+.status-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.status-notstarted {
+    background-color: #6c757d;
+    color: white;
+}
+
+.status-inprogress {
+    background-color: #0dcaf0;
+    color: white;
+}
+
+.status-completed {
+    background-color: #198754;
+    color: white;
+}

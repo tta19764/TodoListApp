@@ -1,0 +1,192 @@
+@using Microsoft.AspNetCore.Http.Extensions
+@model SearchTasksViewModel
+@{
+	ViewData["Title"] = "Search Tasks";
+	Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid mt-4">
+	<div class="row">
+		<div class="col-12">
+			<div class="card shadow-sm">
+				<div class="card-header bg-primary text-white">
+					<h4 class="mb-0">
+						<i class="bi bi-search"></i> Search Tasks
+					</h4>
+				</div>
+				<div class="card-body">
+					<!-- Search Form -->
+					<form asp-controller="TodoTasks" asp-action="Search" method="get" class="mb-4">
+						<div class="row g-3">
+							<div class="col-md-4">
+								<label for="Title" class="form-label">Task Title</label>
+								<input type="text"
+									   class="form-control"
+									   id="Title"
+									   name="title"
+									   value="@Model.Title"
+									   placeholder="Enter task title">
+							</div>
+							<div class="col-md-3">
+								<label for="CreationDate" class="form-label">Creation Date</label>
+								<input type="date"
+									   class="form-control"
+									   id="CreationDate"
+									   name="creationDate"
+									   value="@Model.CreationDate?.ToString("yyyy-MM-dd")">
+							</div>
+							<div class="col-md-3">
+								<label for="DueDate" class="form-label">Due Date</label>
+								<input type="date"
+									   class="form-control"
+									   id="DueDate"
+									   name="dueDate"
+									   value="@Model.DueDate?.ToString("yyyy-MM-dd")">
+							</div>
+							<div class="col-md-2 d-flex align-items-end gap-2">
+								<button type="submit" class="btn btn-primary flex-grow-1">
+									<i class="bi bi-search"></i> Search
+								</button>
+								<a asp-controller="TodoTasks"
+								   asp-action="Search"
+								   class="btn btn-outline-secondary"
+								   title="Clear search">
+									<i class="bi bi-x-lg"></i>
+								</a>
+							</div>
+						</div>
+					</form>
+
+					<hr class="my-3" />
+
+					<!-- Search Results -->
+					@if (Model.Tasks != null && Model.Tasks.Any())
+					{
+						<div class="mb-3">
+							<h5>Search Results</h5>
+							<small class="text-muted">Found @Model.TotalTasks task(s) matching your criteria</small>
+						</div>
+
+						<div id="searchResultsContainer">
+							@foreach (var task in Model.Tasks)
+							{
+								var statusClass = task.Status.ToLower().Replace(" ", "");
+								var isCompleted = task.Status.Equals("Completed", StringComparison.OrdinalIgnoreCase);
+								var isOverdue = task.DueDate < DateTime.Now && !isCompleted;
+
+								<div class="card task-item mb-3 @(isCompleted ? "completed" : "") @(isOverdue ? "task-overdue" : "")">
+									<div class="card-body">
+										<div class="d-flex justify-content-between align-items-start">
+											<a asp-controller="TodoTasks"
+											   asp-action="Details"
+											   asp-route-id="@task.TaskId"
+											   asp-route-listId="@task.ListId"
+											   asp-route-returnUrl="@Context.Request.GetEncodedUrl()"
+											   class="flex-grow-1 text-decoration-none text-dark task-clickable">
+												<div class="d-flex align-items-start gap-2">
+													@if (isOverdue)
+													{
+														<i class="bi bi-exclamation-triangle-fill text-danger mt-1"></i>
+													}
+													<div class="flex-grow-1">
+														<h6 class="task-title mb-2">@task.Title</h6>
+														@if (!string.IsNullOrEmpty(task.Description))
+														{
+															<p class="text-muted mb-2">@task.Description</p>
+														}
+														else
+														{
+															<p class="text-muted mb-2"><em>No description</em></p>
+														}
+														<div class="d-flex gap-2 align-items-center flex-wrap">
+															<span class="badge status-badge status-@statusClass">@task.Status</span>
+															<small class="text-muted">
+																<i class="bi bi-calendar-plus"></i>
+																Created: @task.CreationDate.ToString("MMM dd, yyyy")
+															</small>
+															<small class="text-@(isOverdue ? "danger fw-bold" : "muted")">
+																<i class="bi bi-calendar-event"></i>
+																Due: @task.DueDate.ToString("MMM dd, yyyy")
+																@if (isOverdue)
+																{
+																	<span class="badge bg-danger ms-1">OVERDUE</span>
+																}
+															</small>
+															<small class="text-muted">
+																<i class="bi bi-person"></i> @task.OwnerName
+															</small>
+															@if (task.Tags != null && task.Tags.Any())
+															{
+																@foreach (var tag in task.Tags)
+																{
+																	<span class="badge bg-info">@tag</span>
+																}
+															}
+														</div>
+													</div>
+												</div>
+											</a>
+										</div>
+									</div>
+								</div>
+							}
+
+							<!-- Pagination -->
+							@if (Model.TotalPages > 1)
+							{
+								<nav aria-label="Search results pagination" class="mt-4">
+									<ul class="pagination justify-content-center">
+										<!-- Previous -->
+										<li class="page-item @(Model.PageNumber <= 1 ? "disabled" : "")">
+											<a class="page-link"
+											   asp-controller="TodoTasks"
+											   asp-action="Search"
+											   asp-route-title="@Model.Title"
+											   asp-route-creationDate="@Model.CreationDate?.ToString("yyyy-MM-dd")"
+											   asp-route-dueDate="@Model.DueDate?.ToString("yyyy-MM-dd")"
+											   asp-route-pageNumber="@(Model.PageNumber - 1)"
+											   asp-route-rowCount="@Model.RowCount"
+											   aria-label="Previous">
+												<i class="bi bi-chevron-left"></i> Previous
+											</a>
+										</li>
+
+										<!-- Page info -->
+										<li class="page-item disabled">
+											<span class="page-link">
+												Page @Model.PageNumber of @Model.TotalPages (Total: @Model.TotalTasks tasks)
+											</span>
+										</li>
+
+										<!-- Next -->
+										<li class="page-item @(Model.PageNumber >= Model.TotalPages ? "disabled" : "")">
+											<a class="page-link"
+											   asp-controller="TodoTasks"
+											   asp-action="Search"
+											   asp-route-title="@Model.Title"
+											   asp-route-creationDate="@Model.CreationDate?.ToString("yyyy-MM-dd")"
+											   asp-route-dueDate="@Model.DueDate?.ToString("yyyy-MM-dd")"
+											   asp-route-pageNumber="@(Model.PageNumber + 1)"
+											   asp-route-rowCount="@Model.RowCount"
+											   aria-label="Next">
+												Next <i class="bi bi-chevron-right"></i>
+											</a>
+										</li>
+									</ul>
+								</nav>
+							}
+						</div>
+					}
+					else
+					{
+						<div class="text-center py-5">
+							<i class="bi bi-search text-muted" style="font-size: 3rem;"></i>
+							<p class="text-muted mt-3">No tasks found matching your search criteria</p>
+							<p class="text-muted">Try adjusting your search parameters</p>
+						</div>
+					}
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

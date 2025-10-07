@@ -24,7 +24,7 @@ public class AssignedTasksApiService : IAssignedTasksService
     {
         try
         {
-            Uri uri = TasksUriBuilder.BuildUri(this.httpClient.BaseAddress!, filter, sortBy, sortOrder, pageNumber, rowCount);
+            Uri uri = TasksUriBuilder.BuildSortingUri(this.httpClient.BaseAddress!, filter, sortBy, sortOrder, pageNumber, rowCount);
 
             using var response = await this.httpClient.GetAsync(uri);
 

@@ -56,6 +56,20 @@
     border-left: 4px solid #198754;
 }
 
+.tag-container {
+    margin-top: 2px;
+}
+
+.tag-container .badge {
+    font-size: 0.75rem;
+    border-radius: 0.5rem;
+    padding: 0.35em 0.6em;
+}
+
+.task-title {
+    flex-shrink: 0;
+}
+
 /* --- HEADER (MY LISTS) --- */
 .card-header.bg-primary {
     background-color: var(--core-green) !important;

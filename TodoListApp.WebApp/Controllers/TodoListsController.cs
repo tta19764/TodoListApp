@@ -391,7 +391,6 @@ public class TodoListsController : Controller
             ListId = model.ListId,
             OwnerName = FormatOwnerName(model.OwnerUser?.FirstName, model.OwnerUser?.LastName),
             Tags = model.UsersTags?.Select(tag => tag.Title) ?? Enumerable.Empty<string>(),
-            Comments = model.UserComments?.Select(c => c.Text) ?? Enumerable.Empty<string>(),
         };
     }
 

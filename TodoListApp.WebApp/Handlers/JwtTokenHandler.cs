@@ -10,7 +10,7 @@ using TodoListApp.WebApp.Data;
 
 namespace TodoListApp.WebApp.Handlers;
 
-public class JwtTokenHandler : DelegatingHandler
+internal class JwtTokenHandler : DelegatingHandler
 {
     private readonly IHttpContextAccessor httpContextAccessor;
     private readonly UserManager<AppUser> userManager;

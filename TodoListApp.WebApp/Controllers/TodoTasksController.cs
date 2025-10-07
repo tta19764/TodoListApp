@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Globalization;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
@@ -19,17 +18,20 @@ public class TodoTasksController : Controller
     private readonly ITodoListService todoListService;
     private readonly IAssignedTasksService assignedTasksService;
     private readonly ILogger<TodoTasksController> logger;
+    private readonly ISearchTasksService searchTasksService;
 
     public TodoTasksController(
         ITodoTaskService todoTaskService,
         ITodoListService todoListService,
         ILogger<TodoTasksController> logger,
-        IAssignedTasksService assignedTasksService)
+        IAssignedTasksService assignedTasksService,
+        ISearchTasksService searchTasksService)
     {
         this.todoTaskService = todoTaskService ?? throw new ArgumentNullException(nameof(todoTaskService));
         this.todoListService = todoListService ?? throw new ArgumentNullException(nameof(todoListService));
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
         this.assignedTasksService = assignedTasksService ?? throw new ArgumentNullException(nameof(assignedTasksService));
+        this.searchTasksService = searchTasksService ?? throw new ArgumentNullException(nameof(searchTasksService));
     }
 
     [HttpGet]
@@ -71,9 +73,13 @@ public class TodoTasksController : Controller
             viewModel.Tasks = tasks.Select(t => MapToTaskViewModel(t)).ToList();
             viewModel.TotalTasks = viewModel.Tasks.Count();
 
-            this.logger.LogInformation("Retrieved {Count} assigned tasks for user {UserId}", viewModel.TotalTasks, userId.Value);
+            if (this.ModelState.IsValid)
+            {
+                TodoTasksLog.LogAssignedTasksRetrieved(this.logger, viewModel.TotalTasks, userId.Value);
+                return this.View(viewModel);
+            }
 
-            return this.View(viewModel);
+            return this.View("Error");
         }
         catch (Exception ex)
         {
@@ -141,11 +147,75 @@ public class TodoTasksController : Controller
                 ReturnUrl = returnUrl,
             };
 
-            return this.View(viewModel);
+            if (this.ModelState.IsValid)
+            {
+                TodoTasksLog.LogTaskDetailsRetrieved(this.logger, id, userId.Value);
+                return this.View(viewModel);
+            }
+
+            return this.View("Error");
         }
         catch (Exception ex)
         {
             TodoTasksLog.LogErrorRetrievingTaskDetails(this.logger, id, ex);
+            return this.View("Error");
+            throw;
+        }
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Search(string? title, DateTime? creationDate, DateTime? dueDate, int? pageNumber, int? rowCount)
+    {
+        try
+        {
+            var userId = this.GetCurrentUserId();
+            if (userId == null)
+            {
+                return this.RedirectToAction("Login", "Account");
+            }
+
+            var viewModel = new SearchTasksViewModel
+            {
+                Title = title,
+                CreationDate = creationDate,
+                DueDate = dueDate,
+                PageNumber = pageNumber ?? 1,
+                RowCount = rowCount ?? 10,
+            };
+
+            // Get total count
+            var totalCount = await this.searchTasksService.GetAllSearchCountAsync(
+                userId.Value,
+                title,
+                creationDate,
+                dueDate);
+
+            viewModel.TotalPages = (int)Math.Ceiling(totalCount / (double)viewModel.RowCount);
+            viewModel.TotalTasks = totalCount;
+
+            // Get search results
+            var tasks = await this.searchTasksService.SearchTasksAsync(
+                userId.Value,
+                title,
+                creationDate,
+                dueDate,
+                viewModel.PageNumber,
+                viewModel.RowCount);
+
+            // Map to view models
+            viewModel.Tasks = tasks.Select(t => MapToTaskViewModel(t)).ToList();
+
+            if (this.ModelState.IsValid)
+            {
+                TodoTasksLog.LogSearchTasksRetrieved(this.logger, viewModel.TotalTasks, userId.Value);
+                return this.View(viewModel);
+            }
+
+            return this.View("Error");
+        }
+        catch (Exception ex)
+        {
+            TodoTasksLog.LogErrorLoadingSearchedTasks(this.logger, ex);
             return this.View("Error");
             throw;
         }
@@ -433,7 +503,6 @@ public class TodoTasksController : Controller
             ListId = model.ListId,
             OwnerName = FormatOwnerName(model.OwnerUser?.FirstName, model.OwnerUser?.LastName),
             Tags = model.UsersTags?.Select(tag => tag.Title) ?? Enumerable.Empty<string>(),
-            Comments = model.UserComments?.Select(c => c.Text) ?? Enumerable.Empty<string>(),
         };
     }
 
@@ -453,6 +522,17 @@ public class TodoTasksController : Controller
         return name;
     }
 
+    private static ListRole StringToRoleEnum(string roleName)
+    {
+        return roleName.ToUpperInvariant() switch
+        {
+            "OWNER" => ListRole.Owner,
+            "EDITOR" => ListRole.Editor,
+            "VIEWER" => ListRole.Viewer,
+            _ => ListRole.None,
+        };
+    }
+
     private int? GetCurrentUserId()
     {
         var userNameIdentifier = this.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -463,16 +543,5 @@ public class TodoTasksController : Controller
         }
 
         return null;
-    }
-
-    private static ListRole StringToRoleEnum(string roleName)
-    {
-        return roleName.ToUpperInvariant() switch
-        {
-            "OWNER" => ListRole.Owner,
-            "EDITOR" => ListRole.Editor,
-            "VIEWER" => ListRole.Viewer,
-            _ => ListRole.None,
-        };
     }
 }

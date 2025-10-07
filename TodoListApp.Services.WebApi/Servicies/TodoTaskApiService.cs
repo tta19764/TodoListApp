@@ -235,7 +235,7 @@ public class TodoTaskApiService : ITodoTaskService
         try
         {
             Uri baseUri = new Uri(this.httpClient.BaseAddress + $"Lists/{id}/");
-            Uri uri = TasksUriBuilder.BuildUri(baseUri, filter, sortBy, sortOrder, pageNumber, rowCount);
+            Uri uri = TasksUriBuilder.BuildSortingUri(baseUri, filter, sortBy, sortOrder, pageNumber, rowCount);
 
             using var response = await this.httpClient.GetAsync(uri);
 

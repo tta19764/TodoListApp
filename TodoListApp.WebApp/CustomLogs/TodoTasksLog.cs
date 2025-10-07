@@ -38,6 +38,12 @@ public static class TodoTasksLog
             new EventId(1506, nameof(AssignedTasksRetrieved)),
             "Successfuly retrieved {Count} assigned tasks for user {UserId}");
 
+    private static readonly Action<ILogger, int, int, Exception?> SearchTasksRetrieved =
+        LoggerMessage.Define<int, int>(
+            LogLevel.Information,
+            new EventId(1507, nameof(SearchTasksRetrieved)),
+            "Successfuly retrieved {Count} search tasks for user {UserId}");
+
     private static readonly Action<ILogger, int, int, Exception?> TaskNotFoundForUser =
         LoggerMessage.Define<int, int>(
             LogLevel.Warning,
@@ -116,6 +122,12 @@ public static class TodoTasksLog
             new EventId(3510, nameof(ErrorLoadingAssignedTasks)),
             "Error loading assigned tasks");
 
+    private static readonly Action<ILogger, Exception?> ErrorLoadingSearchedTasks =
+            LoggerMessage.Define(
+            LogLevel.Error,
+            new EventId(3511, nameof(ErrorLoadingSearchedTasks)),
+            "Error loading searched tasks");
+
     public static void LogTaskDetailsRetrieved(ILogger logger, int taskId, int userId)
         => TaskDetailsRetrieved(logger, taskId, userId, null);
 
@@ -139,6 +151,9 @@ public static class TodoTasksLog
 
     public static void LogAssignedTasksRetrieved(ILogger logger, int count, int userId)
         => AssignedTasksRetrieved(logger, count, userId, null);
+
+    public static void LogSearchTasksRetrieved(ILogger logger, int count, int userId)
+        => SearchTasksRetrieved(logger, count, userId, null);
 
     public static void LogErrorRetrievingTaskDetails(ILogger logger, int taskId, Exception ex)
         => ErrorRetrievingTaskDetails(logger, taskId, ex);
@@ -172,4 +187,7 @@ public static class TodoTasksLog
 
     public static void LogErrorLoadingAssignedTasks(ILogger logger, Exception ex)
         => ErrorLoadingAssignedTasks(logger, ex);
+
+    public static void LogErrorLoadingSearchedTasks(ILogger logger, Exception ex)
+        => ErrorLoadingSearchedTasks(logger, ex);
 }

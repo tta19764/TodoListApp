@@ -1,5 +1,3 @@
-using TodoListApp.Services.Enums;
-
 namespace TodoListApp.WebApp.Models.Task;
 
 /// <summary>
@@ -51,9 +49,4 @@ public class TodoTaskViewModel
     /// Gets or sets the list of tags associated with the task.
     /// </summary>
     public IEnumerable<string> Tags { get; set; } = new List<string>();
-
-    /// <summary>
-    /// Gets or sets the list of comments on the task.
-    /// </summary>
-    public IEnumerable<string> Comments { get; set; } = new List<string>();
 }
