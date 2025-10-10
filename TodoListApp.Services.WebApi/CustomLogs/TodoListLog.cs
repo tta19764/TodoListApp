@@ -1,6 +1,10 @@
 using Microsoft.Extensions.Logging;
 
 namespace TodoListApp.Services.WebApi.CustomLogs;
+
+/// <summary>
+/// Custom logging class for TodoList API service operations.
+/// </summary>
 public static class TodoListLog
 {
     // Information level logs
@@ -105,53 +109,149 @@ public static class TodoListLog
     // Public wrappers
 
     // Information
+
+    /// <summary>
+    /// Logs that a to-do list has been successfully created.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="listId">The ID of the created list.</param>
     public static void LogTodoListCreated(ILogger logger, int listId) =>
         TodoListCreated(logger, listId, null);
 
+    /// <summary>
+    /// Logs that a to-do list has been successfully deleted.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="listId">The ID of the deleted list.</param>
     public static void LogTodoListDeleted(ILogger logger, int listId) =>
         TodoListDeleted(logger, listId, null);
 
+    /// <summary>
+    /// Logs that to-do lists have been successfully retrieved for a user.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="count">The number of lists retrieved.</param>
+    /// <param name="userId">The ID of the user.</param>
     public static void LogTodoListsRetrieved(ILogger logger, int count, int userId) =>
         TodoListsRetrieved(logger, count, userId, null);
 
+    /// <summary>
+    /// Logs that a page of to-do lists has been successfully retrieved for a user.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="count">The number of lists retrieved.</param>
+    /// <param name="pageNumber">The page number retrieved.</param>
+    /// <param name="userId">The ID of the user.</param>
     public static void LogTodoListsPageRetrieved(ILogger logger, int count, int pageNumber, int userId) =>
         TodoListsPageRetrieved(logger, count, pageNumber, userId, null);
 
+    /// <summary>
+    /// Logs that a to-do list has been successfully updated.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="listId">The ID of the updated list.</param>
     public static void LogTodoListUpdated(ILogger logger, int listId) =>
         TodoListUpdated(logger, listId, null);
 
+    /// <summary>
+    /// Logs that a to-do list has been successfully retrieved by its ID.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="listId">The ID of the retrieved list.</param>
+    /// <param name="userId">The ID of the user.</param>
     public static void LogTodoListRetrievedById(ILogger logger, int listId, int userId) =>
         TodoListRetrievedById(logger, listId, userId, null);
 
+    /// <summary>
+    /// Logs that to-do lists created by an author have been successfully retrieved.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="count">The number of lists retrieved.</param>
+    /// <param name="userId">The ID of the author user.</param>
     public static void LogTodoListsRetrievedByAuthor(ILogger logger, int count, int userId) =>
         TodoListsRetrievedByAuthor(logger, count, userId, null);
 
+    /// <summary>
+    /// Logs that a page of to-do lists created by an author has been successfully retrieved.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="count">The number of lists retrieved.</param>
+    /// <param name="pageNumber">The page number retrieved.</param>
+    /// <param name="userId">The ID of the author user.</param>
     public static void LogTodoListsPageRetrievedByAuthor(ILogger logger, int count, int pageNumber, int userId) =>
         TodoListsPageRetrievedByAuthor(logger, count, pageNumber, userId, null);
 
+    /// <summary>
+    /// Logs that to-do lists shared with a user have been successfully retrieved.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="count">The number of shared lists retrieved.</param>
+    /// <param name="userId">The ID of the user with whom lists are shared.</param>
     public static void LogTodoListsRetrievedShared(ILogger logger, int count, int userId) =>
         TodoListsRetrievedShared(logger, count, userId, null);
 
+    /// <summary>
+    /// Logs that a page of to-do lists shared with a user has been successfully retrieved.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="count">The number of shared lists retrieved.</param>
+    /// <param name="pageNumber">The page number retrieved.</param>
+    /// <param name="userId">The ID of the user with whom lists are shared.</param>
     public static void LogTodoListsPageRetrievedShared(ILogger logger, int count, int pageNumber, int userId) =>
         TodoListsPageRetrievedShared(logger, count, pageNumber, userId, null);
 
     // Warning
+
+    /// <summary>
+    /// Logs a warning that a to-do list operation returned a null response.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="operation">The name of the operation that returned null.</param>
     public static void LogNullResponse(ILogger logger, string operation) =>
         NullResponse(logger, operation, null);
 
+    /// <summary>
+    /// Logs a warning that a to-do list was not found.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="listId">The ID of the list that was not found.</param>
     public static void LogTodoListNotFound(ILogger logger, int listId) =>
         TodoListNotFound(logger, listId, null);
 
+    /// <summary>
+    /// Logs a warning that a to-do list operation failed.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="operation">The name of the operation that failed.</param>
+    /// <param name="listId">The ID of the list involved.</param>
+    /// <param name="statusCode">The HTTP status code returned.</param>
+    /// <param name="error">The error message returned.</param>
     public static void LogTodoListFailed(ILogger logger, string operation, int listId, int statusCode, string error) =>
         TodoListFailed(logger, operation, listId, statusCode, error, null);
 
     // Error
+
+    /// <summary>
+    /// Logs an error that an HTTP error occurred while performing a to-do list operation.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="ex">The exception that occurred.</param>
     public static void LogHttpRequestError(ILogger logger, Exception ex) =>
         HttpRequestError(logger, ex);
 
+    /// <summary>
+    /// Logs an error that a JSON parsing error occurred while processing a to-do list response.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="ex">The exception that occurred.</param>
     public static void LogJsonParsingError(ILogger logger, Exception ex) =>
         JsonParsingError(logger, ex);
 
+    /// <summary>
+    /// Logs an error that an unexpected error occurred during a to-do list operation.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="ex">The exception that occurred.</param>
     public static void LogUnexpectedError(ILogger logger, Exception ex) =>
         UnexpectedError(logger, ex);
 }

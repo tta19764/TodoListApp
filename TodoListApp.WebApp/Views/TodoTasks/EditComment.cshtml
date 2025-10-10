@@ -1,0 +1,57 @@
+@model EditCommentViewModel
+@{
+	ViewData["Title"] = "Edit Comment";
+	Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-4">
+	<div class="row">
+		<div class="col-lg-6 mx-auto">
+			<div class="card shadow-sm">
+				<div class="card-header bg-primary text-white">
+					<h4 class="mb-0">
+						<i class="bi bi-pencil"></i> Edit Comment
+					</h4>
+					<small>Task: @Model.TaskTitle</small>
+				</div>
+				<div class="card-body">
+					<form asp-controller="TodoTasks" asp-action="EditComment" method="post">
+						<input type="hidden" asp-for="CommentId" />
+						<input type="hidden" asp-for="TaskId" />
+						<input type="hidden" asp-for="TaskTitle" />
+						<input type="hidden" asp-for="ReturnUrl" />
+
+						<div class="mb-3">
+							<label asp-for="Text" class="form-label fw-bold" for="EditCommentText">Comment Text</label>
+							<textarea id="EditCommentText"
+								asp-for="Text"
+									  class="form-control"
+									  rows="5"
+									  placeholder="Enter your comment here..."
+									  required></textarea>
+							<span asp-validation-for="Text" class="text-danger"></span>
+						</div>
+
+						<div class="alert alert-warning">
+							<i class="bi bi-exclamation-triangle"></i>
+							<strong>Note:</strong> Only the list owner can edit comments.
+						</div>
+
+						<div class="d-flex justify-content-between mt-4">
+							<a href="@Model.ReturnUrl" class="btn btn-outline-secondary">
+								<i class="bi bi-x-lg"></i> Cancel
+							</a>
+							<button type="submit" class="btn btn-primary">
+								<i class="bi bi-check-lg"></i> Save Changes
+							</button>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+@section Scripts {
+	<partial name="_ValidationScriptsPartial" />
+}

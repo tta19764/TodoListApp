@@ -1,13 +1,10 @@
-using System.Globalization;
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using TodoListApp.Services.Enums;
 using TodoListApp.Services.Interfaces.Servicies;
 using TodoListApp.Services.Models;
 using TodoListApp.WebApp.CustomLogs;
+using TodoListApp.WebApp.Helpers;
 using TodoListApp.WebApp.Models.List;
-using TodoListApp.WebApp.Models.Task;
 
 namespace TodoListApp.WebApp.Controllers;
 
@@ -35,7 +32,7 @@ public class TodoListsController : Controller
 
         try
         {
-            var userId = this.GetCurrentUserId();
+            var userId = UserHelper.GetCurrentUserId(this.User);
             if (userId == null)
             {
                 return this.RedirectToAction("Login", "Account");
@@ -86,7 +83,7 @@ public class TodoListsController : Controller
             TodoListsLog.LogListsRetrievedForUser(this.logger, lists.Count, userId.Value);
 
             // Map to view models
-            viewModel.TodoLists = lists.Select(l => MapToListViewModel(l)).AsEnumerable();
+            viewModel.TodoLists = lists.Select(l => MapToViewModel.ToList(l)).AsEnumerable();
 
             // If a list is selected, load its tasks
             if (listId.HasValue)
@@ -105,10 +102,10 @@ public class TodoListsController : Controller
 
                 if (selectedList != null)
                 {
-                    viewModel.SelectedList = MapToListViewModel(selectedList);
+                    viewModel.SelectedList = MapToViewModel.ToList(selectedList);
 
                     // Parse task filter
-                    var filter = ParseTaskFilter(taskFilter);
+                    var filter = Formaters.StringToTaskFilterEnum(taskFilter);
 
                     viewModel.TaskPageNumber = taskPageNumber ?? 1;
                     viewModel.TaskRowCount = taskRowCount ?? 10;
@@ -127,7 +124,12 @@ public class TodoListsController : Controller
                     TodoListsLog.LogTasksRetrievedForList(this.logger, tasks.Count, listId.Value, userId.Value);
 
                     // Map tasks to view models
-                    viewModel.Tasks = tasks.Select(t => MapToTaskViewModel(t)).ToList();
+                    viewModel.Tasks = tasks.Select(t =>
+                    {
+                        var taskViewModel = MapToViewModel.ToTask(userId.Value, t);
+                        taskViewModel.Role = Formaters.StringToRoleEnum(selectedList.UserRole);
+                        return taskViewModel;
+                    }).ToList();
                 }
             }
 
@@ -136,7 +138,6 @@ public class TodoListsController : Controller
         catch (Exception ex)
         {
             TodoListsLog.LogFailedToLoadTodoLists(this.logger, ex);
-            return this.View("Error");
             throw;
         }
     }
@@ -146,7 +147,7 @@ public class TodoListsController : Controller
     {
         _ = this.ModelState.IsValid;
 
-        var userId = this.GetCurrentUserId();
+        var userId = UserHelper.GetCurrentUserId(this.User);
         if (userId == null)
         {
             return this.RedirectToAction("Login", "Account");
@@ -180,7 +181,7 @@ public class TodoListsController : Controller
 
         try
         {
-            var userId = this.GetCurrentUserId();
+            var userId = UserHelper.GetCurrentUserId(this.User);
             if (userId == null)
             {
                 return this.RedirectToAction("Login", "Account");
@@ -202,7 +203,6 @@ public class TodoListsController : Controller
         {
             TodoListsLog.LogFailedToLoadCreateTodoList(this.logger, ex);
             this.ModelState.AddModelError(string.Empty, "An error occurred while creating the list.");
-            return this.View(model);
             throw;
         }
     }
@@ -214,7 +214,7 @@ public class TodoListsController : Controller
 
         try
         {
-            var userId = this.GetCurrentUserId();
+            var userId = UserHelper.GetCurrentUserId(this.User);
             if (userId == null)
             {
                 return this.RedirectToAction("Login", "Account");
@@ -249,7 +249,6 @@ public class TodoListsController : Controller
         catch (Exception ex)
         {
             TodoListsLog.LogErrorLoadingEditPage(this.logger, id, ex);
-            return this.View("Error");
             throw;
         }
     }
@@ -267,7 +266,7 @@ public class TodoListsController : Controller
 
         try
         {
-            var userId = this.GetCurrentUserId();
+            var userId = UserHelper.GetCurrentUserId(this.User);
             if (userId == null)
             {
                 return this.RedirectToAction("Login", "Account");
@@ -289,7 +288,6 @@ public class TodoListsController : Controller
         {
             TodoListsLog.LogErrorUpdatingList(this.logger, model.ListId, ex);
             this.ModelState.AddModelError(string.Empty, "An error occurred while updating the list.");
-            return this.View(model);
             throw;
         }
     }
@@ -302,7 +300,7 @@ public class TodoListsController : Controller
 
         try
         {
-            var userId = this.GetCurrentUserId();
+            var userId = UserHelper.GetCurrentUserId(this.User);
             if (userId == null)
             {
                 return this.RedirectToAction("Login", "Account");
@@ -322,87 +320,7 @@ public class TodoListsController : Controller
         catch (Exception ex)
         {
             TodoListsLog.LogErrorDeletingList(this.logger, id, ex);
-            return this.RedirectToAction(nameof(this.Index));
             throw;
         }
-    }
-
-    private static TaskFilter ParseTaskFilter(string? filter)
-    {
-        return filter?.ToUpperInvariant() switch
-        {
-            "NOTSTARTED" => TaskFilter.NotStarted,
-            "INPROGRESS" => TaskFilter.InProgress,
-            "COMPLETED" => TaskFilter.Completed,
-            "ALL" => TaskFilter.All,
-            _ => TaskFilter.Active
-        };
-    }
-
-    private static string FormatOwnerName(string? firstName, string? lastName)
-    {
-        if (string.IsNullOrEmpty(firstName) && string.IsNullOrEmpty(lastName))
-        {
-            return "N/A";
-        }
-
-        var name = firstName ?? "N/A";
-        if (!string.IsNullOrEmpty(lastName))
-        {
-            name += $" {lastName[0]}.";
-        }
-
-        return name;
-    }
-
-    private static TodoListViewModel MapToListViewModel(TodoListModel model)
-    {
-        return new TodoListViewModel
-        {
-            ListId = model.Id,
-            Title = model.Title,
-            Description = model.Description,
-            UserRole = StringToRoleEnum(model.UserRole),
-            PendingTasks = model.ActiveTasks,
-        };
-    }
-
-    private static ListRole StringToRoleEnum(string roleName)
-    {
-        return roleName.ToUpperInvariant() switch
-        {
-            "OWNER" => ListRole.Owner,
-            "EDITOR" => ListRole.Editor,
-            "VIEWER" => ListRole.Viewer,
-            _ => ListRole.None,
-        };
-    }
-
-    private static TodoTaskViewModel MapToTaskViewModel(TodoTaskModel model)
-    {
-        return new TodoTaskViewModel
-        {
-            TaskId = model.Id,
-            Title = model.Title,
-            Description = model.Description,
-            CreationDate = model.CreationDate ?? DateTime.MinValue,
-            DueDate = model.DueDate,
-            Status = model.Status?.StatusTitle ?? "Unknown",
-            ListId = model.ListId,
-            OwnerName = FormatOwnerName(model.OwnerUser?.FirstName, model.OwnerUser?.LastName),
-            Tags = model.UsersTags?.Select(tag => tag.Title) ?? Enumerable.Empty<string>(),
-        };
-    }
-
-    private int? GetCurrentUserId()
-    {
-        var userNameIdentifier = this.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (userNameIdentifier != null &&
-            int.TryParse(userNameIdentifier, NumberStyles.Integer, CultureInfo.InvariantCulture, out var userId))
-        {
-            return userId;
-        }
-
-        return null;
     }
 }

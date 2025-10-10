@@ -1,6 +1,20 @@
 namespace TodoListApp.Services.Models;
+
+/// <summary>
+/// Model representing a to-do list with its details.
+/// </summary>
 public class TodoListModel : AbstractModel
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TodoListModel"/> class.
+    /// </summary>
+    /// <param name="id">The list ID.</param>
+    /// <param name="ownerId">The list owner ID.</param>
+    /// <param name="title">The list title.</param>
+    /// <param name="description">The list description.</param>
+    /// <param name="activeTasks">The nmber of active tasks in the list.</param>
+    /// <param name="ownerFullName">The fillname of the owner.</param>
+    /// <param name="userRole">The list user role.</param>
     public TodoListModel(int id, int ownerId, string title, string? description = null, int activeTasks = 0, string? ownerFullName = null, string userRole = "No role")
         : base(id)
     {

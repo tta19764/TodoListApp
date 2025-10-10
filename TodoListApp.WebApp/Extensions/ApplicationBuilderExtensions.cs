@@ -1,9 +1,21 @@
+using TodoListApp.WebApp.Middleware;
+
 namespace TodoListApp.WebApp.Extensions;
 
+/// <summary>
+/// Extension methods for configuring the application builder.
+/// </summary>
 internal static class ApplicationBuilderExtensions
 {
+    /// <summary>
+    /// Configures the middleware for the TodoList application.
+    /// </summary>
+    /// <param name="app">The application.</param>
+    /// <returns>The configured application.</returns>
     public static WebApplication UseTodoListAppMiddleware(this WebApplication app)
     {
+        _ = app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
+
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
         {
@@ -28,6 +40,11 @@ internal static class ApplicationBuilderExtensions
         return app;
     }
 
+    /// <summary>
+    /// Maps the routes for the TodoList application.
+    /// </summary>
+    /// <param name="app">The application.</param>
+    /// <returns>The application with mapped routes.</returns>
     public static WebApplication MapTodoListAppRoutes(this WebApplication app)
     {
         _ = app.MapControllerRoute(

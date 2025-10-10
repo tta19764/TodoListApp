@@ -1,0 +1,104 @@
+:root {
+    --core-green: #28a745;
+    --core-green-dark: #218838;
+    --core-green-light: #f0faf3;
+    --core-grey: #6c757d;
+}
+
+/* ---------- Base Card ---------- */
+.task-item {
+    border-left: 4px solid #dee2e6;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    background-color: #fff;
+}
+
+    .task-item:hover {
+        background-color: #f8f9fa;
+        border-left-color: #0d6efd;
+        box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.1);
+    }
+
+    .task-item.completed {
+        background-color: rgba(25, 135, 84, 0.05); /* subtle green tint */
+        border-left: 4px solid #198754;
+    }
+
+        .task-item.completed .task-title {
+            text-decoration: line-through;
+        }
+
+/* ---------- Overdue State ---------- */
+.task-overdue {
+    border-left: 4px solid #dc3545 !important;
+    background-color: #fff5f5;
+}
+
+.task-overdue:hover {
+    background-color: #ffe5e5;
+    box-shadow: 0 0.125rem 0.5rem rgba(220, 53, 69, 0.2) !important;
+}
+
+/* ---------- Title and Tags ---------- */
+.task-title {
+    flex-shrink: 0;
+    font-weight: 600;
+}
+
+.tag-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    margin-top: 2px;
+}
+
+    .tag-container .badge {
+        font-size: 0.75rem;
+        border-radius: 0.5rem;
+        padding: 0.35em 0.6em;
+        background-color: #0dcaf0;
+        color: #fff;
+    }
+
+/* ---------- Status Badges ---------- */
+.status-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.5rem;
+    color: #fff;
+}
+
+.status-notstarted {
+    background-color: #6c757d;
+}
+
+.status-inprogress {
+    background-color: #0dcaf0;
+}
+
+.status-completed {
+    background-color: #198754;
+}
+
+/* ---------- Clickable Wrapper ---------- */
+.task-clickable {
+    text-decoration: none;
+    color: inherit;
+    transition: background-color 0.2s ease;
+}
+
+    .task-clickable:hover {
+        text-decoration: none;
+        color: inherit;
+    }
+
+/* ---------- Buttons (from original tasks.css) ---------- */
+.btn-group > .btn:not(:last-child):not(.dropdown-toggle),
+.btn-group > .btn-group:not(:last-child) > .btn {
+    border-top-right-radius: .25rem;
+    border-bottom-right-radius: .25rem;
+}
+
+.btn-group .btn {
+    margin: 2px;
+}

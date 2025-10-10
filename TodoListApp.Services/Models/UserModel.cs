@@ -1,6 +1,16 @@
 namespace TodoListApp.Services.Models;
+
+/// <summary>
+/// Model representing a user.
+/// </summary>
 public class UserModel : AbstractModel
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="UserModel"/> class.
+    /// </summary>
+    /// <param name="id">The user ID.</param>
+    /// <param name="firstName">The user first name.</param>
+    /// <param name="lastName">The user last name.</param>
     public UserModel(int id, string firstName, string lastName)
         : base(id)
     {

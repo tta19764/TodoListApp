@@ -1,0 +1,90 @@
+@model AllTagsViewModel
+@{
+	ViewData["Title"] = "All Tags";
+	Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid mt-4">
+	<div class="row">
+		<div class="col-12">
+			<div class="card shadow-sm">
+				<div class="card-header bg-primary text-white">
+					<h4 class="mb-0">
+						<i class="bi bi-tags"></i> All Tags
+					</h4>
+					<small>Total: @Model.TotalTags tag(s)</small>
+				</div>
+				<div class="card-body">
+					@if (Model.Tags != null && Model.Tags.Any())
+					{
+						<div class="row g-3">
+							@foreach (var tag in Model.Tags)
+							{
+								<div class="col-md-4 col-lg-3">
+									<a asp-controller="Tags"
+									   asp-action="TasksByTag"
+									   asp-route-tagId="@tag.Id"
+									   class="text-decoration-none">
+										<div class="card tag-card h-100 border-info">
+											<div class="card-body text-center">
+												<i class="bi bi-tag-fill text-info fs-2 mb-2"></i>
+												<h6 class="card-title mb-0">@tag.Title</h6>
+											</div>
+										</div>
+									</a>
+								</div>
+							}
+						</div>
+
+						<!-- Pagination -->
+						@if (Model.TotalPages > 1)
+						{
+							<nav aria-label="Tags pagination" class="mt-4">
+								<ul class="pagination justify-content-center">
+									<!-- Previous -->
+									<li class="page-item @(Model.PageNumber <= 1 ? "disabled" : "")">
+										<a class="page-link"
+										   asp-controller="Tags"
+										   asp-action="Index"
+										   asp-route-pageNumber="@(Model.PageNumber - 1)"
+										   asp-route-rowCount="@Model.RowCount"
+										   aria-label="Previous">
+											<i class="bi bi-chevron-left"></i> Previous
+										</a>
+									</li>
+
+									<!-- Page info -->
+									<li class="page-item disabled">
+										<span class="page-link">
+											Page @Model.PageNumber of @Model.TotalPages
+										</span>
+									</li>
+
+									<!-- Next -->
+									<li class="page-item @(Model.PageNumber >= Model.TotalPages ? "disabled" : "")">
+										<a class="page-link"
+										   asp-controller="Tags"
+										   asp-action="Index"
+										   asp-route-pageNumber="@(Model.PageNumber + 1)"
+										   asp-route-rowCount="@Model.RowCount"
+										   aria-label="Next">
+											Next <i class="bi bi-chevron-right"></i>
+										</a>
+									</li>
+								</ul>
+							</nav>
+						}
+					}
+					else
+					{
+						<div class="text-center py-5">
+							<i class="bi bi-tags text-muted" style="font-size: 3rem;"></i>
+							<p class="text-muted mt-3">No tags found</p>
+							<p class="text-muted">Tags will appear here once they are added to tasks</p>
+						</div>
+					}
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

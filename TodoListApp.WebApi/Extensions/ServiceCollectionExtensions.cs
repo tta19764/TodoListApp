@@ -39,7 +39,7 @@ internal static class ServiceCollectionExtensions
         _ = services
             .AddTransient<ITodoListService, TodoListService>()
             .AddTransient<ITodoTaskService, TodoTaskService>()
-            .AddTransient<ITagService, TagSerivice>()
+            .AddTransient<ITagService, TagService>()
             .AddTransient<IAssignedTasksService, AssignedTasksService>()
             .AddTransient<ISearchTasksService, SearchTasksService>()
             .AddTransient<ITaskTagService, TaskTagService>()

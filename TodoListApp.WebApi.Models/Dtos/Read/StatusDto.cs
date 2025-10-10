@@ -5,6 +5,9 @@ namespace TodoListApp.WebApi.Models.Dtos.Read;
 /// </summary>
 public class StatusDto
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="StatusDto"/> class.
+    /// </summary>
     public StatusDto()
     {
     }

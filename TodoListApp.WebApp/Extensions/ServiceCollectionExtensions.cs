@@ -2,6 +2,7 @@ using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.EntityFrameworkCore;
+using TodoListApp.Services.Email;
 using TodoListApp.Services.Interfaces.Servicies;
 using TodoListApp.Services.WebApi.Servicies;
 using TodoListApp.WebApp.Data;
@@ -10,8 +11,18 @@ using TodoListApp.WebApp.Services;
 
 namespace TodoListApp.WebApp.Extensions;
 
+/// <summary>
+/// Extension methods for configuring services in the dependency injection container.
+/// </summary>
 internal static class ServiceCollectionExtensions
 {
+    /// <summary>
+    /// Configures and adds application services to the service collection.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="configuration">The app configuration.</param>
+    /// <returns>The updated service collection.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when the connection string is not found.</exception>
     public static IServiceCollection AddTodoListAppServices(this IServiceCollection services, IConfiguration configuration)
     {
         var connectionString = configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
@@ -34,8 +45,16 @@ internal static class ServiceCollectionExtensions
         })
             .AddEntityFrameworkStores<ApplicationDbContext>();
 
-        _ = services.AddTransient<JwtTokenHandler>()
-            .AddTransient<ITokenStorageService, IdentityTokenStorageService>();
+        var emailConfig = configuration
+        .GetSection("EmailConfiguration")
+        .Get<EmailSender>();
+
+        _ = services
+            .AddSingleton(emailConfig)
+            .AddScoped<IViewRenderService, ViewRenderService>()
+            .AddTransient<JwtTokenHandler>()
+            .AddTransient<ITokenStorageService, IdentityTokenStorageService>()
+            .AddTransient<IEmailService, EmailService>();
 
         _ = services.AddControllersWithViews(options =>
         {

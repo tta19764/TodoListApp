@@ -21,27 +21,27 @@
                         <input type="hidden" asp-for="ReturnUrl" />
 
                         <div class="mb-3">
-                            <label asp-for="Title" class="form-label">Task Title</label>
-                            <input asp-for="Title" class="form-control" placeholder="Enter task title" autofocus />
+							<label asp-for="Title" class="form-label" for="EditTaskTitle">Task Title</label>
+                            <input id="EditTaskTitle" asp-for="Title" class="form-control" placeholder="Enter task title" autofocus />
                             <span asp-validation-for="Title" class="text-danger"></span>
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="Description" class="form-label">Description</label>
-                            <textarea asp-for="Description" class="form-control" rows="4" placeholder="Enter task description (optional)"></textarea>
+                            <label asp-for="Description" class="form-label" for="EditTaskDescription">Description</label>
+                            <textarea id="EditTaskDescription" asp-for="Description" class="form-control" rows="4" placeholder="Enter task description (optional)"></textarea>
                             <span asp-validation-for="Description" class="text-danger"></span>
                         </div>
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label asp-for="DueDate" class="form-label">Due Date</label>
-                                <input asp-for="DueDate" type="date" class="form-control" />
+                                <label asp-for="DueDate" class="form-label" for="EditTaskDueDate">Due Date</label>
+                                <input id="EditTaskDueDate" asp-for="DueDate" type="date" class="form-control" />
                                 <span asp-validation-for="DueDate" class="text-danger"></span>
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <label asp-for="Status" class="form-label">Status</label>
-                                <select asp-for="Status" class="form-select">
+                                <label asp-for="Status" class="form-label" for="EditTaskStatus">Status</label>
+                                <select id="EditTaskStatus" asp-for="Status" class="form-select">
                                     <option value="@TodoTaskStatus.NotStarted">Not Started</option>
 									<option value="@TodoTaskStatus.InProgress">In Progress</option>
 									<option value="@TodoTaskStatus.Completed">Completed</option>

@@ -40,6 +40,10 @@ public class CommentRepository : AbstractRepository, ICommentRepository
         _ = await this.dbSet.AddAsync(entity);
         _ = await this.Context.SaveChangesAsync();
 
+        await this.Context.Entry(entity)
+        .Reference(e => e.Author)
+        .LoadAsync();
+
         return entity;
     }
 

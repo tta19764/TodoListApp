@@ -38,6 +38,351 @@ public class TodoTasksController : ControllerBase
     }
 
     /// <summary>
+    /// Gets the count of comments for a specific task.
+    /// </summary>
+    /// <param name="taskId">The unique identifier of the task.</param>
+    /// <returns>The count of comments.</returns>
+    [HttpGet("{taskId:int}/Comments/Count")]
+    [Authorize]
+    public async Task<ActionResult<int>> GetTaskCommentsCount(int taskId)
+    {
+        try
+        {
+            var userId = UserHelper.GetCurrentUserId(this.User);
+            if (userId == null)
+            {
+                return this.Unauthorized("Invalid user identifier.");
+            }
+
+            var count = await this.service.GetTaskCommentsCountAsync(taskId, userId.Value);
+
+            return this.Ok(count);
+        }
+        catch (EntityNotFoundException ex)
+        {
+            TodoTasksLog.LogTaskNotFoundForUser(this.logger, taskId, UserHelper.GetCurrentUserId(this.User), ex.Message);
+            return this.NotFound($"Task with ID {taskId} was not found.");
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            TodoTasksLog.LogUnauthorizedTaskAccess(this.logger, taskId, UserHelper.GetCurrentUserId(this.User), ex.Message);
+            return this.Forbid("You don't have permission to access this task.");
+        }
+        catch (Exception ex)
+        {
+            TodoTasksLog.LogUnexpectedErrorRetrievingComments(this.logger, taskId, ex);
+            return this.StatusCode(500, "An unexpected error occurred while retrieving comments count.");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets all comments for a specific task.
+    /// </summary>
+    /// <param name="taskId">The unique identifier of the task.</param>
+    /// <returns>A list of comments.</returns>
+    [HttpGet("{taskId:int}/Comments")]
+    [Authorize]
+    public async Task<ActionResult<List<CommentDto>>> GetTaskComments(int taskId)
+    {
+        try
+        {
+            var userId = UserHelper.GetCurrentUserId(this.User);
+            if (userId == null)
+            {
+                return this.Unauthorized("Invalid user identifier.");
+            }
+
+            var comments = await this.service.GetTaskCommentsAsync(taskId, userId.Value);
+
+            if (comments == null || !comments.Any())
+            {
+                return this.Ok(new List<CommentDto>());
+            }
+
+            var commentDtos = comments.Select(MapToDto.ToCommentDto).ToList();
+
+            TodoTasksLog.LogCommentsRetrievedForTask(this.logger, commentDtos.Count, taskId);
+
+            return this.Ok(commentDtos);
+        }
+        catch (EntityNotFoundException ex)
+        {
+            TodoTasksLog.LogTaskNotFoundForUser(this.logger, taskId, UserHelper.GetCurrentUserId(this.User), ex.Message);
+            return this.NotFound($"Task with ID {taskId} was not found.");
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            TodoTasksLog.LogUnauthorizedTaskAccess(this.logger, taskId, UserHelper.GetCurrentUserId(this.User), ex.Message);
+            return this.Forbid("You don't have permission to access this task.");
+        }
+        catch (Exception ex)
+        {
+            TodoTasksLog.LogUnexpectedErrorRetrievingComments(this.logger, taskId, ex);
+            return this.StatusCode(500, "An unexpected error occurred while retrieving comments.");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets paginated comments for a specific task.
+    /// </summary>
+    /// <param name="taskId">The unique identifier of the task.</param>
+    /// <param name="pageNumber">The page number.</param>
+    /// <param name="rowCount">The number of comments per page.</param>
+    /// <returns>A paginated list of comments.</returns>
+    [HttpGet("{taskId:int}/Comments/{pageNumber:min(1)}/{rowCount:min(1)}")]
+    [Authorize]
+    public async Task<ActionResult<List<CommentDto>>> GetTaskCommentsPaginated(
+        int taskId,
+        int pageNumber,
+        int rowCount)
+    {
+        try
+        {
+            var userId = UserHelper.GetCurrentUserId(this.User);
+            if (userId == null)
+            {
+                return this.Unauthorized("Invalid user identifier.");
+            }
+
+            var comments = await this.service.GetTaskCommentsAsync(taskId, userId.Value, pageNumber, rowCount);
+
+            if (comments == null || !comments.Any())
+            {
+                return this.Ok(new List<CommentDto>());
+            }
+
+            var commentDtos = comments.Select(MapToDto.ToCommentDto).ToList();
+
+            TodoTasksLog.LogCommentsRetrievedForTask(this.logger, commentDtos.Count, taskId);
+
+            return this.Ok(commentDtos);
+        }
+        catch (EntityNotFoundException ex)
+        {
+            TodoTasksLog.LogTaskNotFoundForUser(this.logger, taskId, UserHelper.GetCurrentUserId(this.User), ex.Message);
+            return this.NotFound($"Task with ID {taskId} was not found.");
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            TodoTasksLog.LogUnauthorizedTaskAccess(this.logger, taskId, UserHelper.GetCurrentUserId(this.User), ex.Message);
+            return this.Forbid("You don't have permission to access this task.");
+        }
+        catch (ArgumentOutOfRangeException ex) when (ex.ParamName == "pageNumber" || ex.ParamName == "rowCount")
+        {
+            TodoTasksLog.LogInvalidPaginationParameters(this.logger, pageNumber, rowCount);
+            return this.BadRequest("Invalid pagination parameters. Page number and row count must be positive integers.");
+        }
+        catch (Exception ex)
+        {
+            TodoTasksLog.LogUnexpectedErrorRetrievingComments(this.logger, taskId, ex);
+            return this.StatusCode(500, "An unexpected error occurred while retrieving comments.");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Adds a comment to a task.
+    /// </summary>
+    /// <param name="taskId">The unique identifier of the task.</param>
+    /// <param name="dto">The data transfer object containing comment information.</param>
+    /// <returns>The created comment.</returns>
+    [HttpPost("{taskId:int}/Comments")]
+    [Authorize]
+    public async Task<ActionResult<CommentDto>> AddCommentToTask(int taskId, [FromBody] CreateCommentDto dto)
+    {
+        try
+        {
+            if (dto == null)
+            {
+                return this.BadRequest("Comment data is required.");
+            }
+
+            var userId = UserHelper.GetCurrentUserId(this.User);
+            if (userId == null)
+            {
+                return this.Unauthorized("Invalid user identifier.");
+            }
+
+            var commentModel = new CommentModel(0, dto.Text, taskId, userId.Value);
+            var createdComment = await this.service.AddTaskCommentAsync(commentModel);
+
+            TodoTasksLog.LogCommentAddedToTask(this.logger, createdComment.Id, taskId, userId);
+
+            var commentDto = MapToDto.ToCommentDto(createdComment);
+
+            return this.CreatedAtAction(nameof(this.GetTaskComments), new { taskId }, commentDto);
+        }
+        catch (EntityNotFoundException ex)
+        {
+            TodoTasksLog.LogTaskNotFoundForUser(this.logger, taskId, UserHelper.GetCurrentUserId(this.User), ex.Message);
+            return this.NotFound($"Task with ID {taskId} was not found.");
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            TodoTasksLog.LogUnauthorizedCommentOperation(this.logger, taskId, 0, UserHelper.GetCurrentUserId(this.User), ex.Message);
+            return this.Forbid("You don't have permission to add comments to this task.");
+        }
+        catch (UnableToCreateException ex)
+        {
+            TodoTasksLog.LogUnexpectedErrorAddingComment(this.logger, taskId, ex);
+            return this.StatusCode(500, "Unable to add comment. Please try again later.");
+        }
+        catch (Exception ex)
+        {
+            TodoTasksLog.LogUnexpectedErrorAddingComment(this.logger, taskId, ex);
+            return this.StatusCode(500, "An unexpected error occurred while adding comment.");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Updates an existing comment.
+    /// </summary>
+    /// <param name="taskId">The unique identifier of the task.</param>
+    /// <param name="dto">The data transfer object containing updated comment information.</param>
+    /// <returns>The updated comment.</returns>
+    [HttpPut("{taskId:int}/Comments/{commentId:int}")]
+    [Authorize]
+    public async Task<ActionResult<CommentDto>> UpdateComment(int taskId, [FromBody] UpdateCommentDto dto)
+    {
+        if (dto == null)
+        {
+            return this.BadRequest("Comment data is required.");
+        }
+
+        try
+        {
+            var userId = UserHelper.GetCurrentUserId(this.User);
+            if (userId == null)
+            {
+                return this.Unauthorized("Invalid user identifier.");
+            }
+
+            var commentModel = new CommentModel(dto.Id, dto.Text, taskId, userId.Value);
+            var updatedComment = await this.service.UpdateTaskCommentAsync(userId.Value, commentModel);
+
+            TodoTasksLog.LogCommentUpdated(this.logger, dto.Id, userId);
+
+            return this.Ok(MapToDto.ToCommentDto(updatedComment));
+        }
+        catch (EntityNotFoundException ex)
+        {
+            TodoTasksLog.LogCommentNotFound(this.logger, dto.Id, UserHelper.GetCurrentUserId(this.User), ex.Message);
+            return this.NotFound($"Comment with ID {dto.Id} was not found.");
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            TodoTasksLog.LogUnauthorizedCommentOperation(this.logger, taskId, dto.Id, UserHelper.GetCurrentUserId(this.User), ex.Message);
+            return this.Forbid("You don't have permission to update this comment.");
+        }
+        catch (UnableToUpdateException ex)
+        {
+            TodoTasksLog.LogUnexpectedErrorUpdatingComment(this.logger, dto.Id, ex);
+            return this.StatusCode(500, "Unable to update comment. Please try again later.");
+        }
+        catch (Exception ex)
+        {
+            TodoTasksLog.LogUnexpectedErrorUpdatingComment(this.logger, dto.Id, ex);
+            return this.StatusCode(500, "An unexpected error occurred while updating comment.");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Deletes a comment from a task.
+    /// </summary>
+    /// <param name="taskId">The unique identifier of the task.</param>
+    /// <param name="commentId">The unique identifier of the comment.</param>
+    /// <returns>The result of the deletion operation.</returns>
+    [HttpDelete("{taskId:int}/Comments/{commentId:int}")]
+    [Authorize]
+    public async Task<ActionResult> DeleteComment(int taskId, int commentId)
+    {
+        try
+        {
+            var userId = UserHelper.GetCurrentUserId(this.User);
+            if (userId == null)
+            {
+                return this.Unauthorized("Invalid user identifier.");
+            }
+
+            await this.service.RemoveTaskCommentAsync(userId.Value, taskId, commentId);
+
+            TodoTasksLog.LogCommentDeleted(this.logger, commentId, userId);
+
+            return this.Ok(new { message = "Comment has been deleted successfully." });
+        }
+        catch (EntityNotFoundException ex)
+        {
+            TodoTasksLog.LogCommentNotFound(this.logger, commentId, UserHelper.GetCurrentUserId(this.User), ex.Message);
+            return this.NotFound($"Comment with ID {commentId} was not found.");
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            TodoTasksLog.LogUnauthorizedCommentOperation(this.logger, taskId, commentId, UserHelper.GetCurrentUserId(this.User), ex.Message);
+            return this.Forbid("You don't have permission to delete this comment.");
+        }
+        catch (UnableToDeleteException ex)
+        {
+            TodoTasksLog.LogUnexpectedErrorDeletingComment(this.logger, commentId, ex);
+            return this.StatusCode(500, "Unable to delete comment. Please try again later.");
+        }
+        catch (Exception ex)
+        {
+            TodoTasksLog.LogUnexpectedErrorDeletingComment(this.logger, commentId, ex);
+            return this.StatusCode(500, "An unexpected error occurred while deleting comment.");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets a specific comment by its ID.
+    /// </summary>
+    /// <param name="taskId">The task ID.</param>
+    /// <param name="commnetId">The comment ID.</param>
+    /// <returns>The comment with the specified ID if the user has access to it.</returns>
+    [HttpGet("{taskId:int}/Comments/{commnetId:int}")]
+    [Authorize]
+    public async Task<ActionResult<CommentDto>> GetComment(int taskId, int commnetId)
+    {
+        try
+        {
+            var userId = UserHelper.GetCurrentUserId(this.User);
+            if (userId == null)
+            {
+                return this.Unauthorized("Invalid user identifier.");
+            }
+
+            var model = await this.service.GetCommentByIdAsync(userId.Value, taskId, commnetId);
+
+            if (model == null)
+            {
+                return this.NotFound($"Comment with ID {commnetId} was not found.");
+            }
+
+            return this.Ok(MapToDto.ToCommentDto(model));
+        }
+        catch (EntityNotFoundException ex)
+        {
+            TodoTasksLog.LogCommentNotFound(this.logger, commnetId, UserHelper.GetCurrentUserId(this.User), ex.Message);
+            return this.NotFound($"Comment with ID {commnetId} was not found.");
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            TodoTasksLog.LogUnauthorizedTaskAccess(this.logger, taskId, UserHelper.GetCurrentUserId(this.User), ex.Message);
+            return this.Forbid("You don't have permission to access this comment.");
+        }
+        catch (Exception ex)
+        {
+            TodoTasksLog.LogUnexpectedErrorRetrievingTask(this.logger, taskId, ex);
+            return this.StatusCode(500, "An unexpected error occurred while retrieving the comment.");
+            throw;
+        }
+    }
+
+    /// <summary>
     /// Maps a TodoTask model to a TodoTaskDto.
     /// </summary>
     /// <param name="listId">The list unique identifier.</param>

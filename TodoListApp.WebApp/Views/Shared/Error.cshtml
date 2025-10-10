@@ -1,25 +1,98 @@
 @model ErrorViewModel
 @{
-    ViewData["Title"] = "Error";
+	ViewData["Title"] = "Error";
+	Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h1 class="text-danger">Error.</h1>
-<h2 class="text-danger">An error occurred while processing your request.</h2>
+<div class="error-container">
+	<div class="error-card">
+		<div class="error-content">
+			<div class="error-icon">
+				@if (Model.StatusCode == 404)
+				{
+					<span>🔍</span>
+				}
+				else if (Model.StatusCode == 401 || Model.StatusCode == 403)
+				{
+					<span>🔒</span>
+				}
+				else if (Model.StatusCode == 501)
+				{
+					<span>🚧</span>
+				}
+				else
+				{
+					<span>⚠️</span>
+				}
+			</div>
 
-@if (Model.ShowRequestId)
-{
-    <p>
-        <strong>Request ID:</strong> <code>@Model.RequestId</code>
-    </p>
-}
+			<div class="text-center">
+				<span class="status-badge">@Model.StatusCode</span>
+			</div>
 
-<h3>Development Mode</h3>
-<p>
-    Swapping to <strong>Development</strong> environment will display more detailed information about the error that occurred.
-</p>
-<p>
-    <strong>The Development environment shouldn't be enabled for deployed applications.</strong>
-    It can result in displaying sensitive information from exceptions to end users.
-    For local debugging, enable the <strong>Development</strong> environment by setting the <strong>ASPNETCORE_ENVIRONMENT</strong> environment variable to <strong>Development</strong>
-    and restarting the app.
-</p>
+			<h1 class="error-title">
+				@switch (Model.StatusCode)
+				{
+					case 404:
+						@:Page Not Found
+						break;
+					case 401:
+						@:Unauthorized
+						break;
+					case 403:
+						@:Access Denied
+						break;
+					case 501:
+						@:Not Implemented
+						break;
+					default:
+						@:Oops! Something Went Wrong
+						break;
+				}
+			</h1>
+
+			<p class="error-subtitle">@Model.ErrorMessage</p>
+
+			<div class="error-details-box">
+				<div class="error-detail-item">
+					<span class="error-detail-label">Error Code:</span>
+					<span class="error-detail-value">@Model.ErrorCode</span>
+				</div>
+				@if (Model.ShowRequestId)
+				{
+					<div class="error-detail-item">
+						<span class="error-detail-label">Request ID:</span>
+						<span class="error-detail-value">@Model.RequestId</span>
+					</div>
+				}
+				<div class="error-detail-item">
+					<span class="error-detail-label">Timestamp:</span>
+					<span class="error-detail-value">@Model.Timestamp.ToString("yyyy-MM-dd HH:mm:ss UTC")</span>
+				</div>
+			</div>
+
+			@if (Model.ShowDetails)
+			{
+				<div class="error-technical">
+					<h5 style="margin-top: 0; color: #ffd700;">Technical Details (Development Mode Only):</h5>
+					<pre>@Model.ErrorDetails</pre>
+				</div>
+			}
+
+			<div class="error-actions">
+				<a href="/" class="btn-error btn-primary-error">
+					🏠 Go Home
+				</a>
+				<button onclick="history.back()" class="btn-error btn-secondary-error">
+					← Go Back
+				</button>
+				@if (Model.StatusCode == 501)
+				{
+					<a href="/Account/Login" class="btn-error btn-secondary-error">
+						Try Login
+					</a>
+				}
+			</div>
+		</div>
+	</div>
+</div>

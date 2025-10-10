@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using TodoListApp.Services.Database.Data;
 using TodoListApp.Services.Database.Entities;
+using TodoListApp.Services.Database.Helpers;
 using TodoListApp.Services.Database.Repositories;
 using TodoListApp.Services.Database.ServiceExeptions;
 using TodoListApp.Services.Interfaces.Servicies;
@@ -43,8 +44,8 @@ public class TodoListService : ITodoListService
 
         try
         {
-            TodoList newList = await this.repository.AddAsync(ModelToEntity(model));
-            return EntityToModel(newList, model.OwnerId);
+            TodoList newList = await this.repository.AddAsync(ModelToEntityConverter.ToListEntity(model));
+            return EntityToModelConverter.ToListModel(newList, model.OwnerId);
         }
         catch (DbUpdateException ex)
         {
@@ -96,11 +97,11 @@ public class TodoListService : ITodoListService
             int page = pageNumber > 0 ? (int)pageNumber : 1;
             int row = rowCount > 0 ? (int)rowCount : 1;
 
-            return (await this.repository.GetAllByAuthorAsync(authorId, page, row)).Select(l => EntityToModel(l, authorId)).ToList();
+            return (await this.repository.GetAllByAuthorAsync(authorId, page, row)).Select(l => EntityToModelConverter.ToListModel(l, authorId)).ToList();
         }
         else
         {
-            return (await this.repository.GetAllByAuthorAsync(authorId)).Select(l => EntityToModel(l, authorId)).ToList();
+            return (await this.repository.GetAllByAuthorAsync(authorId)).Select(l => EntityToModelConverter.ToListModel(l, authorId)).ToList();
         }
     }
 
@@ -118,11 +119,11 @@ public class TodoListService : ITodoListService
             int page = pageNumber > 0 ? (int)pageNumber : 1;
             int row = rowCount > 0 ? (int)rowCount : 1;
 
-            return (await this.repository.GetAllSharedAsync(userId, page, row)).Select(l => EntityToModel(l, userId)).ToList();
+            return (await this.repository.GetAllSharedAsync(userId, page, row)).Select(l => EntityToModelConverter.ToListModel(l, userId)).ToList();
         }
         else
         {
-            return (await this.repository.GetAllSharedAsync(userId)).Select(l => EntityToModel(l, userId)).ToList();
+            return (await this.repository.GetAllSharedAsync(userId)).Select(l => EntityToModelConverter.ToListModel(l, userId)).ToList();
         }
     }
 
@@ -136,7 +137,7 @@ public class TodoListService : ITodoListService
         var todoLists = await this.repository.GetAllByUserAsync(userId);
         return todoLists
             .Select(l =>
-            EntityToModel(l, userId))
+            EntityToModelConverter.ToListModel(l, userId))
             .ToList();
     }
 
@@ -152,7 +153,7 @@ public class TodoListService : ITodoListService
         var todoLists = await this.repository.GetAllByUserAsync(userId, pageNumber, rowCount);
         return todoLists
             .Select(l =>
-            EntityToModel(l, userId))
+            EntityToModelConverter.ToListModel(l, userId))
             .ToList();
     }
 
@@ -172,12 +173,12 @@ public class TodoListService : ITodoListService
         {
             throw new EntityNotFoundException(nameof(entity), id);
         }
-        else if (!entity.TodoListUserRoles.Any(lur => lur.UserId == userId && lur.ListRole.RoleName == "Editor") && entity.OwnerId != userId)
+        else if (!entity.TodoListUserRoles.Any(lur => lur.UserId == userId) && entity.OwnerId != userId)
         {
             throw new UnauthorizedAccessException("You do not have permission to see this list.");
         }
 
-        return EntityToModel(entity, userId);
+        return EntityToModelConverter.ToListModel(entity, userId);
     }
 
     /// <summary>
@@ -205,10 +206,10 @@ public class TodoListService : ITodoListService
 
         try
         {
-            TodoList? updated = await this.repository.UpdateAsync(ModelToEntity(model));
+            TodoList? updated = await this.repository.UpdateAsync(ModelToEntityConverter.ToListEntity(model));
             return updated == null ?
                 throw new UnableToUpdateException(nameof(existing), model.Id) :
-                EntityToModel(updated, userId);
+                EntityToModelConverter.ToListModel(updated, userId);
         }
         catch (DbUpdateException ex)
         {
@@ -244,60 +245,5 @@ public class TodoListService : ITodoListService
     public async Task<int> AllSharedCount(int userId)
     {
         return (await this.repository.GetAllByUserAsync(userId)).Count(l => l.TodoListUserRoles.Any(lur => lur.UserId == userId));
-    }
-
-    private static TodoListModel EntityToModel(TodoList entity, int userId)
-    {
-        string? userRole = null;
-
-        if (entity.OwnerId == userId)
-        {
-            userRole = "Owner";
-        }
-        else
-        {
-            var role = entity.TodoListUserRoles.FirstOrDefault(r => r.UserId == userId);
-            if (role != null)
-            {
-                userRole = role.ListRole.RoleName;
-            }
-            else
-            {
-                userRole = "No role";
-            }
-        }
-
-        var activeTasks = 0;
-        if (entity.TodoTasks != null)
-        {
-            activeTasks = (from task in entity.TodoTasks
-                           where task.Status != null && task.Status.StatusTitle != "Completed"
-                           select task).Count();
-        }
-
-        string userLastName = string.Empty;
-        if (entity.ListOwner != null && !string.IsNullOrEmpty(entity.ListOwner.LastName))
-        {
-            userLastName = $" {entity.ListOwner.LastName[0]}.";
-        }
-
-        var userFullName = (entity.ListOwner is null) ?
-            null :
-            string.Concat(entity.ListOwner.FirstName, userLastName);
-
-        return new TodoListModel(entity.Id, entity.OwnerId, entity.Title, entity.Description, activeTasks, userFullName, userRole);
-    }
-
-    private static TodoList ModelToEntity(TodoListModel model)
-    {
-        var entity = new TodoList()
-        {
-            Id = model.Id,
-            Title = model.Title,
-            Description = model.Description ?? string.Empty,
-            OwnerId = model.OwnerId,
-        };
-
-        return entity;
     }
 }

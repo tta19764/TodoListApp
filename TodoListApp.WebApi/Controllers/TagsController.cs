@@ -175,7 +175,7 @@ public class TagsController : ControllerBase
     {
         try
         {
-            var tags = await this.service.GetAvilableTaskTagsAsync(taskId);
+            var tags = await this.service.GetAvailableTaskTagsAsync(taskId);
 
             if (tags == null || !tags.Any())
             {
@@ -212,7 +212,7 @@ public class TagsController : ControllerBase
     {
         try
         {
-            var tags = await this.service.GetAvilableTaskTagsAsync(taskId, pageNumber, rowCount);
+            var tags = await this.service.GetAvailableTaskTagsAsync(taskId, pageNumber, rowCount);
 
             if (tags == null || !tags.Any())
             {

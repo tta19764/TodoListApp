@@ -10,6 +10,11 @@ html {
     }
 }
 
+body {
+    margin-bottom: 60px;
+}
+
+/* ---------- NAVIGATION ---------- */
 .nav-hover {
     position: relative;
     transition: color 0.3s ease-in-out;
@@ -22,22 +27,19 @@ html {
     bottom: -4px;
     width: 0;
     height: 2px;
-    background-color: green;
+    background-color: var(--core-green, green);
     transition: width 0.3s ease-in-out;
 }
 
 .nav-hover:hover {
-    color: green !important;
+    color: var(--core-green, green) !important;
 }
 
 .nav-hover:hover::after {
     width: 100%;
 }
 
-body {
-    margin-bottom: 60px;
-}
-
+/* ---------- MAIN PAGE ---------- */
 .main-page {
     border-radius: 25px;
     min-height: 60vh;
@@ -46,6 +48,7 @@ body {
     background-size: cover;
 }
 
+/* ---------- MAIN BUTTONS ---------- */
 .main-btn {
     display: inline-flex;
     align-items: center;
@@ -60,6 +63,12 @@ body {
     transition: all 0.3s ease-in-out;
 }
 
+.main-btn:hover {
+    opacity: 0.85;
+    transform: translateY(-3px);
+}
+
+/* ---------- BUTTON COLORS ---------- */
 .btn-blue {
     background-color: #007bff;
 }
@@ -74,9 +83,4 @@ body {
 
 .btn-purple {
     background-color: #6f42c1;
-}
-
-.main-btn:hover {
-    opacity: 0.85;
-    transform: translateY(-3px);
 }

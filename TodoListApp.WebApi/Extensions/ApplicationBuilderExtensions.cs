@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Diagnostics;
+using TodoListApp.WebApi.CustomLogs;
 using TodoListApp.WebApi.Seed;
 
 namespace TodoListApp.WebApi.Extensions;
@@ -19,6 +21,36 @@ internal static class ApplicationBuilderExtensions
         {
             _ = app.UseSwagger();
             _ = app.UseSwaggerUI();
+        }
+        else
+        {
+            _ = app.UseExceptionHandler(errorApp =>
+            {
+                errorApp.Run(async context =>
+                {
+                    context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+                    context.Response.ContentType = "application/json";
+
+                    var exceptionFeature = context.Features.Get<IExceptionHandlerPathFeature>();
+                    if (exceptionFeature != null)
+                    {
+                        var logger = context.RequestServices
+                            .GetRequiredService<ILoggerFactory>()
+                            .CreateLogger("GlobalExceptionHandler");
+
+                        GlobalExceptionLog.LogUnhandledException(
+                            logger,
+                            exceptionFeature.Error.Message,
+                            exceptionFeature.Path);
+
+                        await context.Response.WriteAsJsonAsync(new
+                        {
+                            error = "An unexpected error occurred while processing your request.",
+                            path = exceptionFeature.Path,
+                        });
+                    }
+                });
+            });
         }
 
         _ = app.UseHttpsRedirection();

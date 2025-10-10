@@ -44,9 +44,6 @@ public class TodoTaskRepository : AbstractRepository, ITodoTaskRepository
         .Include(t => t.TodoList)
         .Include(t => t.OwnerUser)
         .Include(t => t.Status)
-        .Include(t => t.TaskTags)
-            .ThenInclude(tt => tt.Tag)
-        .Include(t => t.Comments)
         .FirstAsync(e => e.Id == entity.Id);
     }
 
@@ -121,7 +118,6 @@ public class TodoTaskRepository : AbstractRepository, ITodoTaskRepository
             .Include(t => t.Status)
             .Include(t => t.TaskTags)
                 .ThenInclude(tt => tt.Tag)
-            .Include(t => t.Comments)
             .FirstOrDefaultAsync(t => t.Id == existing.Id);
     }
 
@@ -139,7 +135,6 @@ public class TodoTaskRepository : AbstractRepository, ITodoTaskRepository
             .Include(t => t.Status)
             .Include(t => t.TaskTags)
                 .ThenInclude(tt => tt.Tag)
-            .Include(t => t.Comments)
             .AsSplitQuery()
             .ToListAsync();
     }
@@ -170,7 +165,6 @@ public class TodoTaskRepository : AbstractRepository, ITodoTaskRepository
             .Include(t => t.Status)
             .Include(t => t.TaskTags)
                 .ThenInclude(tt => tt.Tag)
-            .Include(t => t.Comments)
             .AsSplitQuery()
             .Skip((pageNumber - 1) * rowCount)
             .Take(rowCount)
@@ -193,7 +187,6 @@ public class TodoTaskRepository : AbstractRepository, ITodoTaskRepository
             .Include(t => t.Status)
             .Include(t => t.TaskTags)
                 .ThenInclude(tt => tt.Tag)
-            .Include(t => t.Comments)
             .AsSplitQuery()
             .ToListAsync();
     }
@@ -226,7 +219,6 @@ public class TodoTaskRepository : AbstractRepository, ITodoTaskRepository
             .Include(t => t.Status)
             .Include(t => t.TaskTags)
                 .ThenInclude(tt => tt.Tag)
-            .Include(t => t.Comments)
             .AsSplitQuery()
             .Skip((pageNumber - 1) * rowCount)
             .Take(rowCount)
@@ -249,7 +241,6 @@ public class TodoTaskRepository : AbstractRepository, ITodoTaskRepository
             .Include(t => t.Status)
             .Include(t => t.TaskTags)
                 .ThenInclude(tt => tt.Tag)
-            .Include(t => t.Comments)
             .AsSplitQuery()
             .ToListAsync();
     }
@@ -265,6 +256,16 @@ public class TodoTaskRepository : AbstractRepository, ITodoTaskRepository
     /// </returns>
     public async Task<IReadOnlyList<TodoTask>> GetAllUserTasksAsync(int userId, int pageNumber, int rowCount)
     {
+        if (pageNumber < 1)
+        {
+            throw new ArgumentException("Page number must be greater than 0.");
+        }
+
+        if (rowCount < 1)
+        {
+            throw new ArgumentException("Row count must be greater than 0.");
+        }
+
         return await this.dbSet
             .Where(t => t.OwnerUserId == userId || t.TodoList.TodoListUserRoles.Any(lur => lur.UserId == userId))
             .Include(t => t.TodoList)
@@ -272,7 +273,60 @@ public class TodoTaskRepository : AbstractRepository, ITodoTaskRepository
             .Include(t => t.Status)
             .Include(t => t.TaskTags)
                 .ThenInclude(tt => tt.Tag)
-            .Include(t => t.Comments)
+            .AsSplitQuery()
+            .Skip((pageNumber - 1) * rowCount)
+            .Take(rowCount)
+            .ToListAsync();
+    }
+
+    /// <summary>
+    /// Asynchronously gets all <see cref="TodoTask"/> entities assigned to the user.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user.</param>
+    /// <returns>
+    /// A task representing the asynchronous operation. The task result contains <see cref="IReadOnlyList{TodoTask}"/>.
+    /// </returns>
+    public async Task<IReadOnlyList<TodoTask>> GetAllAssignedTasksAsync(int userId)
+    {
+        return await this.dbSet
+            .Where(t => t.OwnerUserId == userId)
+            .Include(t => t.TodoList)
+            .Include(t => t.OwnerUser)
+            .Include(t => t.Status)
+            .Include(t => t.TaskTags)
+                .ThenInclude(tt => tt.Tag)
+            .AsSplitQuery()
+            .ToListAsync();
+    }
+
+    /// <summary>
+    /// Asynchronously gets all <see cref="TodoTask"/> entities assigned to the user.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user.</param>
+    /// <param name="pageNumber">The page number to retrieve (1-based).</param>
+    /// <param name="rowCount">The number of rows per page.</param>
+    /// <returns>
+    /// A task representing the asynchronous operation. The task result contains <see cref="IReadOnlyList{TodoTask}"/>.
+    /// </returns>
+    public async Task<IReadOnlyList<TodoTask>> GetAllAssignedTasksAsync(int userId, int pageNumber, int rowCount)
+    {
+        if (pageNumber < 1)
+        {
+            throw new ArgumentException("Page number must be greater than 0.");
+        }
+
+        if (rowCount < 1)
+        {
+            throw new ArgumentException("Row count must be greater than 0.");
+        }
+
+        return await this.dbSet
+            .Where(t => t.OwnerUserId == userId)
+            .Include(t => t.TodoList)
+            .Include(t => t.OwnerUser)
+            .Include(t => t.Status)
+            .Include(t => t.TaskTags)
+                .ThenInclude(tt => tt.Tag)
             .AsSplitQuery()
             .Skip((pageNumber - 1) * rowCount)
             .Take(rowCount)
@@ -291,11 +345,14 @@ public class TodoTaskRepository : AbstractRepository, ITodoTaskRepository
     {
         return await this.dbSet
             .Include(t => t.TodoList)
+                .ThenInclude(tl => tl.TodoListUserRoles)
+                    .ThenInclude(tlur => tlur.ListRole)
             .Include(t => t.OwnerUser)
             .Include(t => t.Status)
             .Include(t => t.TaskTags)
                 .ThenInclude(tt => tt.Tag)
             .Include(t => t.Comments)
+                .ThenInclude(c => c.Author)
             .AsSplitQuery()
             .FirstOrDefaultAsync(t => t.Id == id);
     }
@@ -321,7 +378,6 @@ public class TodoTaskRepository : AbstractRepository, ITodoTaskRepository
             .Include(t => t.Status)
             .Include(t => t.TaskTags)
                 .ThenInclude(tt => tt.Tag)
-            .Include(t => t.Comments)
             .AsSplitQuery()
             .ToListAsync();
     }
@@ -349,7 +405,6 @@ public class TodoTaskRepository : AbstractRepository, ITodoTaskRepository
             .Include(t => t.Status)
             .Include(t => t.TaskTags)
                 .ThenInclude(tt => tt.Tag)
-            .Include(t => t.Comments)
             .AsSplitQuery()
             .Skip((pageNumber - 1) * rowCount)
             .Take(rowCount)

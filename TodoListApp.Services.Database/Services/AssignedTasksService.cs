@@ -30,7 +30,7 @@ public class AssignedTasksService : IAssignedTasksService
         sortOrder = string.Equals(sortOrder, "desc", StringComparison.OrdinalIgnoreCase) ? sortOrder : "asc";
         sortBy = string.Equals(sortBy, "Title", StringComparison.OrdinalIgnoreCase) ? sortBy : "DueDate";
 
-        var tasks = await this.repository.GetAllUserTasksAsync(userId);
+        var tasks = await this.repository.GetAllAssignedTasksAsync(userId);
 
         var filteredTasks = filter switch
         {
@@ -66,7 +66,7 @@ public class AssignedTasksService : IAssignedTasksService
     /// <returns>The count of to-do tasks.</returns>
     public async Task<int> GetAllAssignedCountAsync(int userId, TaskFilter filter = TaskFilter.Active)
     {
-        var tasks = await this.repository.GetAllUserTasksAsync(userId);
+        var tasks = await this.repository.GetAllAssignedTasksAsync(userId);
 
         int count = filter switch
         {

@@ -70,65 +70,7 @@
 						<div id="searchResultsContainer">
 							@foreach (var task in Model.Tasks)
 							{
-								var statusClass = task.Status.ToLower().Replace(" ", "");
-								var isCompleted = task.Status.Equals("Completed", StringComparison.OrdinalIgnoreCase);
-								var isOverdue = task.DueDate < DateTime.Now && !isCompleted;
-
-								<div class="card task-item mb-3 @(isCompleted ? "completed" : "") @(isOverdue ? "task-overdue" : "")">
-									<div class="card-body">
-										<div class="d-flex justify-content-between align-items-start">
-											<a asp-controller="TodoTasks"
-											   asp-action="Details"
-											   asp-route-id="@task.TaskId"
-											   asp-route-listId="@task.ListId"
-											   asp-route-returnUrl="@Context.Request.GetEncodedUrl()"
-											   class="flex-grow-1 text-decoration-none text-dark task-clickable">
-												<div class="d-flex align-items-start gap-2">
-													@if (isOverdue)
-													{
-														<i class="bi bi-exclamation-triangle-fill text-danger mt-1"></i>
-													}
-													<div class="flex-grow-1">
-														<h6 class="task-title mb-2">@task.Title</h6>
-														@if (!string.IsNullOrEmpty(task.Description))
-														{
-															<p class="text-muted mb-2">@task.Description</p>
-														}
-														else
-														{
-															<p class="text-muted mb-2"><em>No description</em></p>
-														}
-														<div class="d-flex gap-2 align-items-center flex-wrap">
-															<span class="badge status-badge status-@statusClass">@task.Status</span>
-															<small class="text-muted">
-																<i class="bi bi-calendar-plus"></i>
-																Created: @task.CreationDate.ToString("MMM dd, yyyy")
-															</small>
-															<small class="text-@(isOverdue ? "danger fw-bold" : "muted")">
-																<i class="bi bi-calendar-event"></i>
-																Due: @task.DueDate.ToString("MMM dd, yyyy")
-																@if (isOverdue)
-																{
-																	<span class="badge bg-danger ms-1">OVERDUE</span>
-																}
-															</small>
-															<small class="text-muted">
-																<i class="bi bi-person"></i> @task.OwnerName
-															</small>
-															@if (task.Tags != null && task.Tags.Any())
-															{
-																@foreach (var tag in task.Tags)
-																{
-																	<span class="badge bg-info">@tag</span>
-																}
-															}
-														</div>
-													</div>
-												</div>
-											</a>
-										</div>
-									</div>
-								</div>
+								<partial name="_TaskCardPartial" model="task" />
 							}
 
 							<!-- Pagination -->

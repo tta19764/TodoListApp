@@ -1,11 +1,10 @@
-using System.Globalization;
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TodoListApp.Services.Database.ServiceExeptions;
 using TodoListApp.Services.Interfaces.Servicies;
 using TodoListApp.Services.Models;
 using TodoListApp.WebApi.CustomLogs;
+using TodoListApp.WebApi.Helpers;
 using TodoListApp.WebApi.Models.Dtos.Create;
 using TodoListApp.WebApi.Models.Dtos.Read;
 using TodoListApp.WebApi.Models.Dtos.Update;
@@ -20,7 +19,6 @@ namespace TodoListApp.WebApi.Controllers;
 [Authorize]
 public class TodoListsController : ControllerBase
 {
-    private const string EmptyName = "N/A";
     private readonly ITodoListService service;
     private readonly ILogger<TodoListsController> logger;
 
@@ -46,7 +44,7 @@ public class TodoListsController : ControllerBase
     {
         try
         {
-            var userId = this.GetCurrentUserId();
+            var userId = UserHelper.GetCurrentUserId(this.User);
             if (userId == null)
             {
                 TodoListsLog.LogInvalidUserIdentifier(this.logger, userId);
@@ -60,7 +58,7 @@ public class TodoListsController : ControllerBase
         }
         catch (Exception ex)
         {
-            TodoListsLog.LogUnexpectedErrorRetrievingLists(this.logger, this.GetCurrentUserId(), ex);
+            TodoListsLog.LogUnexpectedErrorRetrievingLists(this.logger, UserHelper.GetCurrentUserId(this.User), ex);
             throw;
         }
     }
@@ -75,7 +73,7 @@ public class TodoListsController : ControllerBase
     {
         try
         {
-            var userId = this.GetCurrentUserId();
+            var userId = UserHelper.GetCurrentUserId(this.User);
             if (userId == null)
             {
                 TodoListsLog.LogInvalidUserIdentifier(this.logger, userId);
@@ -89,7 +87,7 @@ public class TodoListsController : ControllerBase
         }
         catch (Exception ex)
         {
-            TodoListsLog.LogUnexpectedErrorRetrievingLists(this.logger, this.GetCurrentUserId(), ex);
+            TodoListsLog.LogUnexpectedErrorRetrievingLists(this.logger, UserHelper.GetCurrentUserId(this.User), ex);
             throw;
         }
     }
@@ -104,7 +102,7 @@ public class TodoListsController : ControllerBase
     {
         try
         {
-            var userId = this.GetCurrentUserId();
+            var userId = UserHelper.GetCurrentUserId(this.User);
             if (userId == null)
             {
                 TodoListsLog.LogInvalidUserIdentifier(this.logger, userId);
@@ -118,7 +116,7 @@ public class TodoListsController : ControllerBase
         }
         catch (Exception ex)
         {
-            TodoListsLog.LogUnexpectedErrorRetrievingLists(this.logger, this.GetCurrentUserId(), ex);
+            TodoListsLog.LogUnexpectedErrorRetrievingLists(this.logger, UserHelper.GetCurrentUserId(this.User), ex);
             throw;
         }
     }
@@ -134,7 +132,7 @@ public class TodoListsController : ControllerBase
     {
         try
         {
-            var userId = this.GetCurrentUserId();
+            var userId = UserHelper.GetCurrentUserId(this.User);
             if (userId == null)
             {
                 TodoListsLog.LogInvalidUserIdentifier(this.logger, userId);
@@ -149,18 +147,18 @@ public class TodoListsController : ControllerBase
                 return this.NotFound("The list was not found.");
             }
 
-            var result = MapToDto(todoList);
+            var result = MapToDto.ToTodoListDto(todoList);
             TodoListsLog.LogListRetrievedSuccessfully(this.logger, listId, userId);
             return this.Ok(result);
         }
         catch (EntityNotFoundException ex)
         {
-            TodoListsLog.LogListNotFoundForUser(this.logger, listId, this.GetCurrentUserId(), ex.Message);
+            TodoListsLog.LogListNotFoundForUser(this.logger, listId, UserHelper.GetCurrentUserId(this.User), ex.Message);
             return this.NotFound($"List with ID {listId} was not found.");
         }
         catch (UnauthorizedAccessException ex)
         {
-            TodoListsLog.LogUnauthorizedListAccess(this.logger, listId, this.GetCurrentUserId(), ex.Message);
+            TodoListsLog.LogUnauthorizedListAccess(this.logger, listId, UserHelper.GetCurrentUserId(this.User), ex.Message);
             return this.Forbid("You don't have permission to access this list.");
         }
         catch (Exception ex)
@@ -180,7 +178,7 @@ public class TodoListsController : ControllerBase
     {
         try
         {
-            var userId = this.GetCurrentUserId();
+            var userId = UserHelper.GetCurrentUserId(this.User);
             if (userId == null)
             {
                 TodoListsLog.LogInvalidUserIdentifier(this.logger, userId);
@@ -188,19 +186,19 @@ public class TodoListsController : ControllerBase
             }
 
             var todoLists = await this.service.GetAllAsync(userId.Value);
-            var results = todoLists.Select(MapToDto).ToList();
+            var results = todoLists.Select(MapToDto.ToTodoListDto).ToList();
 
             TodoListsLog.LogListsRetrievedSuccessfully(this.logger, results.Count, userId);
             return this.Ok(results);
         }
         catch (UnauthorizedAccessException ex)
         {
-            TodoListsLog.LogUnauthorizedListsAccess(this.logger, this.GetCurrentUserId(), ex.Message);
+            TodoListsLog.LogUnauthorizedListsAccess(this.logger, UserHelper.GetCurrentUserId(this.User), ex.Message);
             return this.Forbid("You don't have permission to access these lists.");
         }
         catch (Exception ex)
         {
-            TodoListsLog.LogUnexpectedErrorRetrievingLists(this.logger, this.GetCurrentUserId(), ex);
+            TodoListsLog.LogUnexpectedErrorRetrievingLists(this.logger, UserHelper.GetCurrentUserId(this.User), ex);
             throw;
         }
     }
@@ -217,7 +215,7 @@ public class TodoListsController : ControllerBase
     {
         try
         {
-            var userId = this.GetCurrentUserId();
+            var userId = UserHelper.GetCurrentUserId(this.User);
             if (userId == null)
             {
                 TodoListsLog.LogInvalidUserIdentifier(this.logger, userId);
@@ -225,14 +223,14 @@ public class TodoListsController : ControllerBase
             }
 
             var todoLists = await this.service.GetAllAsync(userId.Value, pageNumber, rowCount);
-            var results = todoLists.Select(MapToDto).ToList();
+            var results = todoLists.Select(MapToDto.ToTodoListDto).ToList();
 
             TodoListsLog.LogPaginatedListsRetrievedSuccessfully(this.logger, results.Count, pageNumber, rowCount, userId);
             return this.Ok(results);
         }
         catch (UnauthorizedAccessException ex)
         {
-            TodoListsLog.LogUnauthorizedListsAccess(this.logger, this.GetCurrentUserId(), ex.Message);
+            TodoListsLog.LogUnauthorizedListsAccess(this.logger, UserHelper.GetCurrentUserId(this.User), ex.Message);
             return this.Forbid("You don't have permission to access these lists.");
         }
         catch (ArgumentOutOfRangeException ex) when (ex.ParamName == "pageNumber" || ex.ParamName == "rowCount")
@@ -242,7 +240,7 @@ public class TodoListsController : ControllerBase
         }
         catch (Exception ex)
         {
-            TodoListsLog.LogUnexpectedErrorRetrievingPaginatedLists(this.logger, this.GetCurrentUserId(), ex);
+            TodoListsLog.LogUnexpectedErrorRetrievingPaginatedLists(this.logger, UserHelper.GetCurrentUserId(this.User), ex);
             throw;
         }
     }
@@ -257,7 +255,7 @@ public class TodoListsController : ControllerBase
     {
         try
         {
-            var userId = this.GetCurrentUserId();
+            var userId = UserHelper.GetCurrentUserId(this.User);
             if (userId == null)
             {
                 TodoListsLog.LogInvalidUserIdentifier(this.logger, userId);
@@ -265,19 +263,19 @@ public class TodoListsController : ControllerBase
             }
 
             var todoLists = await this.service.GetAllByAuthorAsync(userId.Value);
-            var results = todoLists.Select(MapToDto).ToList();
+            var results = todoLists.Select(MapToDto.ToTodoListDto).ToList();
 
             TodoListsLog.LogListsRetrievedSuccessfully(this.logger, results.Count, userId);
             return this.Ok(results);
         }
         catch (UnauthorizedAccessException ex)
         {
-            TodoListsLog.LogUnauthorizedListsAccess(this.logger, this.GetCurrentUserId(), ex.Message);
+            TodoListsLog.LogUnauthorizedListsAccess(this.logger, UserHelper.GetCurrentUserId(this.User), ex.Message);
             return this.Forbid("You don't have permission to access these lists.");
         }
         catch (Exception ex)
         {
-            TodoListsLog.LogUnexpectedErrorRetrievingUserLists(this.logger, this.GetCurrentUserId(), ex);
+            TodoListsLog.LogUnexpectedErrorRetrievingUserLists(this.logger, UserHelper.GetCurrentUserId(this.User), ex);
             throw;
         }
     }
@@ -294,7 +292,7 @@ public class TodoListsController : ControllerBase
     {
         try
         {
-            var userId = this.GetCurrentUserId();
+            var userId = UserHelper.GetCurrentUserId(this.User);
             if (userId == null)
             {
                 TodoListsLog.LogInvalidUserIdentifier(this.logger, userId);
@@ -302,14 +300,14 @@ public class TodoListsController : ControllerBase
             }
 
             var todoLists = await this.service.GetAllByAuthorAsync(userId.Value, pageNumber, rowCount);
-            var results = todoLists.Select(MapToDto).ToList();
+            var results = todoLists.Select(MapToDto.ToTodoListDto).ToList();
 
             TodoListsLog.LogPaginatedListsRetrievedSuccessfully(this.logger, results.Count, pageNumber, rowCount, userId);
             return this.Ok(results);
         }
         catch (UnauthorizedAccessException ex)
         {
-            TodoListsLog.LogUnauthorizedListsAccess(this.logger, this.GetCurrentUserId(), ex.Message);
+            TodoListsLog.LogUnauthorizedListsAccess(this.logger, UserHelper.GetCurrentUserId(this.User), ex.Message);
             return this.Forbid("You don't have permission to access these lists.");
         }
         catch (ArgumentOutOfRangeException ex) when (ex.ParamName == "pageNumber" || ex.ParamName == "rowCount")
@@ -319,7 +317,7 @@ public class TodoListsController : ControllerBase
         }
         catch (Exception ex)
         {
-            TodoListsLog.LogUnexpectedErrorRetrievingPaginatedUserLists(this.logger, this.GetCurrentUserId(), ex);
+            TodoListsLog.LogUnexpectedErrorRetrievingPaginatedUserLists(this.logger, UserHelper.GetCurrentUserId(this.User), ex);
             throw;
         }
     }
@@ -334,7 +332,7 @@ public class TodoListsController : ControllerBase
     {
         try
         {
-            var userId = this.GetCurrentUserId();
+            var userId = UserHelper.GetCurrentUserId(this.User);
             if (userId == null)
             {
                 TodoListsLog.LogInvalidUserIdentifier(this.logger, userId);
@@ -342,19 +340,19 @@ public class TodoListsController : ControllerBase
             }
 
             var todoLists = await this.service.GetAllSharedAsync(userId.Value);
-            var results = todoLists.Select(MapToDto).ToList();
+            var results = todoLists.Select(MapToDto.ToTodoListDto).ToList();
 
             TodoListsLog.LogListsRetrievedSuccessfully(this.logger, results.Count, userId);
             return this.Ok(results);
         }
         catch (UnauthorizedAccessException ex)
         {
-            TodoListsLog.LogUnauthorizedListsAccess(this.logger, this.GetCurrentUserId(), ex.Message);
+            TodoListsLog.LogUnauthorizedListsAccess(this.logger, UserHelper.GetCurrentUserId(this.User), ex.Message);
             return this.Forbid("You don't have permission to access these lists.");
         }
         catch (Exception ex)
         {
-            TodoListsLog.LogUnexpectedErrorRetrievingUserLists(this.logger, this.GetCurrentUserId(), ex);
+            TodoListsLog.LogUnexpectedErrorRetrievingUserLists(this.logger, UserHelper.GetCurrentUserId(this.User), ex);
             throw;
         }
     }
@@ -371,7 +369,7 @@ public class TodoListsController : ControllerBase
     {
         try
         {
-            var userId = this.GetCurrentUserId();
+            var userId = UserHelper.GetCurrentUserId(this.User);
             if (userId == null)
             {
                 TodoListsLog.LogInvalidUserIdentifier(this.logger, userId);
@@ -379,14 +377,14 @@ public class TodoListsController : ControllerBase
             }
 
             var todoLists = await this.service.GetAllSharedAsync(userId.Value, pageNumber, rowCount);
-            var results = todoLists.Select(MapToDto).ToList();
+            var results = todoLists.Select(MapToDto.ToTodoListDto).ToList();
 
             TodoListsLog.LogPaginatedListsRetrievedSuccessfully(this.logger, results.Count, pageNumber, rowCount, userId);
             return this.Ok(results);
         }
         catch (UnauthorizedAccessException ex)
         {
-            TodoListsLog.LogUnauthorizedListsAccess(this.logger, this.GetCurrentUserId(), ex.Message);
+            TodoListsLog.LogUnauthorizedListsAccess(this.logger, UserHelper.GetCurrentUserId(this.User), ex.Message);
             return this.Forbid("You don't have permission to access these lists.");
         }
         catch (ArgumentOutOfRangeException ex) when (ex.ParamName == "pageNumber" || ex.ParamName == "rowCount")
@@ -396,7 +394,7 @@ public class TodoListsController : ControllerBase
         }
         catch (Exception ex)
         {
-            TodoListsLog.LogUnexpectedErrorRetrievingPaginatedUserLists(this.logger, this.GetCurrentUserId(), ex);
+            TodoListsLog.LogUnexpectedErrorRetrievingPaginatedUserLists(this.logger, UserHelper.GetCurrentUserId(this.User), ex);
             throw;
         }
     }
@@ -412,7 +410,7 @@ public class TodoListsController : ControllerBase
     {
         try
         {
-            var userId = this.GetCurrentUserId();
+            var userId = UserHelper.GetCurrentUserId(this.User);
             if (userId == null)
             {
                 TodoListsLog.LogInvalidUserIdentifier(this.logger, userId);
@@ -427,17 +425,17 @@ public class TodoListsController : ControllerBase
         }
         catch (EntityNotFoundException ex)
         {
-            TodoListsLog.LogListNotFoundForUser(this.logger, listId, this.GetCurrentUserId(), ex.Message);
+            TodoListsLog.LogListNotFoundForUser(this.logger, listId, UserHelper.GetCurrentUserId(this.User), ex.Message);
             return this.NotFound($"List with ID {listId} was not found.");
         }
         catch (UnauthorizedAccessException ex)
         {
-            TodoListsLog.LogUnauthorizedListDeletion(this.logger, listId, this.GetCurrentUserId(), ex.Message);
+            TodoListsLog.LogUnauthorizedListDeletion(this.logger, listId, UserHelper.GetCurrentUserId(this.User), ex.Message);
             return this.Forbid("You don't have permission to delete this list.");
         }
         catch (UnableToDeleteException ex)
         {
-            TodoListsLog.LogUnableToDeleteList(this.logger, listId, this.GetCurrentUserId(), ex.Message, ex);
+            TodoListsLog.LogUnableToDeleteList(this.logger, listId, UserHelper.GetCurrentUserId(this.User), ex.Message, ex);
             return this.StatusCode(500, "Unable to delete the list. Please try again later.");
         }
         catch (Exception ex)
@@ -464,7 +462,7 @@ public class TodoListsController : ControllerBase
                 return this.BadRequest("List data is required.");
             }
 
-            var userId = this.GetCurrentUserId();
+            var userId = UserHelper.GetCurrentUserId(this.User);
             if (userId == null)
             {
                 TodoListsLog.LogInvalidUserIdentifier(this.logger, userId);
@@ -476,7 +474,7 @@ public class TodoListsController : ControllerBase
 
             TodoListsLog.LogListCreatedSuccessfully(this.logger, newEntity.Id, userId);
 
-            var result = MapToDto(newEntity);
+            var result = MapToDto.ToTodoListDto(newEntity);
             return this.CreatedAtAction(nameof(this.GetList), new { listId = newEntity.Id }, result);
         }
         catch (ArgumentNullException ex)
@@ -486,7 +484,7 @@ public class TodoListsController : ControllerBase
         }
         catch (UnauthorizedAccessException ex)
         {
-            TodoListsLog.LogUnauthorizedListsAccess(this.logger, this.GetCurrentUserId(), ex.Message);
+            TodoListsLog.LogUnauthorizedListsAccess(this.logger, UserHelper.GetCurrentUserId(this.User), ex.Message);
             return this.Forbid("You don't have permission to create lists.");
         }
         catch (Exception ex)
@@ -513,7 +511,7 @@ public class TodoListsController : ControllerBase
 
         try
         {
-            var userId = this.GetCurrentUserId();
+            var userId = UserHelper.GetCurrentUserId(this.User);
             if (userId == null)
             {
                 TodoListsLog.LogInvalidUserIdentifier(this.logger, userId);
@@ -525,7 +523,7 @@ public class TodoListsController : ControllerBase
 
             TodoListsLog.LogListUpdatedSuccessfully(this.logger, dto.Id, userId);
 
-            var result = MapToDto(updatedEntity);
+            var result = MapToDto.ToTodoListDto(updatedEntity);
             return this.Ok(result);
         }
         catch (ArgumentNullException ex)
@@ -535,17 +533,17 @@ public class TodoListsController : ControllerBase
         }
         catch (EntityNotFoundException ex)
         {
-            TodoListsLog.LogListNotFoundForUser(this.logger, dto.Id, this.GetCurrentUserId(), ex.Message);
+            TodoListsLog.LogListNotFoundForUser(this.logger, dto.Id, UserHelper.GetCurrentUserId(this.User), ex.Message);
             return this.NotFound($"List with ID {dto.Id} was not found.");
         }
         catch (UnauthorizedAccessException ex)
         {
-            TodoListsLog.LogUnauthorizedListUpdate(this.logger, dto.Id, this.GetCurrentUserId(), ex.Message);
+            TodoListsLog.LogUnauthorizedListUpdate(this.logger, dto.Id, UserHelper.GetCurrentUserId(this.User), ex.Message);
             return this.Forbid("You don't have permission to update this list.");
         }
         catch (UnableToUpdateException ex)
         {
-            TodoListsLog.LogUnableToUpdateList(this.logger, dto.Id, this.GetCurrentUserId(), ex.Message, ex);
+            TodoListsLog.LogUnableToUpdateList(this.logger, dto.Id, UserHelper.GetCurrentUserId(this.User), ex.Message, ex);
             return this.StatusCode(500, "Unable to update the list. Please try again later.");
         }
         catch (Exception ex)
@@ -553,29 +551,5 @@ public class TodoListsController : ControllerBase
             TodoListsLog.LogUnexpectedErrorUpdatingList(this.logger, dto.Id, ex);
             throw;
         }
-    }
-
-    private static TodoListDto MapToDto(TodoListModel model)
-    {
-        return new TodoListDto(
-            model.Id,
-            model.Title,
-            model.Description,
-            model.OwnerFullName ?? EmptyName,
-            model.UserRole,
-            model.OwnerId,
-            model.ActiveTasks);
-    }
-
-    private int? GetCurrentUserId()
-    {
-        var userNameIdentifier = this.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (userNameIdentifier != null &&
-            int.TryParse(userNameIdentifier, NumberStyles.Integer, CultureInfo.InvariantCulture, out var userId))
-        {
-            return userId;
-        }
-
-        return null;
     }
 }

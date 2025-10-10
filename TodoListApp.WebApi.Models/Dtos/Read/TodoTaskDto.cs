@@ -2,13 +2,34 @@ using System.Collections.ObjectModel;
 using System.Text.Json.Serialization;
 
 namespace TodoListApp.WebApi.Models.Dtos.Read;
+
+/// <summary>
+/// Data transfer object for reading task information.
+/// </summary>
 public class TodoTaskDto
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TodoTaskDto"/> class.
+    /// </summary>
     public TodoTaskDto()
     {
     }
 
-    public TodoTaskDto(int id, string title, string? description, DateTime creationDate, DateTime dueDate, string assigneeFirstName, string assigneeLastName, int assigneeId, string status, int listId, ReadOnlyCollection<TagDto>? tags = null, ReadOnlyCollection<string>? comments = null)
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TodoTaskDto"/> class.
+    /// </summary>
+    /// <param name="id">The task ID.</param>
+    /// <param name="title">The task title.</param>
+    /// <param name="description">The task description.</param>
+    /// <param name="creationDate">The task creation date.</param>
+    /// <param name="dueDate">The task due date.</param>
+    /// <param name="assigneeFirstName">The task assignee first name.</param>
+    /// <param name="assigneeLastName">The task assignee last name.</param>
+    /// <param name="assigneeId">The task assignee ID.</param>
+    /// <param name="status">The task status.</param>
+    /// <param name="listId">The task list ID.</param>
+    /// <param name="tags">The list of task tags.</param>
+    public TodoTaskDto(int id, string title, string? description, DateTime creationDate, DateTime dueDate, string assigneeFirstName, string assigneeLastName, int assigneeId, string status, int listId, ReadOnlyCollection<TagDto>? tags = null)
     {
         this.Id = id;
         this.Title = title;
@@ -25,14 +46,6 @@ public class TodoTaskDto
             foreach (var tag in tags)
             {
                 this.Tags.Add(tag);
-            }
-        }
-
-        if (comments != null)
-        {
-            foreach (var comment in comments)
-            {
-                this.Comments.Add(comment);
             }
         }
     }
@@ -92,10 +105,4 @@ public class TodoTaskDto
     /// </summary>
     [JsonInclude]
     public IList<TagDto> Tags { get; private set; } = new List<TagDto>();
-
-    /// <summary>
-    /// Gets user's tags.
-    /// </summary>
-    [JsonInclude]
-    public IList<string> Comments { get; private set; } = new List<string>();
 }

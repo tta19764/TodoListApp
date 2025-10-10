@@ -9,17 +9,40 @@ using TodoListApp.Services.WebApi.Helpers;
 using TodoListApp.WebApi.Models.Dtos.Read;
 
 namespace TodoListApp.Services.WebApi.Servicies;
+
+/// <summary>
+/// Provides API-based assigned task data retrieval.
+/// </summary>
 public class AssignedTasksApiService : IAssignedTasksService
 {
     private readonly HttpClient httpClient;
     private readonly ILogger<AssignedTasksApiService> logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AssignedTasksApiService"/> class.
+    /// </summary>
+    /// <param name="httpClient">The HTTP client used to send API requests.</param>
+    /// <param name="logger">The logger instance for structured logging.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="httpClient"/> or <paramref name="logger"/> is null.</exception>
     public AssignedTasksApiService(HttpClient httpClient, ILogger<AssignedTasksApiService> logger)
     {
         this.httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
+    /// <summary>
+    /// Retrieves all tasks assigned to a specific user with optional filtering, sorting, and pagination.
+    /// </summary>
+    /// <param name="userId">The ID of the user.</param>
+    /// <param name="filter">The task status filter to apply (default is Active).</param>
+    /// <param name="sortBy">The property to sort by (default is "DueDate").</param>
+    /// <param name="sortOrder">The sort order - "asc" for ascending or "desc" for descending (default is "asc").</param>
+    /// <param name="pageNumber">Optional page number for pagination (1-based).</param>
+    /// <param name="rowCount">Optional number of tasks per page.</param>
+    /// <returns>A read-only list of <see cref="TodoTaskModel"/> representing tasks assigned to the user.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when no tasks are found.</exception>
+    /// <exception cref="HttpRequestException">Thrown when the HTTP request fails.</exception>
+    /// <exception cref="JsonException">Thrown when JSON parsing fails.</exception>
     public async Task<IReadOnlyList<TodoTaskModel>> GetAllAssignedAsync(int userId, TaskFilter filter = TaskFilter.Active, string? sortBy = "DueDate", string? sortOrder = "asc", int? pageNumber = null, int? rowCount = null)
     {
         try
@@ -70,6 +93,13 @@ public class AssignedTasksApiService : IAssignedTasksService
         }
     }
 
+    /// <summary>
+    /// Retrieves the count of tasks assigned to a specific user based on the specified filter.
+    /// </summary>
+    /// <param name="userId">The ID of the user.</param>
+    /// <param name="filter">The task status filter to apply (default is Active).</param>
+    /// <returns>The number of tasks assigned to the user matching the filter criteria.</returns>
+    /// <exception cref="HttpRequestException">Thrown when the HTTP request fails.</exception>
     public async Task<int> GetAllAssignedCountAsync(int userId, TaskFilter filter = TaskFilter.Active)
     {
         try

@@ -4,7 +4,7 @@ using TodoListApp.Services.Database.Entities;
 
 namespace TodoListApp.WebApi.Seed;
 
-internal class TagSeed
+internal static class TagSeed
 {
     /// <summary>
     /// Ensures the database is populated with base tags.

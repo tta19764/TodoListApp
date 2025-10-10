@@ -10,7 +10,10 @@ using TodoListApp.WebApp.Data;
 
 namespace TodoListApp.WebApp.Handlers;
 
-internal class JwtTokenHandler : DelegatingHandler
+/// <summary>
+/// HTTP handler for attaching and refreshing JWT tokens in outgoing requests.
+/// </summary>
+internal sealed class JwtTokenHandler : DelegatingHandler
 {
     private readonly IHttpContextAccessor httpContextAccessor;
     private readonly UserManager<AppUser> userManager;
@@ -18,6 +21,15 @@ internal class JwtTokenHandler : DelegatingHandler
     private readonly ITokenStorageService tokenStorageService;
     private readonly ILogger<JwtTokenHandler> logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JwtTokenHandler"/> class.
+    /// </summary>
+    /// <param name="httpContextAccessor">The http context accessor.</param>
+    /// <param name="userManager">The user manager.</param>
+    /// <param name="authService">The auth service.</param>
+    /// <param name="tokenStorageService">The token storage service.</param>
+    /// <param name="logger">The logger.</param>
+    /// <exception cref="ArgumentNullException">If any of the parameters are null.</exception>
     public JwtTokenHandler(
         IHttpContextAccessor httpContextAccessor,
         UserManager<AppUser> userManager,

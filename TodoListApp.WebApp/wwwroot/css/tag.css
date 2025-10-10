@@ -1,0 +1,85 @@
+.tag-card {
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.tag-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    background-color: #f8f9fa;
+}
+
+/* --- TAG BADGES --- */
+.tag-item-wrapper {
+    display: inline-flex;
+    align-items: stretch;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    background-color: #0dcaf0; /* Bootstrap info color */
+    color: #fff;
+    transition: box-shadow 0.2s ease-in-out;
+}
+
+    .tag-item-wrapper:hover {
+        box-shadow: 0 0.25rem 0.6rem rgba(13, 202, 240, 0.35);
+    }
+
+/* Left part: clickable tag link */
+.tag-badge-link {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.35rem 0.65rem;
+    color: inherit;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border-right: 1.5px solid rgba(255, 255, 255, 0.6); /* visible divider */
+    transition: background-color 0.2s ease-in-out;
+}
+
+    .tag-badge-link:hover {
+        background-color: rgba(255, 255, 255, 0.18);
+        text-decoration: none;
+    }
+
+/* Right part: remove button */
+.remove-tag-form {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.remove-tag-btn {
+    border: none;
+    background: transparent;
+    color: #fff; /* white icon by default */
+    padding: 0.35rem 0.7rem; /* wider clickable area */
+    font-size: 0.9rem;
+    line-height: 1;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+    .remove-tag-btn:hover {
+        background-color: rgba(255, 255, 255, 0.25);
+        color: #fff; /* stay white for consistency */
+        cursor: pointer;
+    }
+
+    .remove-tag-btn i {
+        font-size: 1rem;
+        vertical-align: middle;
+    }
+
+.card-header.bg-primary .btn-outline-light {
+    background-color: var(--core-green-dark);
+    color: white;
+    border: 1.5px solid white;
+    font-weight: 500;
+    transition: all 0.2s ease-in-out;
+}
+
+    /* Hover: invert colors for feedback */
+    .card-header.bg-primary .btn-outline-light:hover {
+        background-color: white;
+        color: var(--core-green-dark);
+        border-color: var(--core-green-dark);
+    }

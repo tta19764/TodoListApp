@@ -177,89 +177,275 @@ internal static class TodoListsLog
             "Unexpected error occurred while updating list {ListId}");
 
     // Public methods for Warning level logs
+
+    /// <summary>
+    /// Logs a warning that a list was not found for a user.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="listId">The ID of the list that was not found.</param>
+    /// <param name="userId">The ID of the user.</param>
+    /// <param name="message">Description of the issue.</param>
+    /// <param name="exception">Optional exception that occurred.</param>
     public static void LogListNotFoundForUser(ILogger logger, int listId, int? userId, string message, Exception? exception = null) =>
         ListNotFoundForUser(logger, listId, userId, message, exception);
 
+    /// <summary>
+    /// Logs a warning about an unauthorized attempt to access a list.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="listId">The ID of the list.</param>
+    /// <param name="userId">The ID of the user attempting access.</param>
+    /// <param name="message">Description of the unauthorized access attempt.</param>
+    /// <param name="exception">Optional exception that occurred.</param>
     public static void LogUnauthorizedListAccess(ILogger logger, int listId, int? userId, string message, Exception? exception = null) =>
         UnauthorizedListAccess(logger, listId, userId, message, exception);
 
+    /// <summary>
+    /// Logs a warning about an unauthorized attempt to access lists.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="userId">The ID of the user attempting access.</param>
+    /// <param name="message">Description of the unauthorized access attempt.</param>
+    /// <param name="exception">Optional exception that occurred.</param>
     public static void LogUnauthorizedListsAccess(ILogger logger, int? userId, string message, Exception? exception = null) =>
         UnauthorizedListsAccess(logger, userId, message, exception);
 
+    /// <summary>
+    /// Logs a warning about an unauthorized attempt to delete a list.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="listId">The ID of the list.</param>
+    /// <param name="userId">The ID of the user attempting deletion.</param>
+    /// <param name="message">Description of the unauthorized deletion attempt.</param>
+    /// <param name="exception">Optional exception that occurred.</param>
     public static void LogUnauthorizedListDeletion(ILogger logger, int listId, int? userId, string message, Exception? exception = null) =>
         UnauthorizedListDeletion(logger, listId, userId, message, exception);
 
+    /// <summary>
+    /// Logs a warning about an unauthorized attempt to update a list.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="listId">The ID of the list.</param>
+    /// <param name="userId">The ID of the user attempting update.</param>
+    /// <param name="message">Description of the unauthorized update attempt.</param>
+    /// <param name="exception">Optional exception that occurred.</param>
     public static void LogUnauthorizedListUpdate(ILogger logger, int listId, int? userId, string message, Exception? exception = null) =>
         UnauthorizedListUpdate(logger, listId, userId, message, exception);
 
+    /// <summary>
+    /// Logs a warning about invalid pagination parameters.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="pageNumber">The invalid page number.</param>
+    /// <param name="rowCount">The invalid row count.</param>
+    /// <param name="exception">Optional exception that occurred.</param>
     public static void LogInvalidPaginationParameters(ILogger logger, int pageNumber, int rowCount, Exception? exception = null) =>
         InvalidPaginationParameters(logger, pageNumber, rowCount, exception);
 
+    /// <summary>
+    /// Logs a warning about invalid list data provided.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="message">Description of the invalid data.</param>
+    /// <param name="exception">Optional exception that occurred.</param>
     public static void LogInvalidListDataProvided(ILogger logger, string message, Exception? exception = null) =>
         InvalidListDataProvided(logger, message, exception);
 
+    /// <summary>
+    /// Logs a warning that a referenced entity was not found during list creation.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="message">Description of the missing entity.</param>
+    /// <param name="exception">Optional exception that occurred.</param>
     public static void LogReferencedEntityNotFound(ILogger logger, string message, Exception? exception = null) =>
         ReferencedEntityNotFound(logger, message, exception);
 
+    /// <summary>
+    /// Logs a warning about an invalid user identifier.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="userId">The invalid user ID.</param>
+    /// <param name="exception">Optional exception that occurred.</param>
     public static void LogInvalidUserIdentifier(ILogger logger, int? userId, Exception? exception = null) =>
         InvalidUserIdentifier(logger, userId, exception);
 
+    /// <summary>
+    /// Logs that the number of user lists has been successfully retrieved.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="count">The number of user lists.</param>
+    /// <param name="userId">The ID of the user.</param>
     public static void LogUserListsCountRetrievedSuccessfully(ILogger logger, int count, int? userId) =>
         UserListsCountRetrievedSuccessfully(logger, count, userId, null);
 
+    /// <summary>
+    /// Logs that the number of author lists has been successfully retrieved.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="count">The number of author lists.</param>
+    /// <param name="userId">The ID of the user.</param>
     public static void LogAuthorListsCountRetrievedSuccessfully(ILogger logger, int count, int? userId) =>
         AuthorListsCountRetrievedSuccessfully(logger, count, userId, null);
 
+    /// <summary>
+    /// Logs that the number of shared lists has been successfully retrieved.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="count">The number of shared lists.</param>
+    /// <param name="userId">The ID of the user.</param>
     public static void LogSharedListsCountRetrievedSuccessfully(ILogger logger, int count, int? userId) =>
         SharedListsCountRetrievedSuccessfully(logger, count, userId, null);
 
     // Public methods for Error level logs
+
+    /// <summary>
+    /// Logs an error that a list could not be deleted.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="listId">The ID of the list that could not be deleted.</param>
+    /// <param name="userId">The ID of the user.</param>
+    /// <param name="message">Description of why the deletion failed.</param>
+    /// <param name="exception">Optional exception that occurred.</param>
     public static void LogUnableToDeleteList(ILogger logger, int listId, int? userId, string message, Exception? exception = null) =>
         UnableToDeleteList(logger, listId, userId, message, exception);
 
+    /// <summary>
+    /// Logs an error that a list could not be updated.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="listId">The ID of the list that could not be updated.</param>
+    /// <param name="userId">The ID of the user.</param>
+    /// <param name="message">Description of why the update failed.</param>
+    /// <param name="exception">Optional exception that occurred.</param>
     public static void LogUnableToUpdateList(ILogger logger, int listId, int? userId, string message, Exception? exception = null) =>
         UnableToUpdateList(logger, listId, userId, message, exception);
 
+    /// <summary>
+    /// Logs an error that an unexpected exception occurred while retrieving a list.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="listId">The ID of the list being retrieved.</param>
+    /// <param name="exception">The exception that occurred.</param>
     public static void LogUnexpectedErrorRetrievingList(ILogger logger, int listId, Exception exception) =>
         UnexpectedErrorRetrievingList(logger, listId, exception);
 
+    /// <summary>
+    /// Logs an error that an unexpected exception occurred while retrieving lists for a user.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="userId">The ID of the user.</param>
+    /// <param name="exception">The exception that occurred.</param>
     public static void LogUnexpectedErrorRetrievingLists(ILogger logger, int? userId, Exception exception) =>
         UnexpectedErrorRetrievingLists(logger, userId, exception);
 
+    /// <summary>
+    /// Logs an error that an unexpected exception occurred while retrieving paginated lists.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="userId">The ID of the user.</param>
+    /// <param name="exception">The exception that occurred.</param>
     public static void LogUnexpectedErrorRetrievingPaginatedLists(ILogger logger, int? userId, Exception exception) =>
         UnexpectedErrorRetrievingPaginatedLists(logger, userId, exception);
 
+    /// <summary>
+    /// Logs an error that an unexpected exception occurred while retrieving user lists.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="userId">The ID of the user.</param>
+    /// <param name="exception">The exception that occurred.</param>
     public static void LogUnexpectedErrorRetrievingUserLists(ILogger logger, int? userId, Exception exception) =>
         UnexpectedErrorRetrievingUserLists(logger, userId, exception);
 
+    /// <summary>
+    /// Logs an error that an unexpected exception occurred while retrieving paginated user lists.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="userId">The ID of the user.</param>
+    /// <param name="exception">The exception that occurred.</param>
     public static void LogUnexpectedErrorRetrievingPaginatedUserLists(ILogger logger, int? userId, Exception exception) =>
         UnexpectedErrorRetrievingPaginatedUserLists(logger, userId, exception);
 
+    /// <summary>
+    /// Logs an error that an unexpected exception occurred while deleting a list.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="listId">The ID of the list being deleted.</param>
+    /// <param name="exception">The exception that occurred.</param>
     public static void LogUnexpectedErrorDeletingList(ILogger logger, int listId, Exception exception) =>
         UnexpectedErrorDeletingList(logger, listId, exception);
 
+    /// <summary>
+    /// Logs an error that an unexpected exception occurred while creating a list.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="exception">The exception that occurred.</param>
     public static void LogUnexpectedErrorCreatingList(ILogger logger, Exception exception) =>
         UnexpectedErrorCreatingList(logger, exception);
 
+    /// <summary>
+    /// Logs an error that an unexpected exception occurred while updating a list.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="listId">The ID of the list being updated.</param>
+    /// <param name="exception">The exception that occurred.</param>
     public static void LogUnexpectedErrorUpdatingList(ILogger logger, int listId, Exception exception) =>
         UnexpectedErrorUpdatingList(logger, listId, exception);
 
     // Public methods for Information level logs
+
+    /// <summary>
+    /// Logs that a list has been successfully deleted.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="listId">The ID of the deleted list.</param>
+    /// <param name="userId">The ID of the user who deleted the list.</param>
     public static void LogListDeletedSuccessfully(ILogger logger, int listId, int? userId) =>
         ListDeletedSuccessfully(logger, listId, userId, null);
 
+    /// <summary>
+    /// Logs that a list has been successfully created.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="listId">The ID of the created list.</param>
+    /// <param name="userId">The ID of the user who created the list.</param>
     public static void LogListCreatedSuccessfully(ILogger logger, int listId, int? userId) =>
         ListCreatedSuccessfully(logger, listId, userId, null);
 
+    /// <summary>
+    /// Logs that a list has been successfully updated.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="listId">The ID of the updated list.</param>
+    /// <param name="userId">The ID of the user who updated the list.</param>
     public static void LogListUpdatedSuccessfully(ILogger logger, int listId, int? userId) =>
         ListUpdatedSuccessfully(logger, listId, userId, null);
 
+    /// <summary>
+    /// Logs that a list has been successfully retrieved.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="listId">The ID of the retrieved list.</param>
+    /// <param name="userId">The ID of the user who retrieved the list.</param>
     public static void LogListRetrievedSuccessfully(ILogger logger, int listId, int? userId) =>
         ListRetrievedSuccessfully(logger, listId, userId, null);
 
+    /// <summary>
+    /// Logs that lists have been successfully retrieved for a user.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="count">The number of lists retrieved.</param>
+    /// <param name="userId">The ID of the user.</param>
     public static void LogListsRetrievedSuccessfully(ILogger logger, int count, int? userId) =>
         ListsRetrievedSuccessfully(logger, count, userId, null);
 
+    /// <summary>
+    /// Logs that paginated lists have been successfully retrieved.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="count">The number of lists retrieved.</param>
+    /// <param name="pageNumber">The page number.</param>
+    /// <param name="rowCount">The number of rows per page.</param>
+    /// <param name="userId">The ID of the user.</param>
     public static void LogPaginatedListsRetrievedSuccessfully(ILogger logger, int count, int pageNumber, int rowCount, int? userId) =>
         PaginatedListsRetrievedSuccessfully(logger, count, pageNumber, rowCount, userId, null);
 }

@@ -1,5 +1,3 @@
-using System.Globalization;
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TodoListApp.Services.Enums;
@@ -7,6 +5,8 @@ using TodoListApp.Services.Interfaces.Servicies;
 using TodoListApp.Services.Models;
 using TodoListApp.Services.WebApi.Enums;
 using TodoListApp.WebApp.CustomLogs;
+using TodoListApp.WebApp.Helpers;
+using TodoListApp.WebApp.Models.Comment;
 using TodoListApp.WebApp.Models.Tag;
 using TodoListApp.WebApp.Models.Task;
 
@@ -39,7 +39,7 @@ public class TodoTasksController : Controller
     {
         try
         {
-            var userId = this.GetCurrentUserId();
+            var userId = UserHelper.GetCurrentUserId(this.User);
             if (userId == null)
             {
                 return this.RedirectToAction("Login", "Account");
@@ -55,7 +55,7 @@ public class TodoTasksController : Controller
             };
 
             // Parse task filter
-            var filter = ParseTaskFilter(taskFilter);
+            var filter = Formaters.StringToTaskFilterEnum(taskFilter);
 
             var totalCount = await this.assignedTasksService.GetAllAssignedCountAsync(userId.Value, filter);
             viewModel.TotalPages = (int)Math.Ceiling(totalCount / (double)viewModel.RowCount);
@@ -70,7 +70,7 @@ public class TodoTasksController : Controller
                 viewModel.RowCount);
 
             // Map to view models
-            viewModel.Tasks = tasks.Select(t => MapToTaskViewModel(t)).ToList();
+            viewModel.Tasks = tasks.Select(t => MapToViewModel.ToTask(userId.Value, t)).ToList();
             viewModel.TotalTasks = viewModel.Tasks.Count();
 
             if (this.ModelState.IsValid)
@@ -84,7 +84,6 @@ public class TodoTasksController : Controller
         catch (Exception ex)
         {
             TodoTasksLog.LogErrorLoadingAssignedTasks(this.logger, ex);
-            return this.View("Error");
             throw;
         }
     }
@@ -96,7 +95,7 @@ public class TodoTasksController : Controller
 
         try
         {
-            var userId = this.GetCurrentUserId();
+            var userId = UserHelper.GetCurrentUserId(this.User);
             if (userId == null)
             {
                 return this.RedirectToAction("Login", "Account");
@@ -130,6 +129,8 @@ public class TodoTasksController : Controller
                 }
             }
 
+            var comments = await this.todoTaskService.GetTaskCommentsAsync(id, userId.Value);
+
             var viewModel = new TodoTaskDetailsViewModel
             {
                 TaskId = task.Id,
@@ -139,11 +140,20 @@ public class TodoTasksController : Controller
                 DueDate = task.DueDate,
                 Status = task.Status?.StatusTitle ?? "Unknown",
                 StatusId = task.StatusId,
-                OwnerName = FormatOwnerName(task.OwnerUser?.FirstName, task.OwnerUser?.LastName),
+                OwnerName = Formaters.FormatOwnerName(task.OwnerUser?.FirstName, task.OwnerUser?.LastName),
                 Tags = task.UsersTags?.Select(t => new TagViewModel() { Id = t.Id, Title = t.Title }).ToList() ?? new List<TagViewModel>(),
-                Comments = task.UserComments?.Select(c => c.Text).ToList() ?? new List<string>(),
+                Comments = comments.Select(c =>
+                {
+                    var comment = MapToViewModel.ToComment(userId.Value, c);
+                    if (Formaters.StringToRoleEnum(list.UserRole) == ListRole.Owner)
+                    {
+                        comment.CanEdit = true;
+                    }
+
+                    return comment;
+                }).ToList(),
                 ListId = listId,
-                Role = StringToRoleEnum(list.UserRole ?? "None"),
+                Role = Formaters.StringToRoleEnum(list.UserRole),
                 ReturnUrl = returnUrl,
             };
 
@@ -158,7 +168,257 @@ public class TodoTasksController : Controller
         catch (Exception ex)
         {
             TodoTasksLog.LogErrorRetrievingTaskDetails(this.logger, id, ex);
+            throw;
+        }
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> AddComment(int taskId, Uri? returnUrl)
+    {
+        try
+        {
+            var userId = UserHelper.GetCurrentUserId(this.User);
+            if (userId == null)
+            {
+                return this.RedirectToAction("Login", "Account");
+            }
+
+            var task = await this.todoTaskService.GetByIdAsync(userId.Value, taskId);
+            if (task == null)
+            {
+                TodoTasksLog.LogTaskNotFoundForUser(this.logger, taskId, userId.Value);
+                return this.NotFound();
+            }
+
+            var list = await this.todoListService.GetByIdAsync(userId.Value, task.ListId);
+            if (list == null)
+            {
+                return this.NotFound();
+            }
+
+            var role = Formaters.StringToRoleEnum(list.UserRole ?? "None");
+            if (role != ListRole.Owner && role != ListRole.Editor)
+            {
+                return this.Forbid();
+            }
+
+            var viewModel = new AddCommentViewModel
+            {
+                TaskId = taskId,
+                TaskTitle = task.Title,
+                ReturnUrl = returnUrl ?? new Uri(this.Url.Action("Details", new { id = taskId }) ?? "~/", UriKind.RelativeOrAbsolute),
+            };
+
+            if (this.ModelState.IsValid)
+            {
+                TodoTasksLog.LogAddCommentPageLoaded(this.logger, taskId);
+                return this.View(viewModel);
+            }
+
             return this.View("Error");
+        }
+        catch (Exception ex)
+        {
+            TodoTasksLog.LogErrorLoadingAddCommentPage(this.logger, taskId, ex);
+            throw;
+        }
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AddComment(AddCommentViewModel model)
+    {
+        ArgumentNullException.ThrowIfNull(model);
+
+        if (!this.ModelState.IsValid)
+        {
+            return this.View(model);
+        }
+
+        try
+        {
+            var userId = UserHelper.GetCurrentUserId(this.User);
+            if (userId == null)
+            {
+                return this.RedirectToAction("Login", "Account");
+            }
+
+            var commentModel = new CommentModel(0, model.Text, model.TaskId, userId.Value);
+            var createdComment = await this.todoTaskService.AddTaskCommentAsync(commentModel);
+
+            TodoTasksLog.LogCommentAddedToTask(this.logger, createdComment.Id, model.TaskId, userId.Value);
+
+            this.TempData["SuccessMessage"] = "Comment added successfully";
+            return this.Redirect(model.ReturnUrl.ToString());
+        }
+        catch (Exception ex)
+        {
+            TodoTasksLog.LogErrorAddingComment(this.logger, model.TaskId, ex);
+            this.ModelState.AddModelError(string.Empty, "An error occurred while adding the comment.");
+            throw;
+        }
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> EditComment(int commentId, int taskId, Uri? returnUrl)
+    {
+        try
+        {
+            var userId = UserHelper.GetCurrentUserId(this.User);
+            if (userId == null)
+            {
+                return this.RedirectToAction("Login", "Account");
+            }
+
+            var task = await this.todoTaskService.GetByIdAsync(userId.Value, taskId);
+            if (task == null)
+            {
+                TodoTasksLog.LogTaskNotFoundForUser(this.logger, taskId, userId.Value);
+                return this.NotFound();
+            }
+
+            var list = await this.todoListService.GetByIdAsync(userId.Value, task.ListId);
+            if (list == null)
+            {
+                return this.NotFound();
+            }
+
+            var comment = await this.todoTaskService.GetCommentByIdAsync(userId.Value, taskId, commentId);
+            if (comment == null)
+            {
+                TodoTasksLog.LogCommentNotFoundForUser(this.logger, commentId, userId.Value);
+                return this.NotFound();
+            }
+
+            var role = Formaters.StringToRoleEnum(list.UserRole);
+            if (role != ListRole.Owner && userId.Value != comment.UserId)
+            {
+                return this.Forbid();
+            }
+
+            var viewModel = new EditCommentViewModel
+            {
+                CommentId = commentId,
+                TaskId = taskId,
+                TaskTitle = task.Title,
+                Text = comment.Text,
+                ReturnUrl = returnUrl ?? new Uri(this.Url.Action("Details", new { id = taskId }) ?? "~/", UriKind.RelativeOrAbsolute),
+            };
+
+            if (this.ModelState.IsValid)
+            {
+                TodoTasksLog.LogEditCommentPageLoaded(this.logger, commentId);
+                return this.View(viewModel);
+            }
+
+            return this.View("Error");
+        }
+        catch (Exception ex)
+        {
+            TodoTasksLog.LogErrorLoadingEditCommentPage(this.logger, commentId, ex);
+            throw;
+        }
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditComment(EditCommentViewModel model)
+    {
+        ArgumentNullException.ThrowIfNull(model);
+
+        if (!this.ModelState.IsValid)
+        {
+            return this.View(model);
+        }
+
+        try
+        {
+            var userId = UserHelper.GetCurrentUserId(this.User);
+            if (userId == null)
+            {
+                return this.RedirectToAction("Login", "Account");
+            }
+
+            var commentModel = new CommentModel(model.CommentId, model.Text, model.TaskId, userId.Value);
+            var updatedComment = await this.todoTaskService.UpdateTaskCommentAsync(userId.Value, commentModel);
+
+            TodoTasksLog.LogCommentUpdated(this.logger, updatedComment.Id, userId.Value);
+
+            this.TempData["SuccessMessage"] = "Comment updated successfully";
+            return this.Redirect(model.ReturnUrl.ToString());
+        }
+        catch (Exception ex)
+        {
+            TodoTasksLog.LogErrorUpdatingComment(this.logger, model.CommentId, ex);
+            this.ModelState.AddModelError(string.Empty, "An error occurred while updating the comment.");
+            throw;
+        }
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteComment(int commentId, int taskId, Uri? returnUrl)
+    {
+        _ = this.ModelState.IsValid;
+
+        try
+        {
+            var userId = UserHelper.GetCurrentUserId(this.User);
+            if (userId == null)
+            {
+                return this.RedirectToAction("Login", "Account");
+            }
+
+            var task = await this.todoTaskService.GetByIdAsync(userId.Value, taskId);
+            if (task == null)
+            {
+                TodoTasksLog.LogTaskNotFoundForUser(this.logger, taskId, userId.Value);
+                return this.NotFound();
+            }
+
+            var list = await this.todoListService.GetByIdAsync(userId.Value, task.ListId);
+            if (list == null)
+            {
+                return this.NotFound();
+            }
+
+            var comment = await this.todoTaskService.GetCommentByIdAsync(userId.Value, taskId, commentId);
+            if (comment == null)
+            {
+                TodoTasksLog.LogCommentNotFoundForUser(this.logger, commentId, userId.Value);
+                return this.NotFound();
+            }
+
+            var role = Formaters.StringToRoleEnum(list.UserRole);
+            if (role != ListRole.Owner && userId.Value != comment.UserId)
+            {
+                return this.Forbid();
+            }
+
+            await this.todoTaskService.RemoveTaskCommentAsync(userId.Value, taskId, commentId);
+
+            TodoTasksLog.LogCommentDeleted(this.logger, commentId, userId.Value);
+
+            this.TempData["SuccessMessage"] = "Comment deleted successfully";
+
+            if (returnUrl != null)
+            {
+                return this.Redirect(returnUrl.ToString());
+            }
+
+            return this.RedirectToAction("Details", new { id = taskId });
+        }
+        catch (Exception ex)
+        {
+            TodoTasksLog.LogErrorDeletingComment(this.logger, commentId, ex);
+            this.TempData["ErrorMessage"] = "An error occurred while deleting the comment.";
+
+            if (returnUrl != null)
+            {
+                return this.Redirect(returnUrl.ToString());
+            }
+
+            return this.RedirectToAction("Details", new { id = taskId });
             throw;
         }
     }
@@ -168,7 +428,7 @@ public class TodoTasksController : Controller
     {
         try
         {
-            var userId = this.GetCurrentUserId();
+            var userId = UserHelper.GetCurrentUserId(this.User);
             if (userId == null)
             {
                 return this.RedirectToAction("Login", "Account");
@@ -203,7 +463,7 @@ public class TodoTasksController : Controller
                 viewModel.RowCount);
 
             // Map to view models
-            viewModel.Tasks = tasks.Select(t => MapToTaskViewModel(t)).ToList();
+            viewModel.Tasks = tasks.Select(t => MapToViewModel.ToTask(userId.Value, t)).ToList();
 
             if (this.ModelState.IsValid)
             {
@@ -216,7 +476,6 @@ public class TodoTasksController : Controller
         catch (Exception ex)
         {
             TodoTasksLog.LogErrorLoadingSearchedTasks(this.logger, ex);
-            return this.View("Error");
             throw;
         }
     }
@@ -228,7 +487,7 @@ public class TodoTasksController : Controller
 
         try
         {
-            var userId = this.GetCurrentUserId();
+            var userId = UserHelper.GetCurrentUserId(this.User);
             if (userId == null)
             {
                 return this.RedirectToAction("Login", "Account");
@@ -263,7 +522,6 @@ public class TodoTasksController : Controller
         catch (Exception ex)
         {
             TodoTasksLog.LogErrorLoadingCreatePage(this.logger, listId, ex);
-            return this.View("Error");
             throw;
         }
     }
@@ -281,7 +539,7 @@ public class TodoTasksController : Controller
 
         try
         {
-            var userId = this.GetCurrentUserId();
+            var userId = UserHelper.GetCurrentUserId(this.User);
             if (userId == null)
             {
                 return this.RedirectToAction("Login", "Account");
@@ -307,7 +565,6 @@ public class TodoTasksController : Controller
         {
             TodoTasksLog.LogErrorCreatingTask(this.logger, model.ListId, ex);
             this.ModelState.AddModelError(string.Empty, "An error occurred while creating the task.");
-            return this.View(model);
             throw;
         }
     }
@@ -319,7 +576,7 @@ public class TodoTasksController : Controller
 
         try
         {
-            var userId = this.GetCurrentUserId();
+            var userId = UserHelper.GetCurrentUserId(this.User);
             if (userId == null)
             {
                 return this.RedirectToAction("Login", "Account");
@@ -350,7 +607,6 @@ public class TodoTasksController : Controller
         catch (Exception ex)
         {
             TodoTasksLog.LogErrorLoadingEditPage(this.logger, id, ex);
-            return this.View("Error");
             throw;
         }
     }
@@ -368,7 +624,7 @@ public class TodoTasksController : Controller
 
         try
         {
-            var userId = this.GetCurrentUserId();
+            var userId = UserHelper.GetCurrentUserId(this.User);
             if (userId == null)
             {
                 return this.RedirectToAction("Login", "Account");
@@ -395,7 +651,6 @@ public class TodoTasksController : Controller
         {
             TodoTasksLog.LogErrorUpdatingTask(this.logger, model.TaskId, ex);
             this.ModelState.AddModelError(string.Empty, "An error occurred while updating the task.");
-            return this.View(model);
             throw;
         }
     }
@@ -408,7 +663,7 @@ public class TodoTasksController : Controller
 
         try
         {
-            var userId = this.GetCurrentUserId();
+            var userId = UserHelper.GetCurrentUserId(this.User);
             if (userId == null)
             {
                 return this.RedirectToAction("Login", "Account");
@@ -442,7 +697,7 @@ public class TodoTasksController : Controller
 
         try
         {
-            var userId = this.GetCurrentUserId();
+            var userId = UserHelper.GetCurrentUserId(this.User);
             if (userId == null)
             {
                 return this.RedirectToAction("Login", "Account");
@@ -476,72 +731,5 @@ public class TodoTasksController : Controller
             return this.RedirectToAction("Index", "TodoLists");
             throw;
         }
-    }
-
-    private static TaskFilter ParseTaskFilter(string? filter)
-    {
-        return filter?.ToUpperInvariant() switch
-        {
-            "NOTSTARTED" => TaskFilter.NotStarted,
-            "INPROGRESS" => TaskFilter.InProgress,
-            "COMPLETED" => TaskFilter.Completed,
-            "ALL" => TaskFilter.All,
-            _ => TaskFilter.Active
-        };
-    }
-
-    private static TodoTaskViewModel MapToTaskViewModel(TodoTaskModel model)
-    {
-        return new TodoTaskViewModel
-        {
-            TaskId = model.Id,
-            Title = model.Title,
-            Description = model.Description,
-            CreationDate = model.CreationDate ?? DateTime.MinValue,
-            DueDate = model.DueDate,
-            Status = model.Status?.StatusTitle ?? "Unknown",
-            ListId = model.ListId,
-            OwnerName = FormatOwnerName(model.OwnerUser?.FirstName, model.OwnerUser?.LastName),
-            Tags = model.UsersTags?.Select(tag => tag.Title) ?? Enumerable.Empty<string>(),
-        };
-    }
-
-    private static string FormatOwnerName(string? firstName, string? lastName)
-    {
-        if (string.IsNullOrEmpty(firstName) && string.IsNullOrEmpty(lastName))
-        {
-            return "N/A";
-        }
-
-        var name = firstName ?? "N/A";
-        if (!string.IsNullOrEmpty(lastName))
-        {
-            name += $" {lastName[0]}.";
-        }
-
-        return name;
-    }
-
-    private static ListRole StringToRoleEnum(string roleName)
-    {
-        return roleName.ToUpperInvariant() switch
-        {
-            "OWNER" => ListRole.Owner,
-            "EDITOR" => ListRole.Editor,
-            "VIEWER" => ListRole.Viewer,
-            _ => ListRole.None,
-        };
-    }
-
-    private int? GetCurrentUserId()
-    {
-        var userNameIdentifier = this.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (userNameIdentifier != null &&
-            int.TryParse(userNameIdentifier, NumberStyles.Integer, CultureInfo.InvariantCulture, out var userId))
-        {
-            return userId;
-        }
-
-        return null;
     }
 }

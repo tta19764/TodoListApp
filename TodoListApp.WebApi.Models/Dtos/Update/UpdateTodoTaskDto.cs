@@ -1,10 +1,27 @@
 namespace TodoListApp.WebApi.Models.Dtos.Update;
+
+/// <summary>
+/// Data Transfer Object for updating a to-do task.
+/// </summary>
 public class UpdateTodoTaskDto
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="UpdateTodoTaskDto"/> class.
+    /// </summary>
     public UpdateTodoTaskDto()
     {
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="UpdateTodoTaskDto"/> class.
+    /// </summary>
+    /// <param name="id">The task ID.</param>
+    /// <param name="title">The task title.</param>
+    /// <param name="description">The task description.</param>
+    /// <param name="dueDate">The task due date.</param>
+    /// <param name="statusId">The task status ID.</param>
+    /// <param name="assigneeId">The task assignee ID.</param>
+    /// <param name="listId">The task list ID.</param>
     public UpdateTodoTaskDto(int id, string title, string? description, DateTime dueDate, int statusId, int assigneeId, int listId)
     {
         this.Id = id;

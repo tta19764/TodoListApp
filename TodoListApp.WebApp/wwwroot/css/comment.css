@@ -1,0 +1,41 @@
+.comment-item {
+    transition: background-color 0.2s ease;
+    border: none;
+    border-bottom: 1px solid #dee2e6;
+}
+
+    .comment-item:last-child {
+        border-bottom: none;
+    }
+
+    .comment-item:hover {
+        background-color: #f8f9fa;
+    }
+
+    .comment-item .btn-group {
+        opacity: 0.7;
+        transition: opacity 0.2s ease;
+    }
+
+    .comment-item:hover .btn-group {
+        opacity: 1;
+    }
+
+.btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+}
+
+    .btn-icon i {
+        font-size: 1rem;
+        line-height: 1;
+    }
+
+    /* Optional: subtle hover effect */
+    .btn-icon:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+    }

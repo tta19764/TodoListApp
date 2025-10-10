@@ -60,4 +60,20 @@ public interface ITodoTaskRepository : IRepository<TodoTask>
     /// <param name="rowCount">The number of tasks on the page.</param>
     /// <returns>A read-only list of TodoTask entities.</returns>
     Task<IReadOnlyList<TodoTask>> SerchTasksAsync(int userId, string? title, DateTime? creationDate, DateTime? dueDate, int pageNumber, int rowCount);
+
+    /// <summary>
+    /// Gets all tasks assigned to a specific user by their user ID.
+    /// </summary>
+    /// <param name="userId">The user unique identifier.</param>
+    /// <returns>A read-only list of TodoTask entities.</returns>
+    Task<IReadOnlyList<TodoTask>> GetAllAssignedTasksAsync(int userId);
+
+    /// <summary>
+    /// Gets a paginated list of tasks assigned to a specific user by their user ID.
+    /// </summary>
+    /// <param name="userId">The user unique identifier.</param>
+    /// <param name="pageNumber">The page number.</param>
+    /// <param name="rowCount">The number of tasks on the page.</param>
+    /// <returns>A read-only list of TodoTask entities.</returns>
+    Task<IReadOnlyList<TodoTask>> GetAllAssignedTasksAsync(int userId, int pageNumber, int rowCount);
 }

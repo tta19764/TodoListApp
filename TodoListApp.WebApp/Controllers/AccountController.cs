@@ -7,6 +7,7 @@ using TodoListApp.Services.Interfaces.Servicies;
 using TodoListApp.Services.JWT;
 using TodoListApp.WebApp.CustomLogs;
 using TodoListApp.WebApp.Data;
+using TodoListApp.WebApp.Helpers;
 using TodoListApp.WebApp.Models.Account;
 
 namespace TodoListApp.WebApp.Controllers;
@@ -20,19 +21,25 @@ public class AccountController : Controller
     private readonly ILogger<AccountController> logger;
     private readonly UserManager<AppUser> userManager;
     private readonly ITokenStorageService tokenStorageService;
+    private readonly IEmailService emailService;
+    private readonly IViewRenderService viewRenderService;
 
     public AccountController(
         SignInManager<AppUser> signInManager,
         IAuthService authService,
         ILogger<AccountController> logger,
         UserManager<AppUser> userManager,
-        ITokenStorageService tokenStorageService)
+        ITokenStorageService tokenStorageService,
+        IEmailService emailService,
+        IViewRenderService viewRenderService)
     {
         this.signInManager = signInManager ?? throw new ArgumentNullException(nameof(signInManager));
         this.authService = authService ?? throw new ArgumentNullException(nameof(authService));
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
         this.userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
         this.tokenStorageService = tokenStorageService ?? throw new ArgumentNullException(nameof(tokenStorageService));
+        this.emailService = emailService ?? throw new ArgumentNullException(nameof(emailService));
+        this.viewRenderService = viewRenderService ?? throw new ArgumentNullException(nameof(viewRenderService));
     }
 
     [HttpGet]
@@ -488,7 +495,154 @@ public class AccountController : Controller
             return this.View(model);
         }
 
-        throw new NotImplementedException("Forgot password functionality is not implemented yet.");
+        try
+        {
+            var user = await this.userManager.FindByEmailAsync(model.Email);
+
+            // Always return success page to prevent email enumeration
+            // (security best practice - don't reveal if email exists)
+            if (user == null)
+            {
+                AccountLog.LogUserNotFoundForPasswordReset(this.logger, model.Email);
+                return this.RedirectToAction(nameof(this.ForgotPasswordConfirmation));
+            }
+
+            // Generate password reset token
+            var token = await this.userManager.GeneratePasswordResetTokenAsync(user);
+
+            // Create reset link
+            var resetLink = this.Url.Action(
+                nameof(this.ResetPassword),
+                "Account",
+                new { email = model.Email, token },
+                protocol: this.Request.Scheme);
+
+            if (string.IsNullOrEmpty(resetLink))
+            {
+                AccountLog.LogPasswordResetLinkGenerationFailed(this.logger, model.Email);
+                return this.RedirectToAction(nameof(this.ForgotPasswordConfirmation));
+            }
+
+            var emailModel = new PasswordResetEmailViewModel
+            {
+                FirstName = user.FirstName ?? "User",
+                ResetLink = resetLink,
+                ExpirationHours = 24,
+            };
+
+            // Send email
+            var subject = "Reset Your Password - TodoList App";
+            var messageBody = await this.viewRenderService.RenderToStringAsync("Email/PasswordReset", emailModel);
+
+            var userName = Formaters.FormatOwnerName(user.FirstName, user.LastName);
+            await this.emailService.SendEmailAsync("TodoListApp", userName, model.Email, subject, messageBody);
+
+            AccountLog.LogPasswordResetEmailSent(this.logger, model.Email);
+
+            return this.RedirectToAction(nameof(this.ForgotPasswordConfirmation));
+        }
+        catch (Exception ex)
+        {
+            AccountLog.LogUnexpectedErrorDuringPasswordReset(this.logger, model.Email, ex);
+
+            // Still redirect to confirmation page to not reveal errors
+            return this.RedirectToAction(nameof(this.ForgotPasswordConfirmation));
+            throw;
+        }
+    }
+
+    [HttpGet]
+    [Route("ForgotPasswordConfirmation")]
+    [AllowAnonymous]
+    public IActionResult ForgotPasswordConfirmation()
+    {
+        return this.View();
+    }
+
+    [HttpGet]
+    [Route("ResetPassword")]
+    [AllowAnonymous]
+    public IActionResult ResetPassword(string? email, string? token)
+    {
+        if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(token))
+        {
+            AccountLog.LogInvalidPasswordResetLink(this.logger);
+            return this.RedirectToAction(nameof(this.ForgotPassword));
+        }
+
+        var model = new ResetPasswordViewModel
+        {
+            Email = email,
+            Token = token,
+        };
+
+        return this.View(model);
+    }
+
+    [HttpPost]
+    [Route("ResetPassword")]
+    [AllowAnonymous]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
+    {
+        if (model == null)
+        {
+            AccountLog.LogNullResetPasswordViewModel(this.logger);
+            return this.View(new ResetPasswordViewModel());
+        }
+
+        if (!this.ModelState.IsValid)
+        {
+            AccountLog.LogInvalidModelState(this.logger);
+            return this.View(model);
+        }
+
+        try
+        {
+            var user = await this.userManager.FindByEmailAsync(model.Email);
+            if (user == null)
+            {
+                AccountLog.LogPasswordResetFailedUserNotFound(this.logger, model.Email);
+
+                // Don't reveal that the user does not exist
+                return this.RedirectToAction(nameof(this.ResetPasswordConfirmation));
+            }
+
+            // Reset the password
+            var result = await this.userManager.ResetPasswordAsync(user, model.Token, model.NewPassword);
+
+            if (result.Succeeded)
+            {
+                AccountLog.LogPasswordResetSuccessful(this.logger, model.Email);
+                return this.RedirectToAction(nameof(this.ResetPasswordConfirmation));
+            }
+
+            // Add errors to model state
+            foreach (var error in result.Errors)
+            {
+                this.ModelState.AddModelError(string.Empty, error.Description);
+            }
+
+            var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+            AccountLog.LogPasswordResetFailedWithErrors(this.logger, model.Email, errors);
+
+            return this.View(model);
+        }
+        catch (Exception ex)
+        {
+            AccountLog.LogUnexpectedErrorDuringPasswordReset(this.logger, model.Email, ex);
+            this.ModelState.AddModelError(string.Empty, "An unexpected error occurred. Please try again later.");
+            return this.View(model);
+            throw;
+        }
+    }
+
+    [HttpGet]
+    [Route("ResetPasswordConfirmation")]
+    [AllowAnonymous]
+    public IActionResult ResetPasswordConfirmation()
+    {
+        return this.View();
     }
 
     private async Task PerformLocalLogout()

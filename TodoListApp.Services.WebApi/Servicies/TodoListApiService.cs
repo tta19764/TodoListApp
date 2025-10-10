@@ -5,22 +5,42 @@ using Microsoft.Extensions.Logging;
 using TodoListApp.Services.Interfaces.Servicies;
 using TodoListApp.Services.Models;
 using TodoListApp.Services.WebApi.CustomLogs;
+using TodoListApp.Services.WebApi.Helpers;
 using TodoListApp.WebApi.Models.Dtos.Create;
 using TodoListApp.WebApi.Models.Dtos.Read;
 using TodoListApp.WebApi.Models.Dtos.Update;
 
 namespace TodoListApp.Services.WebApi.Servicies;
+
+/// <summary>
+/// Provides API-based CRUD operations and data retrieval for to-do lists.
+/// </summary>
 public class TodoListApiService : ITodoListService
 {
     private readonly HttpClient httpClient;
     private readonly ILogger<TodoListApiService> logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TodoListApiService"/> class.
+    /// </summary>
+    /// <param name="httpClient">The HTTP client used to send API requests.</param>
+    /// <param name="logger">The logger instance for structured logging.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="httpClient"/> or <paramref name="logger"/> is null.</exception>
     public TodoListApiService(HttpClient httpClient, ILogger<TodoListApiService> logger)
     {
         this.httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
+    /// <summary>
+    /// Creates a new to-do list through the API.
+    /// </summary>
+    /// <param name="model">The to-do list model to create.</param>
+    /// <returns>The created <see cref="TodoListModel"/> instance returned from the API.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="model"/> is null.</exception>
+    /// <exception cref="HttpRequestException">Thrown when the API request fails.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when the API returns a null or invalid response.</exception>
+    /// <exception cref="JsonException">Thrown when the API response cannot be deserialized.</exception>
     public async Task<TodoListModel> AddAsync(TodoListModel model)
     {
         ArgumentNullException.ThrowIfNull(model);
@@ -40,7 +60,7 @@ public class TodoListApiService : ITodoListService
                 if (result != null)
                 {
                     TodoListLog.LogTodoListCreated(this.logger, result.Id);
-                    return MapToModel(result);
+                    return MapToModel.MapToTodoListModel(result);
                 }
 
                 TodoListLog.LogNullResponse(this.logger, "create");
@@ -68,6 +88,13 @@ public class TodoListApiService : ITodoListService
         }
     }
 
+    /// <summary>
+    /// Deletes a specific to-do list by its identifier.
+    /// </summary>
+    /// <param name="userId">The ID of the user performing the delete operation.</param>
+    /// <param name="id">The ID of the to-do list to delete.</param>
+    /// <exception cref="HttpRequestException">Thrown when the delete request fails.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when the specified to-do list is not found.</exception>
     public async Task DeleteAsync(int userId, int id)
     {
         try
@@ -102,6 +129,13 @@ public class TodoListApiService : ITodoListService
         }
     }
 
+    /// <summary>
+    /// Retrieves all to-do lists accessible by a specific user.
+    /// </summary>
+    /// <param name="userId">The ID of the user.</param>
+    /// <returns>A read-only list of <see cref="TodoListModel"/> objects representing all accessible lists.</returns>
+    /// <exception cref="HttpRequestException">Thrown when the retrieval request fails.</exception>
+    /// <exception cref="JsonException">Thrown when the response cannot be deserialized.</exception>
     public async Task<IReadOnlyList<TodoListModel>> GetAllAsync(int userId)
     {
         try
@@ -114,7 +148,7 @@ public class TodoListApiService : ITodoListService
                 if (lists != null)
                 {
                     TodoListLog.LogTodoListsRetrieved(this.logger, lists.Count, userId);
-                    return lists.Select(MapToModel).ToList();
+                    return lists.Select(MapToModel.MapToTodoListModel).ToList();
                 }
 
                 TodoListLog.LogNullResponse(this.logger, "get all");
@@ -142,6 +176,15 @@ public class TodoListApiService : ITodoListService
         }
     }
 
+    /// <summary>
+    /// Retrieves a paginated list of all to-do lists accessible by a user.
+    /// </summary>
+    /// <param name="userId">The ID of the user.</param>
+    /// <param name="pageNumber">The page number to retrieve.</param>
+    /// <param name="rowCount">The number of items per page.</param>
+    /// <returns>A read-only paginated list of <see cref="TodoListModel"/> objects.</returns>
+    /// <exception cref="HttpRequestException">Thrown when the retrieval request fails.</exception>
+    /// <exception cref="JsonException">Thrown when the response cannot be deserialized.</exception>
     public async Task<IReadOnlyList<TodoListModel>> GetAllAsync(int userId, int pageNumber, int rowCount)
     {
         try
@@ -155,7 +198,7 @@ public class TodoListApiService : ITodoListService
                 if (lists != null)
                 {
                     TodoListLog.LogTodoListsPageRetrieved(this.logger, lists.Count, pageNumber, userId);
-                    return lists.Select(MapToModel).ToList();
+                    return lists.Select(MapToModel.MapToTodoListModel).ToList();
                 }
 
                 TodoListLog.LogNullResponse(this.logger, "get paginated");
@@ -183,6 +226,15 @@ public class TodoListApiService : ITodoListService
         }
     }
 
+    /// <summary>
+    /// Retrieves all to-do lists created by a specific author.
+    /// </summary>
+    /// <param name="authorId">The ID of the author (owner).</param>
+    /// <param name="pageNumber">The optional page number for pagination.</param>
+    /// <param name="rowCount">The optional number of items per page.</param>
+    /// <returns>A read-only list of <see cref="TodoListModel"/> objects representing the author's lists.</returns>
+    /// <exception cref="HttpRequestException">Thrown when the retrieval request fails.</exception>
+    /// <exception cref="JsonException">Thrown when the response cannot be deserialized.</exception>
     public async Task<IReadOnlyList<TodoListModel>> GetAllByAuthorAsync(int authorId, int? pageNumber = null, int? rowCount = null)
     {
         try
@@ -218,7 +270,7 @@ public class TodoListApiService : ITodoListService
                         TodoListLog.LogTodoListsRetrievedByAuthor(this.logger, lists.Count, authorId);
                     }
 
-                    return lists.Select(MapToModel).ToList();
+                    return lists.Select(MapToModel.MapToTodoListModel).ToList();
                 }
 
                 TodoListLog.LogNullResponse(this.logger, "get paginated by author");
@@ -246,6 +298,15 @@ public class TodoListApiService : ITodoListService
         }
     }
 
+    /// <summary>
+    /// Retrieves all to-do lists shared with a specific user.
+    /// </summary>
+    /// <param name="userId">The ID of the user with whom the lists are shared.</param>
+    /// <param name="pageNumber">The optional page number for pagination.</param>
+    /// <param name="rowCount">The optional number of items per page.</param>
+    /// <returns>A read-only list of <see cref="TodoListModel"/> objects representing shared lists.</returns>
+    /// <exception cref="HttpRequestException">Thrown when the retrieval request fails.</exception>
+    /// <exception cref="JsonException">Thrown when the response cannot be deserialized.</exception>
     public async Task<IReadOnlyList<TodoListModel>> GetAllSharedAsync(int userId, int? pageNumber = null, int? rowCount = null)
     {
         try
@@ -281,7 +342,7 @@ public class TodoListApiService : ITodoListService
                         TodoListLog.LogTodoListsRetrievedShared(this.logger, lists.Count, userId);
                     }
 
-                    return lists.Select(MapToModel).ToList();
+                    return lists.Select(MapToModel.MapToTodoListModel).ToList();
                 }
 
                 TodoListLog.LogNullResponse(this.logger, "get paginated shared");
@@ -309,6 +370,15 @@ public class TodoListApiService : ITodoListService
         }
     }
 
+    /// <summary>
+    /// Retrieves a specific to-do list by its identifier.
+    /// </summary>
+    /// <param name="userId">The ID of the user performing the operation.</param>
+    /// <param name="id">The ID of the to-do list to retrieve.</param>
+    /// <returns>The <see cref="TodoListModel"/> that matches the specified identifier.</returns>
+    /// <exception cref="HttpRequestException">Thrown when the retrieval request fails.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when the list is not found or response is null.</exception>
+    /// <exception cref="JsonException">Thrown when the response cannot be deserialized.</exception>
     public async Task<TodoListModel> GetByIdAsync(int userId, int id)
     {
         try
@@ -322,7 +392,7 @@ public class TodoListApiService : ITodoListService
                 if (list != null)
                 {
                     TodoListLog.LogTodoListRetrievedById(this.logger, id, userId);
-                    return MapToModel(list);
+                    return MapToModel.MapToTodoListModel(list);
                 }
 
                 TodoListLog.LogNullResponse(this.logger, "get by id");
@@ -360,6 +430,16 @@ public class TodoListApiService : ITodoListService
         }
     }
 
+    /// <summary>
+    /// Updates an existing to-do list through the API.
+    /// </summary>
+    /// <param name="userId">The ID of the user performing the update.</param>
+    /// <param name="model">The updated to-do list model.</param>
+    /// <returns>The updated <see cref="TodoListModel"/> returned by the API.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="model"/> is null.</exception>
+    /// <exception cref="HttpRequestException">Thrown when the update request fails.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when the list is not found or response is null.</exception>
+    /// <exception cref="JsonException">Thrown when the response cannot be deserialized.</exception>
     public async Task<TodoListModel> UpdateAsync(int userId, TodoListModel model)
     {
         ArgumentNullException.ThrowIfNull(model);
@@ -380,7 +460,7 @@ public class TodoListApiService : ITodoListService
                 if (result != null)
                 {
                     TodoListLog.LogTodoListUpdated(this.logger, model.Id);
-                    return MapToModel(result);
+                    return MapToModel.MapToTodoListModel(result);
                 }
 
                 TodoListLog.LogNullResponse(this.logger, "update");
@@ -418,6 +498,12 @@ public class TodoListApiService : ITodoListService
         }
     }
 
+    /// <summary>
+    /// Retrieves the count of all to-do lists accessible by a specific user.
+    /// </summary>
+    /// <param name="userId">The ID of the user.</param>
+    /// <returns>The number of to-do lists accessible by the user.</returns>
+    /// <exception cref="HttpRequestException">Thrown when the HTTP request fails.</exception>
     public async Task<int> AllByUserCount(int userId)
     {
         try
@@ -452,6 +538,12 @@ public class TodoListApiService : ITodoListService
         }
     }
 
+    /// <summary>
+    /// Retrieves the count of to-do lists owned/created by a specific author.
+    /// </summary>
+    /// <param name="authorId">The ID of the author/owner.</param>
+    /// <returns>The number of to-do lists owned by the author.</returns>
+    /// <exception cref="HttpRequestException">Thrown when the HTTP request fails.</exception>
     public async Task<int> AllByAuthorCount(int authorId)
     {
         try
@@ -486,6 +578,12 @@ public class TodoListApiService : ITodoListService
         }
     }
 
+    /// <summary>
+    /// Retrieves the count of to-do lists that are shared with a specific user (lists they don't own).
+    /// </summary>
+    /// <param name="userId">The ID of the user.</param>
+    /// <returns>The number of to-do lists shared with the user.</returns>
+    /// <exception cref="HttpRequestException">Thrown when the HTTP request fails.</exception>
     public async Task<int> AllSharedCount(int userId)
     {
         try
@@ -518,19 +616,5 @@ public class TodoListApiService : ITodoListService
             TodoListLog.LogUnexpectedError(this.logger, ex);
             throw;
         }
-    }
-
-    private static TodoListModel MapToModel(TodoListDto dto)
-    {
-        return new TodoListModel(
-            id: dto.Id,
-            ownerId: dto.ListOwnerId,
-            title: dto.Title,
-            description: dto.Description ?? string.Empty)
-        {
-            UserRole = dto.ListRole,
-            OwnerFullName = dto.OwnerName,
-            ActiveTasks = dto.PendingTasks,
-        };
     }
 }

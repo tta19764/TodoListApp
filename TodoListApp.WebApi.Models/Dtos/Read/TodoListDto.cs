@@ -5,6 +5,9 @@ namespace TodoListApp.WebApi.Models.Dtos.Read;
 /// </summary>
 public class TodoListDto
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TodoListDto"/> class.
+    /// </summary>
     public TodoListDto()
     {
     }

@@ -5,6 +5,9 @@ namespace TodoListApp.WebApi.Models.Dtos.Update;
 /// </summary>
 public class UpdateTodoListDto
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="UpdateTodoListDto"/> class.
+    /// </summary>
     public UpdateTodoListDto()
     {
     }

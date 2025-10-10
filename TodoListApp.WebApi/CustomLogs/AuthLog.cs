@@ -87,44 +87,118 @@ internal static class AuthLog
             "Token refreshed successfully for user ID: {UserId}");
 
     // Public methods for Warning level logs
+
+    /// <summary>
+    /// Logs a warning about an invalid login attempt.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="username">The username that attempted to login.</param>
+    /// <param name="exception">Optional exception that occurred.</param>
     public static void LogInvalidLoginAttempt(ILogger logger, string username, Exception? exception = null) =>
         InvalidLoginAttempt(logger, username, exception);
 
+    /// <summary>
+    /// Logs a warning about an invalid logout attempt.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="userId">The user ID that attempted to logout.</param>
+    /// <param name="exception">Optional exception that occurred.</param>
     public static void LogInvalidLogoutAttempt(ILogger logger, string userId, Exception? exception = null) =>
         InvalidLogoutAttempt(logger, userId, exception);
 
+    /// <summary>
+    /// Logs a warning about an invalid refresh token attempt.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="userId">The user ID that attempted to refresh the token.</param>
+    /// <param name="exception">Optional exception that occurred.</param>
     public static void LogInvalidRefreshTokenAttempt(ILogger logger, string userId, Exception? exception = null) =>
         InvalidRefreshTokenAttempt(logger, userId, exception);
 
+    /// <summary>
+    /// Logs a warning that a null login request was received.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="exception">Optional exception that occurred.</param>
     public static void LogNullLoginRequest(ILogger logger, Exception? exception = null) =>
         NullLoginRequest(logger, exception);
 
+    /// <summary>
+    /// Logs a warning that a null logout request was received.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="exception">Optional exception that occurred.</param>
     public static void LogNullLogoutRequest(ILogger logger, Exception? exception = null) =>
         NullLogoutRequest(logger, exception);
 
+    /// <summary>
+    /// Logs a warning that a null refresh token request was received.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="exception">Optional exception that occurred.</param>
     public static void LogNullRefreshTokenRequest(ILogger logger, Exception? exception = null) =>
         NullRefreshTokenRequest(logger, exception);
 
     // Public methods for Error level logs
+
+    /// <summary>
+    /// Logs an error that an unexpected exception occurred during login.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="username">The username attempting to login.</param>
+    /// <param name="exception">The exception that occurred.</param>
     public static void LogUnexpectedErrorDuringLogin(ILogger logger, string username, Exception exception) =>
         UnexpectedErrorDuringLogin(logger, username, exception);
 
+    /// <summary>
+    /// Logs an error that an unexpected exception occurred during logout.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="userId">The user ID attempting to logout.</param>
+    /// <param name="exception">The exception that occurred.</param>
     public static void LogUnexpectedErrorDuringLogout(ILogger logger, string userId, Exception exception) =>
         UnexpectedErrorDuringLogout(logger, userId, exception);
 
+    /// <summary>
+    /// Logs an error that an unexpected exception occurred during token refresh.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="userId">The user ID attempting to refresh the token.</param>
+    /// <param name="exception">The exception that occurred.</param>
     public static void LogUnexpectedErrorDuringRefresh(ILogger logger, string userId, Exception exception) =>
         UnexpectedErrorDuringRefresh(logger, userId, exception);
 
+    /// <summary>
+    /// Logs an error that the user login or password was not set to an instance.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="exception">Optional exception that occurred.</param>
     public static void LogNullUserLoginOrPassword(ILogger logger, Exception? exception = null) =>
         NullUserLoginOrPassword(logger, exception);
 
     // Public methods for Information level logs
+
+    /// <summary>
+    /// Logs that a user has successfully logged in.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="username">The username that logged in successfully.</param>
     public static void LogUserLoggedInSuccessfully(ILogger logger, string username) =>
         UserLoggedInSuccessfully(logger, username, null);
 
+    /// <summary>
+    /// Logs that a user has successfully logged out.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="userId">The user ID that logged out successfully.</param>
     public static void LogUserLoggedOutSuccessfully(ILogger logger, string userId) =>
         UserLoggedOutSuccessfully(logger, userId, null);
 
+    /// <summary>
+    /// Logs that a token has been successfully refreshed.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="userId">The user ID for which the token was refreshed.</param>
     public static void LogTokenRefreshedSuccessfully(ILogger logger, string userId) =>
         TokenRefreshedSuccessfully(logger, userId, null);
 }

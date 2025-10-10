@@ -1,0 +1,95 @@
+@using Microsoft.AspNetCore.Http.Extensions
+@model TagTasksViewModel
+@{
+	ViewData["Title"] = $"Tasks tagged: {Model.TagTitle}";
+	Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid mt-4">
+	<div class="row">
+		<div class="col-12">
+			<div class="card shadow-sm">
+				<div class="card-header bg-primary text-white d-flex justify-content-between align-items-center flex-wrap">
+					<div class="d-flex flex-column">
+						<h4 class="mb-1 d-flex align-items-center">
+							<i class="bi bi-tag-fill me-2"></i>
+							Tasks tagged:
+							<span class="badge bg-light text-primary ms-2">@Model.TagTitle</span>
+						</h4>
+						<small class="text-light opacity-75">Total: @Model.TotalTasks task(s)</small>
+					</div>
+
+					<div class="d-flex align-items-center gap-2 mt-2 mt-md-0">
+						<a href="@Model.ReturnUrl" class="btn btn-outline-light btn-sm">
+							<i class="bi bi-arrow-left"></i> Back
+						</a>
+						<a asp-controller="Tags"
+						   asp-action="Index"
+						   class="btn btn-outline-light btn-sm">
+							<i class="bi bi-tags"></i> All Tags
+						</a>
+					</div>
+				</div>
+				<div class="card-body">
+					@if (Model.Tasks != null && Model.Tasks.Any())
+					{
+						<div id="tagTasksContainer">
+							@foreach (var task in Model.Tasks)
+							{
+								<partial name="_TaskCardPartial" model="task" />
+							}
+
+							<!-- Pagination -->
+							@if (Model.TotalPages > 1)
+							{
+								<nav aria-label="Task pagination" class="mt-4">
+									<ul class="pagination justify-content-center">
+										<!-- Previous -->
+										<li class="page-item @(Model.PageNumber <= 1 ? "disabled" : "")">
+											<a class="page-link"
+											   asp-controller="Tags"
+											   asp-action="TasksByTag"
+											   asp-route-tagId="@Model.TagId"
+											   asp-route-pageNumber="@(Model.PageNumber - 1)"
+											   asp-route-rowCount="@Model.RowCount"
+											   aria-label="Previous">
+												<i class="bi bi-chevron-left"></i> Previous
+											</a>
+										</li>
+
+										<!-- Page info -->
+										<li class="page-item disabled">
+											<span class="page-link">
+												Page @Model.PageNumber of @Model.TotalPages (Total: @Model.TotalTasks tasks)
+											</span>
+										</li>
+
+										<!-- Next -->
+										<li class="page-item @(Model.PageNumber >= Model.TotalPages ? "disabled" : "")">
+											<a class="page-link"
+											   asp-controller="Tags"
+											   asp-action="TasksByTag"
+											   asp-route-tagId="@Model.TagId"
+											   asp-route-pageNumber="@(Model.PageNumber + 1)"
+											   asp-route-rowCount="@Model.RowCount"
+											   aria-label="Next">
+												Next <i class="bi bi-chevron-right"></i>
+											</a>
+										</li>
+									</ul>
+								</nav>
+							}
+						</div>
+					}
+					else
+					{
+						<div class="text-center py-5">
+							<i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+							<p class="text-muted mt-3">No tasks found with this tag</p>
+						</div>
+					}
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

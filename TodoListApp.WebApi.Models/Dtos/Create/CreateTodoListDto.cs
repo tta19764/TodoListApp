@@ -5,6 +5,9 @@ namespace TodoListApp.WebApi.Models.Dtos.Create;
 /// </summary>
 public class CreateTodoListDto
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CreateTodoListDto"/> class.
+    /// </summary>
     public CreateTodoListDto()
     {
     }

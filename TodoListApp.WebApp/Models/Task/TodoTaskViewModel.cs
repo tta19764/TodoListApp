@@ -1,3 +1,5 @@
+using TodoListApp.Services.Enums;
+
 namespace TodoListApp.WebApp.Models.Task;
 
 /// <summary>
@@ -49,4 +51,14 @@ public class TodoTaskViewModel
     /// Gets or sets the list of tags associated with the task.
     /// </summary>
     public IEnumerable<string> Tags { get; set; } = new List<string>();
+
+    /// <summary>
+    /// Gets or sets the role of the user in relation to the task.
+    /// </summary>
+    public ListRole Role { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the current user is the assignee of the task.
+    /// </summary>
+    public bool IsAssignee { get; set; }
 }
