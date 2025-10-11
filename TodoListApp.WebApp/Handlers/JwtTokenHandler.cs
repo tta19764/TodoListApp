@@ -13,7 +13,7 @@ namespace TodoListApp.WebApp.Handlers;
 /// <summary>
 /// HTTP handler for attaching and refreshing JWT tokens in outgoing requests.
 /// </summary>
-internal sealed class JwtTokenHandler : DelegatingHandler
+public sealed class JwtTokenHandler : DelegatingHandler
 {
     private readonly IHttpContextAccessor httpContextAccessor;
     private readonly UserManager<AppUser> userManager;
@@ -44,10 +44,15 @@ internal sealed class JwtTokenHandler : DelegatingHandler
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
 
+        return this.SendAsyncInternal(request, cancellationToken);
+    }
+
+    private async Task<HttpResponseMessage> SendAsyncInternal(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
         var httpContext = this.httpContextAccessor.HttpContext;
 
         if (httpContext?.User?.Identity?.IsAuthenticated == true)
@@ -57,26 +62,34 @@ internal sealed class JwtTokenHandler : DelegatingHandler
             {
                 var token = await this.tokenStorageService.GetToken(user.Id.ToString(CultureInfo.InvariantCulture));
 
-                if (token is not null && !string.IsNullOrEmpty(token))
+                if (!string.IsNullOrEmpty(token))
                 {
-                    // Check expiry
                     var jwt = new JwtSecurityTokenHandler().ReadJwtToken(token);
                     var exp = jwt.ValidTo;
 
                     if (exp < DateTime.UtcNow.AddMinutes(-1))
                     {
-                        var refreshToken = JsonSerializer.Deserialize<RefreshTokenPayload>(await this.userManager.GetAuthenticationTokenAsync(user, "JwtBearer", "JwtRefreshToken"));
+                        var refreshTokenJson = await this.userManager.GetAuthenticationTokenAsync(user, "JwtBearer", "JwtRefreshToken");
+                        var refreshToken = JsonSerializer.Deserialize<RefreshTokenPayload>(refreshTokenJson);
 
-                        if (refreshToken is not null && !string.IsNullOrEmpty(refreshToken.Token))
+                        if (!string.IsNullOrEmpty(refreshToken?.Token))
                         {
-                            var tokenRequestDto = new RefreshTokenRequestDto { RefreshToken = refreshToken.Token, UserId = user.Id.ToString(CultureInfo.InvariantCulture) };
+                            var tokenRequestDto = new RefreshTokenRequestDto
+                            {
+                                RefreshToken = refreshToken.Token,
+                                UserId = user.Id.ToString(CultureInfo.InvariantCulture),
+                            };
+
                             var tokenResponse = await this.authService.RefreshTokensAsync(tokenRequestDto, cancellationToken);
+
                             if (tokenResponse != null)
                             {
                                 AccountLog.LogJwtTokenRefreshed(this.logger, user.UserName);
+
                                 token = tokenResponse.AccessToken;
-                                var tokenSaveResult = await this.tokenStorageService.SaveToken(user.Id.ToString(CultureInfo.InvariantCulture), token);
-                                if (tokenSaveResult)
+                                var saved = await this.tokenStorageService.SaveToken(user.Id.ToString(CultureInfo.InvariantCulture), token);
+
+                                if (saved)
                                 {
                                     AccountLog.LogJwtTokenStored(this.logger, user.UserName);
                                 }

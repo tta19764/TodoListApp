@@ -18,18 +18,20 @@ internal static class MapToDto
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        return new TodoTaskDto(
-            model.Id,
-            model.Title,
-            model.Description,
-            model.CreationDate ?? DateTime.MinValue,
-            model.DueDate,
-            model.OwnerUser!.FirstName,
-            model.OwnerUser!.LastName,
-            model.OwnerUser!.Id,
-            model.Status?.StatusTitle ?? "Unknown",
-            model.ListId,
-            new ReadOnlyCollection<TagDto>(model.UsersTags.Select(ut => new TagDto() { Id = ut.Id, Title = ut.Title }).ToList()));
+        return new TodoTaskDto()
+        {
+            Id = model.Id,
+            Title = model.Title,
+            Description = model.Description,
+            CreationDate = model.CreationDate ?? DateTime.MinValue,
+            DueDate = model.DueDate,
+            AssigneeFirstName = model.OwnerUser!.FirstName,
+            AssigneeLastName = model.OwnerUser!.LastName,
+            AssigneeId = model.OwnerUser!.Id,
+            Status = model.Status?.StatusTitle ?? "Unknown",
+            ListId = model.ListId,
+            Tags = new ReadOnlyCollection<TagDto>(model.UsersTags.Select(ut => new TagDto() { Id = ut.Id, Title = ut.Title }).ToList()),
+        };
     }
 
     /// <summary>
@@ -75,13 +77,15 @@ internal static class MapToDto
     public static TodoListDto ToTodoListDto(TodoListModel model)
     {
         ArgumentNullException.ThrowIfNull(model);
-        return new TodoListDto(
-            model.Id,
-            model.Title,
-            model.Description,
-            model.OwnerFullName ?? "N/A",
-            model.UserRole,
-            model.OwnerId,
-            model.ActiveTasks);
+        return new TodoListDto()
+        {
+            Id = model.Id,
+            Title = model.Title,
+            Description = model.Description,
+            OwnerName = model.OwnerFullName ?? "N/A",
+            ListRole = model.UserRole,
+            ListOwnerId = model.OwnerId,
+            PendingTasks = model.ActiveTasks,
+        };
     }
 }

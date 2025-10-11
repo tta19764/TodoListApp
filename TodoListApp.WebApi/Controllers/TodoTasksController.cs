@@ -736,7 +736,16 @@ public class TodoTasksController : ControllerBase
                 return this.Unauthorized("Invalid user identifier.");
             }
 
-            var model = new TodoTaskModel(0, dto.Title, dto.Description, null, dto.DueDate, dto.StatusId, dto.AssigneeId, dto.ListId);
+            var model = new TodoTaskModel(0)
+            {
+                Title = dto.Title,
+                Description = dto.Description,
+                CreationDate = null,
+                DueDate = dto.DueDate,
+                StatusId = dto.StatusId,
+                OwnerUserId = dto.AssigneeId,
+                ListId = dto.ListId,
+            };
             var createdTask = await this.service.AddAsync(model);
 
             TodoTasksLog.LogTaskCreatedSuccessfully(this.logger, createdTask.Id, userId);
@@ -784,7 +793,16 @@ public class TodoTasksController : ControllerBase
                 return this.Unauthorized("Invalid user identifier.");
             }
 
-            var model = new TodoTaskModel(dto.Id, dto.Title, dto.Description, null, dto.DueDate, dto.StatusId, dto.AssigneeId, dto.ListId);
+            var model = new TodoTaskModel(dto.Id)
+            {
+                Title = dto.Title,
+                Description = dto.Description,
+                CreationDate = null,
+                DueDate = dto.DueDate,
+                StatusId = dto.StatusId,
+                OwnerUserId = dto.AssigneeId,
+                ListId = dto.ListId,
+            };
             var updatedTask = await this.service.UpdateAsync(userId.Value, model);
 
             TodoTasksLog.LogTaskUpdatedSuccessfully(this.logger, dto.Id, userId);

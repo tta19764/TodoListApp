@@ -49,7 +49,7 @@ public class AuthService : IAuthService
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A <see cref="TokenResponseDto"/> containing access and refresh tokens if successful; otherwise, null.</returns>
     /// <exception cref="ArgumentNullException">If data transfer object is null.</exception>
-    public async Task<TokenResponseDto?> LoginAsync(UserDto request, CancellationToken cancellationToken = default)
+    public Task<TokenResponseDto?> LoginAsync(UserDto request, CancellationToken cancellationToken = default)
     {
         if (request == null)
         {
@@ -57,6 +57,55 @@ public class AuthService : IAuthService
             throw new ArgumentNullException(nameof(request));
         }
 
+        return this.LoginInternalAsync(request);
+    }
+
+    /// <summary>
+    /// Logs out a user by invalidating their refresh token.
+    /// </summary>
+    /// <param name="logoutRequestDto">The data transfer object containing the access token and user ID.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>True if logout was successful; otherwise, false.</returns>
+    public Task<bool> LogoutAsync(LogoutRequestDto logoutRequestDto, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(logoutRequestDto);
+
+        return this.LogoutInternalAsync(logoutRequestDto);
+    }
+
+    /// <summary>
+    /// Refreshes JWT tokens using a valid refresh token.
+    /// </summary>
+    /// <param name="request">The data transfer object containing the refresh token and user ID.</param>
+    /// <param name="cancellationToken">The cancellation toke.</param>
+    /// <returns>A <see cref="TokenResponseDto"/> containing new access and refresh tokens if successful; otherwise, null.</returns>
+    public Task<TokenResponseDto?> RefreshTokensAsync(RefreshTokenRequestDto request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        return this.RefreshTokensInternalAsync(request);
+    }
+
+    private static string GenerateRefreshToken()
+    {
+        var randomNumber = new byte[32];
+        using var rng = RandomNumberGenerator.Create();
+        rng.GetBytes(randomNumber);
+        return Convert.ToBase64String(randomNumber);
+    }
+
+    private static string? GetUserIdFromToken(string jwtToken)
+    {
+        var handler = new JwtSecurityTokenHandler();
+        var token = handler.ReadJwtToken(jwtToken);
+
+        var userIdClaim = token.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+
+        return userIdClaim?.Value;
+    }
+
+    private async Task<TokenResponseDto?> LoginInternalAsync(UserDto request)
+    {
         var user = await this.userManager.FindByNameAsync(request.Username);
         if (user is null)
         {
@@ -77,16 +126,21 @@ public class AuthService : IAuthService
         return tokenResponse;
     }
 
-    /// <summary>
-    /// Logs out a user by invalidating their refresh token.
-    /// </summary>
-    /// <param name="logoutRequestDto">The data transfer object containing the access token and user ID.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>True if logout was successful; otherwise, false.</returns>
-    public async Task<bool> LogoutAsync(LogoutRequestDto logoutRequestDto, CancellationToken cancellationToken = default)
+    private async Task<TokenResponseDto?> RefreshTokensInternalAsync(RefreshTokenRequestDto request)
     {
-        ArgumentNullException.ThrowIfNull(logoutRequestDto);
+        var user = await this.ValidateRefreshTokenAsync(request.UserId, request.RefreshToken);
+        if (user is null)
+        {
+            return null;
+        }
 
+        var tokenResponse = await this.CreateTokenResponse(user);
+
+        return tokenResponse;
+    }
+
+    private async Task<bool> LogoutInternalAsync(LogoutRequestDto logoutRequestDto)
+    {
         var user = await this.userManager.FindByIdAsync(logoutRequestDto.UserId);
         if (user == null)
         {
@@ -124,45 +178,6 @@ public class AuthService : IAuthService
         }
     }
 
-    /// <summary>
-    /// Refreshes JWT tokens using a valid refresh token.
-    /// </summary>
-    /// <param name="request">The data transfer object containing the refresh token and user ID.</param>
-    /// <param name="cancellationToken">The cancellation toke.</param>
-    /// <returns>A <see cref="TokenResponseDto"/> containing new access and refresh tokens if successful; otherwise, null.</returns>
-    public async Task<TokenResponseDto?> RefreshTokensAsync(RefreshTokenRequestDto request, CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(request);
-
-        var user = await this.ValidateRefreshTokenAsync(request.UserId, request.RefreshToken);
-        if (user is null)
-        {
-            return null;
-        }
-
-        var tokenResponse = await this.CreateTokenResponse(user);
-
-        return tokenResponse;
-    }
-
-    private static string GenerateRefreshToken()
-    {
-        var randomNumber = new byte[32];
-        using var rng = RandomNumberGenerator.Create();
-        rng.GetBytes(randomNumber);
-        return Convert.ToBase64String(randomNumber);
-    }
-
-    private static string? GetUserIdFromToken(string jwtToken)
-    {
-        var handler = new JwtSecurityTokenHandler();
-        var token = handler.ReadJwtToken(jwtToken);
-
-        var userIdClaim = token.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
-
-        return userIdClaim?.Value;
-    }
-
     private async Task<User?> ValidateRefreshTokenAsync(string userNameIdentifier, string refreshToken)
     {
         if (userNameIdentifier is null)
@@ -198,10 +213,8 @@ public class AuthService : IAuthService
         return user;
     }
 
-    private async Task<TokenResponseDto?> CreateTokenResponse(User? user)
+    private async Task<TokenResponseDto?> CreateTokenResponse(User user)
     {
-        ArgumentNullException.ThrowIfNull(user);
-
         var token = this.CreateToken(user);
         var refreshToken = await this.GenerateAndSaveRefreshTokenAsync(user);
 

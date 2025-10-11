@@ -202,57 +202,16 @@ public class TagsController : Controller
     /// <returns>A redirect to the return URL or the form view in case of an error.</returns>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> AddTag(AddTagToTaskViewModel model)
+    public Task<IActionResult> AddTag(AddTagToTaskViewModel model)
     {
         ArgumentNullException.ThrowIfNull(model);
-        _ = this.ModelState.IsValid;
 
-        if (!model.SelectedTagId.HasValue)
+        if (this.ModelState.IsValid)
         {
-            this.ModelState.AddModelError(nameof(model.SelectedTagId), "Please select a tag");
-
-            // Reload available tags
-            var availableTags = await this.tagService.GetAvailableTaskTagsAsync(model.TaskId);
-            model.AvailableTags = availableTags.Select(t => new TagViewModel
-            {
-                Id = t.Id,
-                Title = t.Title,
-            }).ToList();
-
-            return this.View(model);
+            return this.AddTagIntenal(model);
         }
 
-        try
-        {
-            var userId = UserHelper.GetCurrentUserId(this.User);
-            if (userId == null)
-            {
-                return this.RedirectToAction("Login", "Account");
-            }
-
-            var updatedTask = await this.taskTagService.AddTaskTag(userId.Value, model.TaskId, model.SelectedTagId.Value);
-
-            TagsLog.LogTagAddedToTask(
-                this.logger,
-                model.SelectedTagId.Value,
-                updatedTask.Id,
-                userId.Value);
-
-            this.TempData["SuccessMessage"] = "Tag added successfully";
-
-            return this.Redirect(model.ReturnUrl.ToString());
-        }
-        catch (Exception ex)
-        {
-            TagsLog.LogErrorAddingTagToTask(this.logger, ex);
-
-            this.ModelState.AddModelError(string.Empty, "An error occurred while adding the tag");
-
-            // Reload available tags
-            var availableTags = await this.tagService.GetAvailableTaskTagsAsync(model.TaskId);
-            model.AvailableTags = availableTags.Select(MapToViewModel.ToTag).ToList();
-            throw;
-        }
+        return Task.FromResult<IActionResult>(this.View(model));
     }
 
     /// <summary>
@@ -305,6 +264,56 @@ public class TagsController : Controller
             }
 
             return this.RedirectToAction("Details", "TodoTasks", new { id = taskId });
+            throw;
+        }
+    }
+
+    private async Task<IActionResult> AddTagIntenal(AddTagToTaskViewModel model)
+    {
+        if (!model.SelectedTagId.HasValue)
+        {
+            this.ModelState.AddModelError(nameof(model.SelectedTagId), "Please select a tag");
+
+            // Reload available tags
+            var availableTags = await this.tagService.GetAvailableTaskTagsAsync(model.TaskId);
+            model.AvailableTags = availableTags.Select(t => new TagViewModel
+            {
+                Id = t.Id,
+                Title = t.Title,
+            }).ToList();
+
+            return this.View(model);
+        }
+
+        try
+        {
+            var userId = UserHelper.GetCurrentUserId(this.User);
+            if (userId == null)
+            {
+                return this.RedirectToAction("Login", "Account");
+            }
+
+            var updatedTask = await this.taskTagService.AddTaskTag(userId.Value, model.TaskId, model.SelectedTagId.Value);
+
+            TagsLog.LogTagAddedToTask(
+                this.logger,
+                model.SelectedTagId.Value,
+                updatedTask.Id,
+                userId.Value);
+
+            this.TempData["SuccessMessage"] = "Tag added successfully";
+
+            return this.Redirect(model.ReturnUrl.ToString());
+        }
+        catch (Exception ex)
+        {
+            TagsLog.LogErrorAddingTagToTask(this.logger, ex);
+
+            this.ModelState.AddModelError(string.Empty, "An error occurred while adding the tag");
+
+            // Reload available tags
+            var availableTags = await this.tagService.GetAvailableTaskTagsAsync(model.TaskId);
+            model.AvailableTags = availableTags.Select(MapToViewModel.ToTag).ToList();
             throw;
         }
     }

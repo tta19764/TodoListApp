@@ -13,17 +13,6 @@ public class TagDto
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="TagDto"/> class with parameters.
-    /// </summary>
-    /// <param name="id">The tag unqiue identifier.</param>
-    /// <param name="title">The tag title.</param>
-    public TagDto(int id, string title)
-    {
-        this.Id = id;
-        this.Title = title;
-    }
-
-    /// <summary>
     /// Gets or sets the unique identifier of the tag.
     /// </summary>
     public int Id { get; set; }

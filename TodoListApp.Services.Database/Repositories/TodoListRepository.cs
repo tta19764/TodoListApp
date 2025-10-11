@@ -33,18 +33,11 @@ public class TodoListRepository : AbstractRepository, ITodoListRepository
     /// <exception cref="ArgumentNullException">
     /// Thrown if <paramref name="entity"/> is <c>null</c>.
     /// </exception>
-    public async Task<TodoList> AddAsync(TodoList entity)
+    public Task<TodoList> AddAsync(TodoList entity)
     {
         ArgumentNullException.ThrowIfNull(entity);
 
-        _ = await this.dbSet.AddAsync(entity);
-        _ = await this.Context.SaveChangesAsync();
-
-        await this.Context.Entry(entity)
-        .Reference(e => e.ListOwner)
-        .LoadAsync();
-
-        return entity;
+        return this.AddInternalAsync(entity);
     }
 
     /// <summary>
@@ -57,20 +50,11 @@ public class TodoListRepository : AbstractRepository, ITodoListRepository
     /// <exception cref="ArgumentNullException">
     /// Thrown if <paramref name="entity"/> is <c>null</c>.
     /// </exception>
-    public async Task<bool> DeleteAsync(TodoList entity)
+    public Task<bool> DeleteAsync(TodoList entity)
     {
         ArgumentNullException.ThrowIfNull(entity);
 
-        var existing = await this.dbSet.FindAsync(entity.Id);
-        if (existing is null)
-        {
-            return false;
-        }
-
-        _ = this.dbSet.Remove(existing);
-        _ = await this.Context.SaveChangesAsync();
-
-        return true;
+        return this.DeleteInternalAsync(entity);
     }
 
     /// <summary>
@@ -120,7 +104,7 @@ public class TodoListRepository : AbstractRepository, ITodoListRepository
     /// <returns>
     /// A task representing the asynchronous operation. The task result contains <see cref="IReadOnlyList{TodoList}"/>.
     /// </returns>
-    public async Task<IReadOnlyList<TodoList>> GetAllAsync(int pageNumber, int rowCount)
+    public Task<IReadOnlyList<TodoList>> GetAllAsync(int pageNumber, int rowCount)
     {
         if (pageNumber < 1)
         {
@@ -132,16 +116,7 @@ public class TodoListRepository : AbstractRepository, ITodoListRepository
             throw new ArgumentException("Row count must be greater than 0.");
         }
 
-        return await this.dbSet
-            .Include(tl => tl.TodoTasks)
-                .ThenInclude(tt => tt.Status)
-            .Include(tl => tl.ListOwner)
-        .Include(tl => tl.TodoListUserRoles)
-            .ThenInclude(tlur => tlur.ListRole)
-            .AsSplitQuery()
-            .Skip((pageNumber - 1) * rowCount)
-            .Take(rowCount)
-            .ToListAsync();
+        return this.GetAllInternalAsync(pageNumber, rowCount);
     }
 
     /// <summary>
@@ -173,7 +148,7 @@ public class TodoListRepository : AbstractRepository, ITodoListRepository
     /// <returns>
     /// A task representing the asynchronous operation. The task result contains <see cref="IReadOnlyList{TodoList}"/>.
     /// </returns>
-    public async Task<IReadOnlyList<TodoList>> GetAllByAuthorAsync(int authorId, int pageNumber, int rowCount)
+    public Task<IReadOnlyList<TodoList>> GetAllByAuthorAsync(int authorId, int pageNumber, int rowCount)
     {
         if (pageNumber < 1)
         {
@@ -185,17 +160,7 @@ public class TodoListRepository : AbstractRepository, ITodoListRepository
             throw new ArgumentException("Row count must be greater than 0.");
         }
 
-        return await this.dbSet
-            .Where(l => l.OwnerId == authorId)
-            .Include(tl => tl.TodoTasks)
-                .ThenInclude(tt => tt.Status)
-            .Include(tl => tl.ListOwner)
-        .Include(tl => tl.TodoListUserRoles)
-            .ThenInclude(tlur => tlur.ListRole)
-            .AsSplitQuery()
-            .Skip((pageNumber - 1) * rowCount)
-            .Take(rowCount)
-            .ToListAsync();
+        return this.GetAllByAuthorInternalAsync(authorId, pageNumber, rowCount);
     }
 
     /// <summary>
@@ -225,7 +190,7 @@ public class TodoListRepository : AbstractRepository, ITodoListRepository
     /// <param name="pageNumber">The page number to retrieve (1-based).</param>
     /// <param name="rowCount">The number of rows per page.</param>
     /// <returns>A task representing the asynchronous operation. The task result contains <see cref="IReadOnlyList{TodoList}"/>.</returns>
-    public async Task<IReadOnlyList<TodoList>> GetAllSharedAsync(int userId, int pageNumber, int rowCount)
+    public Task<IReadOnlyList<TodoList>> GetAllSharedAsync(int userId, int pageNumber, int rowCount)
     {
         if (pageNumber < 1)
         {
@@ -237,17 +202,7 @@ public class TodoListRepository : AbstractRepository, ITodoListRepository
             throw new ArgumentException("Row count must be greater than 0.");
         }
 
-        return await this.dbSet
-            .Where(l => l.TodoListUserRoles.Any(lur => lur.UserId == userId))
-            .Include(tl => tl.TodoTasks)
-                .ThenInclude(tt => tt.Status)
-            .Include(tl => tl.ListOwner)
-        .Include(tl => tl.TodoListUserRoles)
-            .ThenInclude(tlur => tlur.ListRole)
-            .AsSplitQuery()
-            .Skip((pageNumber - 1) * rowCount)
-            .Take(rowCount)
-            .ToListAsync();
+        return this.GetAllSharedInternalAsync(userId, pageNumber, rowCount);
     }
 
     /// <summary>
@@ -279,7 +234,7 @@ public class TodoListRepository : AbstractRepository, ITodoListRepository
     /// <returns>
     /// A task representing the asynchronous operation. The task result contains <see cref="IReadOnlyList{TodoList}"/>.
     /// </returns>
-    public async Task<IReadOnlyList<TodoList>> GetAllByUserAsync(int userId, int pageNumber, int rowCount)
+    public Task<IReadOnlyList<TodoList>> GetAllByUserAsync(int userId, int pageNumber, int rowCount)
     {
         if (pageNumber < 1)
         {
@@ -291,17 +246,7 @@ public class TodoListRepository : AbstractRepository, ITodoListRepository
             throw new ArgumentException("Row count must be greater than 0.");
         }
 
-        return await this.dbSet
-            .Where(l => l.OwnerId == userId || l.TodoListUserRoles.Any(lur => lur.UserId == userId))
-            .Include(tl => tl.TodoTasks)
-                .ThenInclude(tt => tt.Status)
-            .Include(tl => tl.ListOwner)
-        .Include(tl => tl.TodoListUserRoles)
-            .ThenInclude(tlur => tlur.ListRole)
-            .AsSplitQuery()
-            .Skip((pageNumber - 1) * rowCount)
-            .Take(rowCount)
-            .ToListAsync();
+        return this.GetAllByUserInternalAsync(userId, pageNumber, rowCount);
     }
 
     /// <summary>
@@ -329,10 +274,100 @@ public class TodoListRepository : AbstractRepository, ITodoListRepository
     /// </summary>
     /// <param name="entity">The <see cref="TodoList"/> entity to update.</param>
     /// <returns>Updated <see cref="TodoList"/> entity.</returns>
-    public async Task<TodoList?> UpdateAsync(TodoList entity)
+    public Task<TodoList?> UpdateAsync(TodoList entity)
     {
         ArgumentNullException.ThrowIfNull(entity);
 
+        return this.UpdateInternalAsync(entity);
+    }
+
+    private async Task<TodoList> AddInternalAsync(TodoList entity)
+    {
+        _ = await this.dbSet.AddAsync(entity);
+        _ = await this.Context.SaveChangesAsync();
+
+        await this.Context.Entry(entity)
+        .Reference(e => e.ListOwner)
+        .LoadAsync();
+
+        return entity;
+    }
+
+    private async Task<bool> DeleteInternalAsync(TodoList entity)
+    {
+        var existing = await this.dbSet.FindAsync(entity.Id);
+        if (existing is null)
+        {
+            return false;
+        }
+
+        _ = this.dbSet.Remove(existing);
+        _ = await this.Context.SaveChangesAsync();
+
+        return true;
+    }
+
+    private async Task<IReadOnlyList<TodoList>> GetAllInternalAsync(int pageNumber, int rowCount)
+    {
+        return await this.dbSet
+            .Include(tl => tl.TodoTasks)
+                .ThenInclude(tt => tt.Status)
+            .Include(tl => tl.ListOwner)
+        .Include(tl => tl.TodoListUserRoles)
+            .ThenInclude(tlur => tlur.ListRole)
+            .AsSplitQuery()
+            .Skip((pageNumber - 1) * rowCount)
+            .Take(rowCount)
+            .ToListAsync();
+    }
+
+    private async Task<IReadOnlyList<TodoList>> GetAllByAuthorInternalAsync(int authorId, int pageNumber, int rowCount)
+    {
+        return await this.dbSet
+            .Where(l => l.OwnerId == authorId)
+            .Include(tl => tl.TodoTasks)
+                .ThenInclude(tt => tt.Status)
+            .Include(tl => tl.ListOwner)
+        .Include(tl => tl.TodoListUserRoles)
+            .ThenInclude(tlur => tlur.ListRole)
+            .AsSplitQuery()
+            .Skip((pageNumber - 1) * rowCount)
+            .Take(rowCount)
+            .ToListAsync();
+    }
+
+    private async Task<IReadOnlyList<TodoList>> GetAllSharedInternalAsync(int userId, int pageNumber, int rowCount)
+    {
+        return await this.dbSet
+            .Where(l => l.TodoListUserRoles.Any(lur => lur.UserId == userId))
+            .Include(tl => tl.TodoTasks)
+                .ThenInclude(tt => tt.Status)
+            .Include(tl => tl.ListOwner)
+        .Include(tl => tl.TodoListUserRoles)
+            .ThenInclude(tlur => tlur.ListRole)
+            .AsSplitQuery()
+            .Skip((pageNumber - 1) * rowCount)
+            .Take(rowCount)
+            .ToListAsync();
+    }
+
+    private async Task<IReadOnlyList<TodoList>> GetAllByUserInternalAsync(int userId, int pageNumber, int rowCount)
+    {
+        return await this.dbSet
+            .Where(l => l.OwnerId == userId || l.TodoListUserRoles.Any(lur => lur.UserId == userId))
+            .Include(tl => tl.TodoTasks)
+                .ThenInclude(tt => tt.Status)
+            .Include(tl => tl.ListOwner)
+        .Include(tl => tl.TodoListUserRoles)
+            .ThenInclude(tlur => tlur.ListRole)
+            .AsSplitQuery()
+            .Skip((pageNumber - 1) * rowCount)
+            .Take(rowCount)
+            .ToListAsync();
+    }
+
+    private async Task<TodoList?> UpdateInternalAsync(TodoList entity)
+    {
         var existing = await this.dbSet.FindAsync(entity.Id);
         if (existing is null)
         {

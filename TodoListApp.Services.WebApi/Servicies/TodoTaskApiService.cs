@@ -42,55 +42,11 @@ public class TodoTaskApiService : ITodoTaskService
     /// <exception cref="HttpRequestException">Thrown when the API request fails.</exception>
     /// <exception cref="InvalidOperationException">Thrown when the API returns a null response.</exception>
     /// <exception cref="JsonException">Thrown when the API response cannot be parsed.</exception>
-    public async Task<TodoTaskModel> AddAsync(TodoTaskModel model)
+    public Task<TodoTaskModel> AddAsync(TodoTaskModel model)
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        try
-        {
-            var dto = new CreateTodoTaskDto(
-                model.Title,
-                model.Description,
-                model.CreationDate,
-                model.DueDate,
-                model.StatusId,
-                model.OwnerUserId,
-                model.ListId);
-
-            using var response = await this.httpClient.PutAsJsonAsync(this.httpClient.BaseAddress, dto);
-
-            if (response.IsSuccessStatusCode)
-            {
-                var result = await response.Content.ReadFromJsonAsync<TodoTaskDto>();
-                if (result != null)
-                {
-                    TodoTaskLog.LogTaskCreated(this.logger, result.Id);
-                    return MapToModel.MapToTodoTaskModel(result);
-                }
-
-                TodoTaskLog.LogNullResponse(this.logger, "create");
-                throw new InvalidOperationException("Failed to create todo task - null response");
-            }
-
-            var errorContent = await response.Content.ReadAsStringAsync();
-            TodoTaskLog.LogTaskFailed(this.logger, "create", 0, (int)response.StatusCode, errorContent);
-            throw new HttpRequestException($"Failed to create todo task: {response.StatusCode}");
-        }
-        catch (HttpRequestException ex)
-        {
-            TodoTaskLog.LogHttpRequestError(this.logger, ex);
-            throw;
-        }
-        catch (JsonException ex)
-        {
-            TodoTaskLog.LogJsonParsingError(this.logger, ex);
-            throw;
-        }
-        catch (Exception ex)
-        {
-            TodoTaskLog.LogUnexpectedError(this.logger, ex);
-            throw;
-        }
+        return this.AddInternalAsync(model);
     }
 
     /// <summary>
@@ -417,65 +373,11 @@ public class TodoTaskApiService : ITodoTaskService
     /// <exception cref="HttpRequestException">Thrown when the update request fails.</exception>
     /// <exception cref="InvalidOperationException">Thrown when the task is not found or the response is null.</exception>
     /// <exception cref="JsonException">Thrown when the response cannot be deserialized.</exception>
-    public async Task<TodoTaskModel> UpdateAsync(int userId, TodoTaskModel model)
+    public Task<TodoTaskModel> UpdateAsync(int userId, TodoTaskModel model)
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        try
-        {
-            var dto = new UpdateTodoTaskDto(
-                model.Id,
-                model.Title,
-                model.Description,
-                model.DueDate,
-                model.StatusId,
-                model.OwnerUserId,
-                model.ListId);
-
-            using var response = await this.httpClient.PostAsJsonAsync(this.httpClient.BaseAddress, dto);
-
-            if (response.IsSuccessStatusCode)
-            {
-                var result = await response.Content.ReadFromJsonAsync<TodoTaskDto>();
-                if (result != null)
-                {
-                    TodoTaskLog.LogTaskUpdated(this.logger, model.Id);
-                    return MapToModel.MapToTodoTaskModel(result);
-                }
-
-                TodoTaskLog.LogNullResponse(this.logger, "update");
-                throw new InvalidOperationException($"Failed to update todo task {model.Id} - null response");
-            }
-
-            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
-            {
-                TodoTaskLog.LogTaskNotFound(this.logger, model.Id);
-                throw new InvalidOperationException($"Todo task with ID {model.Id} was not found");
-            }
-
-            var errorContent = await response.Content.ReadAsStringAsync();
-            TodoTaskLog.LogTaskFailed(this.logger, "update", model.Id, (int)response.StatusCode, errorContent);
-            throw new HttpRequestException($"Failed to update todo task: {response.StatusCode}");
-        }
-        catch (HttpRequestException ex)
-        {
-            TodoTaskLog.LogHttpRequestError(this.logger, ex);
-            throw;
-        }
-        catch (JsonException ex)
-        {
-            TodoTaskLog.LogJsonParsingError(this.logger, ex);
-            throw;
-        }
-        catch (InvalidOperationException)
-        {
-            throw;
-        }
-        catch (Exception ex)
-        {
-            TodoTaskLog.LogUnexpectedError(this.logger, ex);
-            throw;
-        }
+        return this.UpdateIntrenalAsync(model);
     }
 
     /// <summary>
@@ -492,9 +394,11 @@ public class TodoTaskApiService : ITodoTaskService
     {
         try
         {
-            var dto = new UpdateStatusDto(
-                statusId,
-                taskId);
+            var dto = new UpdateStatusDto()
+            {
+                StatusId = statusId,
+                TaskId = taskId,
+            };
 
             using var content = JsonContent.Create(dto);
             using var response = await this.httpClient.PatchAsync(this.httpClient.BaseAddress, content);
@@ -663,49 +567,11 @@ public class TodoTaskApiService : ITodoTaskService
     /// <exception cref="InvalidOperationException">Thrown when the comment creation fails.</exception>
     /// <exception cref="HttpRequestException">Thrown when the HTTP request fails.</exception>
     /// <exception cref="JsonException">Thrown when JSON parsing fails.</exception>
-    public async Task<CommentModel> AddTaskCommentAsync(CommentModel commentModel)
+    public Task<CommentModel> AddTaskCommentAsync(CommentModel commentModel)
     {
         ArgumentNullException.ThrowIfNull(commentModel);
 
-        try
-        {
-            var dto = new CreateCommentDto(commentModel.Text);
-            var uri = new Uri($"{commentModel.TaskId}/Comments", UriKind.Relative);
-
-            using var response = await this.httpClient.PostAsJsonAsync(uri, dto);
-
-            if (response.IsSuccessStatusCode)
-            {
-                var result = await response.Content.ReadFromJsonAsync<CommentDto>();
-                if (result != null)
-                {
-                    TodoTaskLog.LogCommentCreated(this.logger, result.Id, commentModel.TaskId);
-                    return MapToModel.MapToCommentModel(result);
-                }
-
-                TodoTaskLog.LogNullResponse(this.logger, "create comment");
-                throw new InvalidOperationException("Failed to create comment - null response");
-            }
-
-            var errorContent = await response.Content.ReadAsStringAsync();
-            TodoTaskLog.LogCommentOperationFailed(this.logger, "create", 0, (int)response.StatusCode, errorContent);
-            throw new HttpRequestException($"Failed to create comment: {response.StatusCode}");
-        }
-        catch (HttpRequestException ex)
-        {
-            TodoTaskLog.LogHttpRequestError(this.logger, ex);
-            throw;
-        }
-        catch (JsonException ex)
-        {
-            TodoTaskLog.LogJsonParsingError(this.logger, ex);
-            throw;
-        }
-        catch (Exception ex)
-        {
-            TodoTaskLog.LogUnexpectedErrorCreatingComment(this.logger, commentModel.TaskId, ex);
-            throw;
-        }
+        return this.AddTaskCommentIntrenalAsync(commentModel);
     }
 
     /// <summary>
@@ -718,59 +584,11 @@ public class TodoTaskApiService : ITodoTaskService
     /// <exception cref="InvalidOperationException">Thrown when the comment is not found or update fails.</exception>
     /// <exception cref="HttpRequestException">Thrown when the HTTP request fails.</exception>
     /// <exception cref="JsonException">Thrown when JSON parsing fails.</exception>
-    public async Task<CommentModel> UpdateTaskCommentAsync(int userId, CommentModel commentModel)
+    public Task<CommentModel> UpdateTaskCommentAsync(int userId, CommentModel commentModel)
     {
         ArgumentNullException.ThrowIfNull(commentModel);
 
-        try
-        {
-            var dto = new UpdateCommentDto(commentModel.Id, commentModel.Text);
-            var uri = new Uri($"{commentModel.TaskId}/Comments/{commentModel.Id}", UriKind.Relative);
-
-            using var response = await this.httpClient.PutAsJsonAsync(uri, dto);
-
-            if (response.IsSuccessStatusCode)
-            {
-                var result = await response.Content.ReadFromJsonAsync<CommentDto>();
-                if (result != null)
-                {
-                    TodoTaskLog.LogCommentUpdated(this.logger, commentModel.Id);
-                    return MapToModel.MapToCommentModel(result);
-                }
-
-                TodoTaskLog.LogNullResponse(this.logger, "update comment");
-                throw new InvalidOperationException($"Failed to update comment {commentModel.Id} - null response");
-            }
-
-            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
-            {
-                TodoTaskLog.LogCommentNotFound(this.logger, commentModel.Id);
-                throw new InvalidOperationException($"Comment with ID {commentModel.Id} was not found");
-            }
-
-            var errorContent = await response.Content.ReadAsStringAsync();
-            TodoTaskLog.LogCommentOperationFailed(this.logger, "update", commentModel.Id, (int)response.StatusCode, errorContent);
-            throw new HttpRequestException($"Failed to update comment: {response.StatusCode}");
-        }
-        catch (HttpRequestException ex)
-        {
-            TodoTaskLog.LogHttpRequestError(this.logger, ex);
-            throw;
-        }
-        catch (JsonException ex)
-        {
-            TodoTaskLog.LogJsonParsingError(this.logger, ex);
-            throw;
-        }
-        catch (InvalidOperationException)
-        {
-            throw;
-        }
-        catch (Exception ex)
-        {
-            TodoTaskLog.LogUnexpectedErrorUpdatingComment(this.logger, commentModel.Id, ex);
-            throw;
-        }
+        return this.UpdateTaskCommentIntrenalAsync(commentModel);
     }
 
     /// <summary>
@@ -875,6 +693,218 @@ public class TodoTaskApiService : ITodoTaskService
         catch (Exception ex)
         {
             TodoTaskLog.LogUnexpectedError(this.logger, ex);
+            throw;
+        }
+    }
+
+    private async Task<TodoTaskModel> AddInternalAsync(TodoTaskModel model)
+    {
+        try
+        {
+            var dto = new CreateTodoTaskDto()
+            {
+                Title = model.Title,
+                Description = model.Description,
+                CreationDate = model.CreationDate,
+                DueDate = model.DueDate,
+                StatusId = model.StatusId,
+                AssigneeId = model.OwnerUserId,
+                ListId = model.ListId,
+            };
+
+            using var response = await this.httpClient.PutAsJsonAsync(this.httpClient.BaseAddress, dto);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<TodoTaskDto>();
+                if (result != null)
+                {
+                    TodoTaskLog.LogTaskCreated(this.logger, result.Id);
+                    return MapToModel.MapToTodoTaskModel(result);
+                }
+
+                TodoTaskLog.LogNullResponse(this.logger, "create");
+                throw new InvalidOperationException("Failed to create todo task - null response");
+            }
+
+            var errorContent = await response.Content.ReadAsStringAsync();
+            TodoTaskLog.LogTaskFailed(this.logger, "create", 0, (int)response.StatusCode, errorContent);
+            throw new HttpRequestException($"Failed to create todo task: {response.StatusCode}");
+        }
+        catch (HttpRequestException ex)
+        {
+            TodoTaskLog.LogHttpRequestError(this.logger, ex);
+            throw;
+        }
+        catch (JsonException ex)
+        {
+            TodoTaskLog.LogJsonParsingError(this.logger, ex);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            TodoTaskLog.LogUnexpectedError(this.logger, ex);
+            throw;
+        }
+    }
+
+    private async Task<TodoTaskModel> UpdateIntrenalAsync(TodoTaskModel model)
+    {
+        try
+        {
+            var dto = new UpdateTodoTaskDto()
+            {
+                Id = model.Id,
+                Title = model.Title,
+                Description = model.Description,
+                DueDate = model.DueDate,
+                StatusId = model.StatusId,
+                AssigneeId = model.OwnerUserId,
+                ListId = model.ListId,
+            };
+
+            using var response = await this.httpClient.PostAsJsonAsync(this.httpClient.BaseAddress, dto);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<TodoTaskDto>();
+                if (result != null)
+                {
+                    TodoTaskLog.LogTaskUpdated(this.logger, model.Id);
+                    return MapToModel.MapToTodoTaskModel(result);
+                }
+
+                TodoTaskLog.LogNullResponse(this.logger, "update");
+                throw new InvalidOperationException($"Failed to update todo task {model.Id} - null response");
+            }
+
+            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                TodoTaskLog.LogTaskNotFound(this.logger, model.Id);
+                throw new InvalidOperationException($"Todo task with ID {model.Id} was not found");
+            }
+
+            var errorContent = await response.Content.ReadAsStringAsync();
+            TodoTaskLog.LogTaskFailed(this.logger, "update", model.Id, (int)response.StatusCode, errorContent);
+            throw new HttpRequestException($"Failed to update todo task: {response.StatusCode}");
+        }
+        catch (HttpRequestException ex)
+        {
+            TodoTaskLog.LogHttpRequestError(this.logger, ex);
+            throw;
+        }
+        catch (JsonException ex)
+        {
+            TodoTaskLog.LogJsonParsingError(this.logger, ex);
+            throw;
+        }
+        catch (InvalidOperationException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            TodoTaskLog.LogUnexpectedError(this.logger, ex);
+            throw;
+        }
+    }
+
+    private async Task<CommentModel> AddTaskCommentIntrenalAsync(CommentModel commentModel)
+    {
+        try
+        {
+            var dto = new CreateCommentDto() { Text = commentModel.Text };
+            var uri = new Uri($"{commentModel.TaskId}/Comments", UriKind.Relative);
+
+            using var response = await this.httpClient.PostAsJsonAsync(uri, dto);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<CommentDto>();
+                if (result != null)
+                {
+                    TodoTaskLog.LogCommentCreated(this.logger, result.Id, commentModel.TaskId);
+                    return MapToModel.MapToCommentModel(result);
+                }
+
+                TodoTaskLog.LogNullResponse(this.logger, "create comment");
+                throw new InvalidOperationException("Failed to create comment - null response");
+            }
+
+            var errorContent = await response.Content.ReadAsStringAsync();
+            TodoTaskLog.LogCommentOperationFailed(this.logger, "create", 0, (int)response.StatusCode, errorContent);
+            throw new HttpRequestException($"Failed to create comment: {response.StatusCode}");
+        }
+        catch (HttpRequestException ex)
+        {
+            TodoTaskLog.LogHttpRequestError(this.logger, ex);
+            throw;
+        }
+        catch (JsonException ex)
+        {
+            TodoTaskLog.LogJsonParsingError(this.logger, ex);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            TodoTaskLog.LogUnexpectedErrorCreatingComment(this.logger, commentModel.TaskId, ex);
+            throw;
+        }
+    }
+
+    private async Task<CommentModel> UpdateTaskCommentIntrenalAsync(CommentModel commentModel)
+    {
+        try
+        {
+            var dto = new UpdateCommentDto()
+            {
+                Id = commentModel.Id,
+                Text = commentModel.Text,
+            };
+            var uri = new Uri($"{commentModel.TaskId}/Comments/{commentModel.Id}", UriKind.Relative);
+
+            using var response = await this.httpClient.PutAsJsonAsync(uri, dto);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<CommentDto>();
+                if (result != null)
+                {
+                    TodoTaskLog.LogCommentUpdated(this.logger, commentModel.Id);
+                    return MapToModel.MapToCommentModel(result);
+                }
+
+                TodoTaskLog.LogNullResponse(this.logger, "update comment");
+                throw new InvalidOperationException($"Failed to update comment {commentModel.Id} - null response");
+            }
+
+            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                TodoTaskLog.LogCommentNotFound(this.logger, commentModel.Id);
+                throw new InvalidOperationException($"Comment with ID {commentModel.Id} was not found");
+            }
+
+            var errorContent = await response.Content.ReadAsStringAsync();
+            TodoTaskLog.LogCommentOperationFailed(this.logger, "update", commentModel.Id, (int)response.StatusCode, errorContent);
+            throw new HttpRequestException($"Failed to update comment: {response.StatusCode}");
+        }
+        catch (HttpRequestException ex)
+        {
+            TodoTaskLog.LogHttpRequestError(this.logger, ex);
+            throw;
+        }
+        catch (JsonException ex)
+        {
+            TodoTaskLog.LogJsonParsingError(this.logger, ex);
+            throw;
+        }
+        catch (InvalidOperationException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            TodoTaskLog.LogUnexpectedErrorUpdatingComment(this.logger, commentModel.Id, ex);
             throw;
         }
     }

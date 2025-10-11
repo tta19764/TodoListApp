@@ -37,25 +37,12 @@ public class GlobalExceptionHandlerMiddleware
     /// <param name="httpContext">The http context.</param>
     /// <param name="environment">The host environment.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    public async Task InvokeAsync(HttpContext httpContext, IHostEnvironment environment)
+    public Task InvokeAsync(HttpContext httpContext, IHostEnvironment environment)
     {
         ArgumentNullException.ThrowIfNull(httpContext);
         ArgumentNullException.ThrowIfNull(environment);
 
-        try
-        {
-            await this.next(httpContext);
-        }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception exception) when (exception is not StackOverflowException
-                                          && exception is not OutOfMemoryException
-                                          && exception is not ThreadAbortException)
-        {
-            await this.HandleExceptionAsync(httpContext, exception, environment);
-        }
+        return this.InvokeInternalAsync(httpContext, environment);
     }
 
     private static int GetStatusCode(Exception exception)
@@ -97,6 +84,24 @@ public class GlobalExceptionHandlerMiddleware
             InvalidOperationException => "The requested operation could not be completed.",
             _ => "An unexpected error occurred. Our team has been notified and is working on it."
         };
+    }
+
+    private async Task InvokeInternalAsync(HttpContext httpContext, IHostEnvironment environment)
+    {
+        try
+        {
+            await this.next(httpContext);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception exception) when (exception is not StackOverflowException
+                                          && exception is not OutOfMemoryException
+                                          && exception is not ThreadAbortException)
+        {
+            await this.HandleExceptionAsync(httpContext, exception, environment);
+        }
     }
 
     private async Task HandleExceptionAsync(

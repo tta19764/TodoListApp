@@ -13,23 +13,6 @@ public class CommentDto
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="CommentDto"/> class.
-    /// </summary>
-    /// <param name="id">The comment ID.</param>
-    /// <param name="text">The comment text.</param>
-    /// <param name="taskId">The task ID.</param>
-    /// <param name="userId">The user ID.</param>
-    public CommentDto(int id, string text, int taskId, int userId, string userFirstName, string userLastName)
-    {
-        this.Id = id;
-        this.Text = text;
-        this.TaskId = taskId;
-        this.UserId = userId;
-        this.UserFirstName = userFirstName;
-        this.UserLastName = userLastName;
-    }
-
-    /// <summary>
     /// Gets or sets the unique identifier of the comment.
     /// </summary>
     public int Id { get; set; }

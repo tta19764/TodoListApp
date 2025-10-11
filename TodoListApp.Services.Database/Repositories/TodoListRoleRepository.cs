@@ -33,14 +33,11 @@ public class TodoListRoleRepository : AbstractRepository, ITodoListRoleRepositor
     /// <exception cref="ArgumentNullException">
     /// Thrown if <paramref name="entity"/> is <c>null</c>.
     /// </exception>
-    public async Task<TodoListRole> AddAsync(TodoListRole entity)
+    public Task<TodoListRole> AddAsync(TodoListRole entity)
     {
         ArgumentNullException.ThrowIfNull(entity);
 
-        _ = await this.dbSet.AddAsync(entity);
-        _ = await this.Context.SaveChangesAsync();
-
-        return entity;
+        return this.AddInternalAsync(entity);
     }
 
     /// <summary>
@@ -53,20 +50,11 @@ public class TodoListRoleRepository : AbstractRepository, ITodoListRoleRepositor
     /// <exception cref="ArgumentNullException">
     /// Thrown if <paramref name="entity"/> is <c>null</c>.
     /// </exception>
-    public async Task<bool> DeleteAsync(TodoListRole entity)
+    public Task<bool> DeleteAsync(TodoListRole entity)
     {
         ArgumentNullException.ThrowIfNull(entity);
 
-        var existing = await this.dbSet.FindAsync(entity.Id);
-        if (existing is null)
-        {
-            return false;
-        }
-
-        _ = this.dbSet.Remove(existing);
-        _ = await this.Context.SaveChangesAsync();
-
-        return true;
+        return this.DeleteInternalAsync(entity);
     }
 
     /// <summary>
@@ -110,7 +98,7 @@ public class TodoListRoleRepository : AbstractRepository, ITodoListRoleRepositor
     /// <returns>
     /// A task representing the asynchronous operation. The task result contains <see cref="IReadOnlyList{TodoListRole}"/>.
     /// </returns>
-    public async Task<IReadOnlyList<TodoListRole>> GetAllAsync(int pageNumber, int rowCount)
+    public Task<IReadOnlyList<TodoListRole>> GetAllAsync(int pageNumber, int rowCount)
     {
         if (pageNumber < 1)
         {
@@ -122,10 +110,7 @@ public class TodoListRoleRepository : AbstractRepository, ITodoListRoleRepositor
             throw new ArgumentException("Row count must be greater than 0.");
         }
 
-        return await this.dbSet
-            .Skip((pageNumber - 1) * rowCount)
-            .Take(rowCount)
-            .ToListAsync();
+        return this.GetAllInternalAsync(pageNumber, rowCount);
     }
 
     /// <summary>
@@ -147,10 +132,45 @@ public class TodoListRoleRepository : AbstractRepository, ITodoListRoleRepositor
     /// </summary>
     /// <param name="entity">The <see cref="TodoListRole"/> entity to update.</param>
     /// <returns>Updated <see cref="TodoListRole"/> entity.</returns>
-    public async Task<TodoListRole?> UpdateAsync(TodoListRole entity)
+    public Task<TodoListRole?> UpdateAsync(TodoListRole entity)
     {
         ArgumentNullException.ThrowIfNull(entity);
 
+        return this.UpdateInternalAsync(entity);
+    }
+
+    private async Task<TodoListRole> AddInternalAsync(TodoListRole entity)
+    {
+        _ = await this.dbSet.AddAsync(entity);
+        _ = await this.Context.SaveChangesAsync();
+
+        return entity;
+    }
+
+    private async Task<bool> DeleteInternalAsync(TodoListRole entity)
+    {
+        var existing = await this.dbSet.FindAsync(entity.Id);
+        if (existing is null)
+        {
+            return false;
+        }
+
+        _ = this.dbSet.Remove(existing);
+        _ = await this.Context.SaveChangesAsync();
+
+        return true;
+    }
+
+    private async Task<IReadOnlyList<TodoListRole>> GetAllInternalAsync(int pageNumber, int rowCount)
+    {
+        return await this.dbSet
+            .Skip((pageNumber - 1) * rowCount)
+            .Take(rowCount)
+            .ToListAsync();
+    }
+
+    private async Task<TodoListRole?> UpdateInternalAsync(TodoListRole entity)
+    {
         var existing = await this.dbSet.FindAsync(entity.Id);
         if (existing is null)
         {

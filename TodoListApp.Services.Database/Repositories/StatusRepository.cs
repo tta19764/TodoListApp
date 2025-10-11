@@ -33,14 +33,11 @@ public class StatusRepository : AbstractRepository, IStatusRepository
     /// <exception cref="ArgumentNullException">
     /// Thrown if <paramref name="entity"/> is <c>null</c>.
     /// </exception>
-    public async Task<Status> AddAsync(Status entity)
+    public Task<Status> AddAsync(Status entity)
     {
         ArgumentNullException.ThrowIfNull(entity);
 
-        _ = await this.dbSet.AddAsync(entity);
-        _ = await this.Context.SaveChangesAsync();
-
-        return entity;
+        return this.AddInternalAsync(entity);
     }
 
     /// <summary>
@@ -53,20 +50,11 @@ public class StatusRepository : AbstractRepository, IStatusRepository
     /// <exception cref="ArgumentNullException">
     /// Thrown if <paramref name="entity"/> is <c>null</c>.
     /// </exception>
-    public async Task<bool> DeleteAsync(Status entity)
+    public Task<bool> DeleteAsync(Status entity)
     {
         ArgumentNullException.ThrowIfNull(entity);
 
-        var existing = await this.dbSet.FindAsync(entity.Id);
-        if (existing is null)
-        {
-            return false;
-        }
-
-        _ = this.dbSet.Remove(existing);
-        _ = await this.Context.SaveChangesAsync();
-
-        return true;
+        return this.DeleteInternalAsync(entity);
     }
 
     /// <summary>
@@ -110,7 +98,7 @@ public class StatusRepository : AbstractRepository, IStatusRepository
     /// <returns>
     /// A task representing the asynchronous operation. The task result contains <see cref="IReadOnlyList{Status}"/>.
     /// </returns>
-    public async Task<IReadOnlyList<Status>> GetAllAsync(int pageNumber, int rowCount)
+    public Task<IReadOnlyList<Status>> GetAllAsync(int pageNumber, int rowCount)
     {
         if (pageNumber < 1)
         {
@@ -122,10 +110,7 @@ public class StatusRepository : AbstractRepository, IStatusRepository
             throw new ArgumentException("Row count must be greater than 0.");
         }
 
-        return await this.dbSet
-            .Skip((pageNumber - 1) * rowCount)
-            .Take(rowCount)
-            .ToListAsync();
+        return this.GetAllInternalAsync(pageNumber, rowCount);
     }
 
     /// <summary>
@@ -147,10 +132,45 @@ public class StatusRepository : AbstractRepository, IStatusRepository
     /// </summary>
     /// <param name="entity">The <see cref="Status"/> entity to update.</param>
     /// <returns>Updated <see cref="Status"/> entity.</returns>
-    public async Task<Status?> UpdateAsync(Status entity)
+    public Task<Status?> UpdateAsync(Status entity)
     {
         ArgumentNullException.ThrowIfNull(entity);
 
+        return this.UpdateInternalAsync(entity);
+    }
+
+    private async Task<Status> AddInternalAsync(Status entity)
+    {
+        _ = await this.dbSet.AddAsync(entity);
+        _ = await this.Context.SaveChangesAsync();
+
+        return entity;
+    }
+
+    private async Task<bool> DeleteInternalAsync(Status entity)
+    {
+        var existing = await this.dbSet.FindAsync(entity.Id);
+        if (existing is null)
+        {
+            return false;
+        }
+
+        _ = this.dbSet.Remove(existing);
+        _ = await this.Context.SaveChangesAsync();
+
+        return true;
+    }
+
+    private async Task<IReadOnlyList<Status>> GetAllInternalAsync(int pageNumber, int rowCount)
+    {
+        return await this.dbSet
+            .Skip((pageNumber - 1) * rowCount)
+            .Take(rowCount)
+            .ToListAsync();
+    }
+
+    private async Task<Status?> UpdateInternalAsync(Status entity)
+    {
         var existing = await this.dbSet.FindAsync(entity.Id);
         if (existing is null)
         {

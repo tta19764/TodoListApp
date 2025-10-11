@@ -1,4 +1,3 @@
-using System.Collections.ObjectModel;
 using System.Text.Json.Serialization;
 
 namespace TodoListApp.WebApi.Models.Dtos.Read;
@@ -13,41 +12,6 @@ public class TodoTaskDto
     /// </summary>
     public TodoTaskDto()
     {
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="TodoTaskDto"/> class.
-    /// </summary>
-    /// <param name="id">The task ID.</param>
-    /// <param name="title">The task title.</param>
-    /// <param name="description">The task description.</param>
-    /// <param name="creationDate">The task creation date.</param>
-    /// <param name="dueDate">The task due date.</param>
-    /// <param name="assigneeFirstName">The task assignee first name.</param>
-    /// <param name="assigneeLastName">The task assignee last name.</param>
-    /// <param name="assigneeId">The task assignee ID.</param>
-    /// <param name="status">The task status.</param>
-    /// <param name="listId">The task list ID.</param>
-    /// <param name="tags">The list of task tags.</param>
-    public TodoTaskDto(int id, string title, string? description, DateTime creationDate, DateTime dueDate, string assigneeFirstName, string assigneeLastName, int assigneeId, string status, int listId, ReadOnlyCollection<TagDto>? tags = null)
-    {
-        this.Id = id;
-        this.Title = title;
-        this.Description = description;
-        this.CreationDate = creationDate;
-        this.DueDate = dueDate;
-        this.AssigneeFirstName = assigneeFirstName;
-        this.AssigneeLastName = assigneeLastName;
-        this.AssigneeId = assigneeId;
-        this.Status = status;
-        this.ListId = listId;
-        if (tags != null)
-        {
-            foreach (var tag in tags)
-            {
-                this.Tags.Add(tag);
-            }
-        }
     }
 
     /// <summary>
@@ -101,8 +65,8 @@ public class TodoTaskDto
     public int ListId { get; set; }
 
     /// <summary>
-    /// Gets user's tags.
+    /// Gets or sets the name of the list containing the task.
     /// </summary>
     [JsonInclude]
-    public IList<TagDto> Tags { get; private set; } = new List<TagDto>();
+    public IEnumerable<TagDto> Tags { get; set; } = new List<TagDto>();
 }

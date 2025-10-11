@@ -2,10 +2,12 @@ using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace TodoListApp.WebApp.Data.Migrations;
-internal partial class CreateIdentitySchema : Migration
+public sealed partial class CreateIdentitySchema : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)
     {
+        ArgumentNullException.ThrowIfNull(migrationBuilder);
+
         _ = migrationBuilder.CreateTable(
             name: "AspNetRoles",
             columns: table => new
@@ -193,6 +195,8 @@ internal partial class CreateIdentitySchema : Migration
 
     protected override void Down(MigrationBuilder migrationBuilder)
     {
+        ArgumentNullException.ThrowIfNull(migrationBuilder);
+
         _ = migrationBuilder.DropTable(
             name: "AspNetRoleClaims");
 

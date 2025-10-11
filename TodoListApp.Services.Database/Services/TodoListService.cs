@@ -32,25 +32,11 @@ public class TodoListService : ITodoListService
     /// <returns>The created to-do list model.</returns>
     /// <exception cref="EntityWithIdExistsException">If the model contains the id that is already in the context.</exception>
     /// <exception cref="UnableToCreateException">If the service is unable to add the list.</exception>
-    public async Task<TodoListModel> AddAsync(TodoListModel model)
+    public Task<TodoListModel> AddAsync(TodoListModel model)
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        TodoList? existing = await this.repository.GetByIdAsync(model.Id);
-        if (existing is not null)
-        {
-            throw new EntityWithIdExistsException(nameof(TodoList), model.Id);
-        }
-
-        try
-        {
-            TodoList newList = await this.repository.AddAsync(ModelToEntityConverter.ToListEntity(model));
-            return EntityToModelConverter.ToListModel(newList, model.OwnerId);
-        }
-        catch (DbUpdateException ex)
-        {
-            throw new UnableToCreateException(nameof(TodoList), ex, model.Id);
-        }
+        return this.AddInternalAsync(model);
     }
 
     /// <summary>
@@ -190,31 +176,11 @@ public class TodoListService : ITodoListService
     /// <exception cref="EntityNotFoundException">If there is no entity with the specified ID in the context.</exception>
     /// <exception cref="UnauthorizedAccessException">If the user has no rights to eddit the list.</exception>
     /// <exception cref="UnableToUpdateException">If service is unable to update the list.</exception>
-    public async Task<TodoListModel> UpdateAsync(int userId, TodoListModel model)
+    public Task<TodoListModel> UpdateAsync(int userId, TodoListModel model)
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        TodoList? existing = await this.repository.GetByIdAsync(model.Id);
-        if (existing == null)
-        {
-            throw new EntityNotFoundException(nameof(existing), model.Id);
-        }
-        else if (!existing.TodoListUserRoles.Any(lur => lur.UserId == userId && lur.ListRole.RoleName == "Editor") && existing.OwnerId != userId)
-        {
-            throw new UnauthorizedAccessException("You do not have permission to see this list.");
-        }
-
-        try
-        {
-            TodoList? updated = await this.repository.UpdateAsync(ModelToEntityConverter.ToListEntity(model));
-            return updated == null ?
-                throw new UnableToUpdateException(nameof(existing), model.Id) :
-                EntityToModelConverter.ToListModel(updated, userId);
-        }
-        catch (DbUpdateException ex)
-        {
-            throw new UnableToUpdateException(nameof(existing), model.Id, ex);
-        }
+        return this.UpdateInternalAsync(userId, model);
     }
 
     /// <summary>
@@ -245,5 +211,49 @@ public class TodoListService : ITodoListService
     public async Task<int> AllSharedCount(int userId)
     {
         return (await this.repository.GetAllByUserAsync(userId)).Count(l => l.TodoListUserRoles.Any(lur => lur.UserId == userId));
+    }
+
+    private async Task<TodoListModel> AddInternalAsync(TodoListModel model)
+    {
+        TodoList? existing = await this.repository.GetByIdAsync(model.Id);
+        if (existing is not null)
+        {
+            throw new EntityWithIdExistsException(nameof(TodoList), model.Id);
+        }
+
+        try
+        {
+            TodoList newList = await this.repository.AddAsync(ModelToEntityConverter.ToListEntity(model));
+            return EntityToModelConverter.ToListModel(newList, model.OwnerId);
+        }
+        catch (DbUpdateException ex)
+        {
+            throw new UnableToCreateException(nameof(TodoList), ex, model.Id);
+        }
+    }
+
+    private async Task<TodoListModel> UpdateInternalAsync(int userId, TodoListModel model)
+    {
+        TodoList? existing = await this.repository.GetByIdAsync(model.Id);
+        if (existing == null)
+        {
+            throw new EntityNotFoundException(nameof(existing), model.Id);
+        }
+        else if (!existing.TodoListUserRoles.Any(lur => lur.UserId == userId && lur.ListRole.RoleName == "Editor") && existing.OwnerId != userId)
+        {
+            throw new UnauthorizedAccessException("You do not have permission to see this list.");
+        }
+
+        try
+        {
+            TodoList? updated = await this.repository.UpdateAsync(ModelToEntityConverter.ToListEntity(model));
+            return updated == null ?
+                throw new UnableToUpdateException(nameof(existing), model.Id) :
+                EntityToModelConverter.ToListModel(updated, userId);
+        }
+        catch (DbUpdateException ex)
+        {
+            throw new UnableToUpdateException(nameof(existing), model.Id, ex);
+        }
     }
 }
