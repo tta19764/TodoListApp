@@ -13,21 +13,6 @@ public class UpdateTodoListDto
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="UpdateTodoListDto"/> class.
-    /// </summary>
-    /// <param name="id">The unique identifier of the list.</param>
-    /// <param name="title">The list's title.</param>
-    /// <param name="description">The list's description.</param>
-    /// <param name="ownerId">The unique identifier of the owner.</param>
-    public UpdateTodoListDto(int id, string title, string? description, int ownerId)
-    {
-        this.Id = id;
-        this.Title = title;
-        this.Description = description;
-        this.OwnerId = ownerId;
-    }
-
-    /// <summary>
     /// Gets or sets the unique identifier of the list.
     /// </summary>
     public int Id { get; set; }

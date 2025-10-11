@@ -170,41 +170,16 @@ public class TodoListsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(CreateTodoListViewModel model)
+    public Task<IActionResult> Create(CreateTodoListViewModel model)
     {
         ArgumentNullException.ThrowIfNull(model);
 
         if (!this.ModelState.IsValid)
         {
-            return this.View(model);
+            return this.CreateInternal(model);
         }
 
-        try
-        {
-            var userId = UserHelper.GetCurrentUserId(this.User);
-            if (userId == null)
-            {
-                return this.RedirectToAction("Login", "Account");
-            }
-
-            var listModel = new TodoListModel(
-                id: 0,
-                ownerId: userId.Value,
-                title: model.Title,
-                description: model.Description ?? string.Empty);
-
-            var createdList = await this.todoListService.AddAsync(listModel);
-
-            TodoListsLog.LogListCreatedSuccessfully(this.logger, createdList.Id, userId.Value);
-
-            return this.Redirect(model.ReturnUrl.ToString());
-        }
-        catch (Exception ex)
-        {
-            TodoListsLog.LogFailedToLoadCreateTodoList(this.logger, ex);
-            this.ModelState.AddModelError(string.Empty, "An error occurred while creating the list.");
-            throw;
-        }
+        return Task.FromResult<IActionResult>(this.View(model));
     }
 
     [HttpGet]
@@ -255,41 +230,16 @@ public class TodoListsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(EditTodoListViewModel model)
+    public Task<IActionResult> Edit(EditTodoListViewModel model)
     {
         ArgumentNullException.ThrowIfNull(model);
 
         if (!this.ModelState.IsValid)
         {
-            return this.View(model);
+            return this.EditInternal(model);
         }
 
-        try
-        {
-            var userId = UserHelper.GetCurrentUserId(this.User);
-            if (userId == null)
-            {
-                return this.RedirectToAction("Login", "Account");
-            }
-
-            var listModel = new TodoListModel(
-                id: model.ListId,
-                ownerId: userId.Value,
-                title: model.Title,
-                description: model.Description ?? string.Empty);
-
-            var updatedList = await this.todoListService.UpdateAsync(userId.Value, listModel);
-
-            TodoListsLog.LogListUpdatedSuccessfully(this.logger, updatedList.Id, userId.Value);
-
-            return this.Redirect(model.ReturnUrl.ToString());
-        }
-        catch (Exception ex)
-        {
-            TodoListsLog.LogErrorUpdatingList(this.logger, model.ListId, ex);
-            this.ModelState.AddModelError(string.Empty, "An error occurred while updating the list.");
-            throw;
-        }
+        return Task.FromResult<IActionResult>(this.View(model));
     }
 
     [HttpPost]
@@ -320,6 +270,67 @@ public class TodoListsController : Controller
         catch (Exception ex)
         {
             TodoListsLog.LogErrorDeletingList(this.logger, id, ex);
+            throw;
+        }
+    }
+
+    private async Task<IActionResult> CreateInternal(CreateTodoListViewModel model)
+    {
+        try
+        {
+            var userId = UserHelper.GetCurrentUserId(this.User);
+            if (userId == null)
+            {
+                return this.RedirectToAction("Login", "Account");
+            }
+
+            var listModel = new TodoListModel(
+                id: 0,
+                ownerId: userId.Value,
+                title: model.Title,
+                description: model.Description ?? string.Empty);
+
+            var createdList = await this.todoListService.AddAsync(listModel);
+
+            TodoListsLog.LogListCreatedSuccessfully(this.logger, createdList.Id, userId.Value);
+
+            return this.Redirect(model.ReturnUrl.ToString());
+        }
+        catch (Exception ex)
+        {
+            TodoListsLog.LogFailedToLoadCreateTodoList(this.logger, ex);
+            this.ModelState.AddModelError(string.Empty, "An error occurred while creating the list.");
+            throw;
+        }
+    }
+
+    private async Task<IActionResult> EditInternal(EditTodoListViewModel model)
+    {
+        try
+        {
+            var userId = UserHelper.GetCurrentUserId(this.User);
+            if (userId == null)
+            {
+                return this.RedirectToAction("Login", "Account");
+            }
+
+            var listModel = new TodoListModel(
+                id: model.ListId,
+                ownerId: userId.Value,
+                title: model.Title,
+                description: model.Description ?? string.Empty);
+
+            var updatedList = await this.todoListService.UpdateAsync(userId.Value, listModel);
+
+            TodoListsLog.LogListUpdatedSuccessfully(this.logger, updatedList.Id, userId.Value);
+
+            return this.Redirect(model.ReturnUrl.ToString());
+        }
+        catch (Exception ex)
+        {
+            TodoListsLog.LogErrorUpdatingList(this.logger, model.ListId, ex);
+            this.ModelState.AddModelError(string.Empty, "An error occurred while updating the list.");
+            return this.View(model);
             throw;
         }
     }

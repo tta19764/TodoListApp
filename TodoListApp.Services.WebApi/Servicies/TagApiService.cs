@@ -41,48 +41,11 @@ public class TagApiService : ITagService
     /// <exception cref="InvalidOperationException">Thrown when the creation fails or returns a null response.</exception>
     /// <exception cref="HttpRequestException">Thrown when the HTTP request fails.</exception>
     /// <exception cref="JsonException">Thrown when JSON parsing fails.</exception>
-    public async Task<TagModel> AddAsync(TagModel model)
+    public Task<TagModel> AddAsync(TagModel model)
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        try
-        {
-            var dto = new CreateTagDto { Title = model.Title };
-
-            using var response = await this.httpClient.PutAsJsonAsync(this.httpClient.BaseAddress, dto);
-
-            if (response.IsSuccessStatusCode)
-            {
-                var result = await response.Content.ReadFromJsonAsync<TagDto>();
-                if (result != null)
-                {
-                    TagLog.LogTagCreated(this.logger, result.Id);
-                    return MapToModel.MapToTagModel(result);
-                }
-
-                TagLog.LogNullResponse(this.logger, "create");
-                throw new InvalidOperationException("Failed to create tag - null response");
-            }
-
-            var errorContent = await response.Content.ReadAsStringAsync();
-            TagLog.LogOperationFailed(this.logger, "create", 0, (int)response.StatusCode, errorContent);
-            throw new HttpRequestException($"Failed to create tag: {response.StatusCode}");
-        }
-        catch (HttpRequestException ex)
-        {
-            TagLog.LogHttpRequestError(this.logger, ex);
-            throw;
-        }
-        catch (JsonException ex)
-        {
-            TagLog.LogJsonParsingError(this.logger, ex);
-            throw;
-        }
-        catch (Exception ex)
-        {
-            TagLog.LogUnexpectedError(this.logger, ex);
-            throw;
-        }
+        return this.AddInternalAsync(model);
     }
 
     /// <summary>
@@ -390,10 +353,57 @@ public class TagApiService : ITagService
     /// <exception cref="InvalidOperationException">Thrown when the tag is not found or update fails.</exception>
     /// <exception cref="HttpRequestException">Thrown when the HTTP request fails.</exception>
     /// <exception cref="JsonException">Thrown when JSON parsing fails.</exception>
-    public async Task<TagModel> UpdateAsync(TagModel model)
+    public Task<TagModel> UpdateAsync(TagModel model)
     {
         ArgumentNullException.ThrowIfNull(model);
 
+        return this.UpdateInternalAsync(model);
+    }
+
+    private async Task<TagModel> AddInternalAsync(TagModel model)
+    {
+        try
+        {
+            var dto = new CreateTagDto { Title = model.Title };
+
+            using var response = await this.httpClient.PutAsJsonAsync(this.httpClient.BaseAddress, dto);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<TagDto>();
+                if (result != null)
+                {
+                    TagLog.LogTagCreated(this.logger, result.Id);
+                    return MapToModel.MapToTagModel(result);
+                }
+
+                TagLog.LogNullResponse(this.logger, "create");
+                throw new InvalidOperationException("Failed to create tag - null response");
+            }
+
+            var errorContent = await response.Content.ReadAsStringAsync();
+            TagLog.LogOperationFailed(this.logger, "create", 0, (int)response.StatusCode, errorContent);
+            throw new HttpRequestException($"Failed to create tag: {response.StatusCode}");
+        }
+        catch (HttpRequestException ex)
+        {
+            TagLog.LogHttpRequestError(this.logger, ex);
+            throw;
+        }
+        catch (JsonException ex)
+        {
+            TagLog.LogJsonParsingError(this.logger, ex);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            TagLog.LogUnexpectedError(this.logger, ex);
+            throw;
+        }
+    }
+
+    private async Task<TagModel> UpdateInternalAsync(TagModel model)
+    {
         try
         {
             var dto = new UpdateTagDto { Id = model.Id, Title = model.Title };

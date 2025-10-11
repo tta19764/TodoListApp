@@ -39,7 +39,7 @@ public class UnableToCreateException : Exception
     /// </summary>
     /// <param name="entityName">The name of the entity.</param>
     /// <param name="key">The key of the entity (if known).</param>
-    public UnableToCreateException(string entityName, Exception innerException, object? key = null)
+    public UnableToCreateException(string entityName, Exception innerException, object? key)
         : base(
             key is null
             ? $"{entityName} could not be created."

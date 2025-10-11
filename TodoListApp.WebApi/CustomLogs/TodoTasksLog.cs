@@ -326,7 +326,6 @@ internal static class TodoTasksLog
     public static void LogListNotFoundForUser(ILogger logger, int listId, int? userId, string message, Exception? exception = null) =>
         ListNotFoundForUser(logger, listId, userId, message, exception);
 
-
     /// <summary>
     /// Logs a warning about an unauthorized attempt to access a task.
     /// </summary>

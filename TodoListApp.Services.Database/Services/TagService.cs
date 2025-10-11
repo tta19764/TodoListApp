@@ -34,25 +34,11 @@ public class TagService : ITagService
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="model"/> is <c>null</c>.</exception>
     /// <exception cref="EntityWithIdExistsException">Thrown when a tag with the same ID already exists.</exception>
     /// <exception cref="UnableToCreateException">Thrown when the database operation to create the tag fails.</exception>
-    public async Task<TagModel> AddAsync(TagModel model)
+    public Task<TagModel> AddAsync(TagModel model)
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        Tag? existing = await this.repository.GetByIdAsync(model.Id);
-        if (existing is not null)
-        {
-            throw new EntityWithIdExistsException(nameof(Tag), model.Id);
-        }
-
-        try
-        {
-            Tag newTag = await this.repository.AddAsync(ModelToEntityConverter.ToTagEntity(model));
-            return EntityToModelConverter.ToTagModel(newTag);
-        }
-        catch (DbUpdateException ex)
-        {
-            throw new UnableToCreateException(nameof(Tag), ex, model.Id);
-        }
+        return this.AddInternalAsync(model);
     }
 
     /// <summary>
@@ -138,27 +124,11 @@ public class TagService : ITagService
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="model"/> is <c>null</c>.</exception>
     /// <exception cref="EntityNotFoundException">Thrown when the tag to update does not exist.</exception>
     /// <exception cref="UnableToUpdateException">Thrown when the database operation to update the tag fails.</exception>
-    public async Task<TagModel> UpdateAsync(TagModel model)
+    public Task<TagModel> UpdateAsync(TagModel model)
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        Tag? existing = await this.repository.GetByIdAsync(model.Id);
-        if (existing is null)
-        {
-            throw new EntityNotFoundException(nameof(existing), model.Id);
-        }
-
-        try
-        {
-            Tag? updated = await this.repository.UpdateAsync(ModelToEntityConverter.ToTagEntity(model));
-            return updated is null ?
-                throw new UnableToUpdateException(nameof(existing), model.Id) :
-                EntityToModelConverter.ToTagModel(updated);
-        }
-        catch (DbUpdateException ex)
-        {
-            throw new UnableToUpdateException(nameof(existing), model.Id, ex);
-        }
+        return this.UpdateInternalAsync(model);
     }
 
     /// <summary>
@@ -197,5 +167,45 @@ public class TagService : ITagService
         return availableTags
             .Select(t => EntityToModelConverter.ToTagModel(t))
             .ToList();
+    }
+
+    private async Task<TagModel> AddInternalAsync(TagModel model)
+    {
+        Tag? existing = await this.repository.GetByIdAsync(model.Id);
+        if (existing is not null)
+        {
+            throw new EntityWithIdExistsException(nameof(Tag), model.Id);
+        }
+
+        try
+        {
+            Tag newTag = await this.repository.AddAsync(ModelToEntityConverter.ToTagEntity(model));
+            return EntityToModelConverter.ToTagModel(newTag);
+        }
+        catch (DbUpdateException ex)
+        {
+            throw new UnableToCreateException(nameof(Tag), ex, model.Id);
+        }
+    }
+
+    private async Task<TagModel> UpdateInternalAsync(TagModel model)
+    {
+        Tag? existing = await this.repository.GetByIdAsync(model.Id);
+        if (existing is null)
+        {
+            throw new EntityNotFoundException(nameof(existing), model.Id);
+        }
+
+        try
+        {
+            Tag? updated = await this.repository.UpdateAsync(ModelToEntityConverter.ToTagEntity(model));
+            return updated is null ?
+                throw new UnableToUpdateException(nameof(existing), model.Id) :
+                EntityToModelConverter.ToTagModel(updated);
+        }
+        catch (DbUpdateException ex)
+        {
+            throw new UnableToUpdateException(nameof(existing), model.Id, ex);
+        }
     }
 }

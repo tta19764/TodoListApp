@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using TodoListApp.Services.Interfaces.Servicies;
 
@@ -42,7 +43,7 @@ public class ViewRenderService : IViewRenderService
     /// <param name="model">The model.</param>
     /// <returns>The rendered HTML string.</returns>
     /// <exception cref="ArgumentNullException">Thrown when viewName is null.</exception>
-    public async Task<string> RenderToStringAsync<TModel>(string viewName, TModel model)
+    public Task<string> RenderToStringAsync<TModel>(string viewName, TModel model)
     {
         var httpContext = new DefaultHttpContext { RequestServices = this.serviceProvider };
         var actionContext = new ActionContext(httpContext, new RouteData(), new ActionDescriptor());
@@ -56,6 +57,13 @@ public class ViewRenderService : IViewRenderService
             throw new ArgumentNullException($"Unable to find view '{viewName}'");
         }
 
+        return this.RenderViewInternalAsync(viewResult.View, actionContext, model);
+    }
+
+    private async Task<string> RenderViewInternalAsync<TModel>(IView view, ActionContext actionContext, TModel model)
+    {
+        using var sw = new StringWriter();
+
         var viewDictionary = new ViewDataDictionary<TModel>(
             new EmptyModelMetadataProvider(),
             new ModelStateDictionary())
@@ -65,13 +73,13 @@ public class ViewRenderService : IViewRenderService
 
         var viewContext = new ViewContext(
             actionContext,
-            viewResult.View,
+            view,
             viewDictionary,
             new TempDataDictionary(actionContext.HttpContext, this.tempDataProvider),
             sw,
             new HtmlHelperOptions());
 
-        await viewResult.View.RenderAsync(viewContext);
+        await view.RenderAsync(viewContext);
         return sw.ToString();
     }
 }

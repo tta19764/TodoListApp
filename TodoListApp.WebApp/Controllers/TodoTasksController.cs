@@ -226,37 +226,16 @@ public class TodoTasksController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> AddComment(AddCommentViewModel model)
+    public Task<IActionResult> AddComment(AddCommentViewModel model)
     {
         ArgumentNullException.ThrowIfNull(model);
 
         if (!this.ModelState.IsValid)
         {
-            return this.View(model);
+            return this.AddCommentInternal(model);
         }
 
-        try
-        {
-            var userId = UserHelper.GetCurrentUserId(this.User);
-            if (userId == null)
-            {
-                return this.RedirectToAction("Login", "Account");
-            }
-
-            var commentModel = new CommentModel(0, model.Text, model.TaskId, userId.Value);
-            var createdComment = await this.todoTaskService.AddTaskCommentAsync(commentModel);
-
-            TodoTasksLog.LogCommentAddedToTask(this.logger, createdComment.Id, model.TaskId, userId.Value);
-
-            this.TempData["SuccessMessage"] = "Comment added successfully";
-            return this.Redirect(model.ReturnUrl.ToString());
-        }
-        catch (Exception ex)
-        {
-            TodoTasksLog.LogErrorAddingComment(this.logger, model.TaskId, ex);
-            this.ModelState.AddModelError(string.Empty, "An error occurred while adding the comment.");
-            throw;
-        }
+        return Task.FromResult<IActionResult>(this.View(model));
     }
 
     [HttpGet]
@@ -322,37 +301,16 @@ public class TodoTasksController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> EditComment(EditCommentViewModel model)
+    public Task<IActionResult> EditComment(EditCommentViewModel model)
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        if (!this.ModelState.IsValid)
+        if (this.ModelState.IsValid)
         {
-            return this.View(model);
+            return this.EditCommentInternal(model);
         }
 
-        try
-        {
-            var userId = UserHelper.GetCurrentUserId(this.User);
-            if (userId == null)
-            {
-                return this.RedirectToAction("Login", "Account");
-            }
-
-            var commentModel = new CommentModel(model.CommentId, model.Text, model.TaskId, userId.Value);
-            var updatedComment = await this.todoTaskService.UpdateTaskCommentAsync(userId.Value, commentModel);
-
-            TodoTasksLog.LogCommentUpdated(this.logger, updatedComment.Id, userId.Value);
-
-            this.TempData["SuccessMessage"] = "Comment updated successfully";
-            return this.Redirect(model.ReturnUrl.ToString());
-        }
-        catch (Exception ex)
-        {
-            TodoTasksLog.LogErrorUpdatingComment(this.logger, model.CommentId, ex);
-            this.ModelState.AddModelError(string.Empty, "An error occurred while updating the comment.");
-            throw;
-        }
+        return Task.FromResult<IActionResult>(this.View(model));
     }
 
     [HttpPost]
@@ -528,45 +486,16 @@ public class TodoTasksController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(CreateTodoTaskViewModel model)
+    public Task<IActionResult> Create(CreateTodoTaskViewModel model)
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        if (!this.ModelState.IsValid)
+        if (this.ModelState.IsValid)
         {
-            return this.View(model);
+            return this.CreateInternal(model);
         }
 
-        try
-        {
-            var userId = UserHelper.GetCurrentUserId(this.User);
-            if (userId == null)
-            {
-                return this.RedirectToAction("Login", "Account");
-            }
-
-            var taskModel = new TodoTaskModel(
-                id: 0,
-                title: model.Title,
-                description: model.Description ?? string.Empty,
-                creationDate: null,
-                dueDate: model.DueDate,
-                statusId: (int)model.Status,
-                ownerUserId: userId.Value,
-                listId: model.ListId);
-
-            _ = await this.todoTaskService.AddAsync(taskModel);
-
-            TodoTasksLog.LogTaskCreatedSuccessfully(this.logger, model.ListId, userId.Value);
-
-            return this.Redirect(model.ReturnUrl.ToString());
-        }
-        catch (Exception ex)
-        {
-            TodoTasksLog.LogErrorCreatingTask(this.logger, model.ListId, ex);
-            this.ModelState.AddModelError(string.Empty, "An error occurred while creating the task.");
-            throw;
-        }
+        return Task.FromResult<IActionResult>(this.View(model));
     }
 
     [HttpGet]
@@ -613,46 +542,16 @@ public class TodoTasksController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(EditTodoTaskViewModel model)
+    public Task<IActionResult> Edit(EditTodoTaskViewModel model)
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        if (!this.ModelState.IsValid)
+        if (this.ModelState.IsValid)
         {
-            return this.View(model);
+            return this.EditInternal(model);
         }
 
-        try
-        {
-            var userId = UserHelper.GetCurrentUserId(this.User);
-            if (userId == null)
-            {
-                return this.RedirectToAction("Login", "Account");
-            }
-
-            var taskModel = new TodoTaskModel(
-                id: model.TaskId,
-                title: model.Title,
-                description: model.Description ?? string.Empty,
-                creationDate: null,
-                dueDate: model.DueDate,
-                statusId: (int)model.Status,
-                ownerUserId: userId.Value,
-                listId: model.ListId);
-
-            _ = await this.todoTaskService.UpdateAsync(userId.Value, taskModel);
-
-            TodoTasksLog.LogTaskUpdatedSuccessfully(this.logger, model.TaskId, userId.Value);
-
-            // Use the returned task model if needed to display updated data
-            return this.Redirect(model.ReturnUrl.ToString());
-        }
-        catch (Exception ex)
-        {
-            TodoTasksLog.LogErrorUpdatingTask(this.logger, model.TaskId, ex);
-            this.ModelState.AddModelError(string.Empty, "An error occurred while updating the task.");
-            throw;
-        }
+        return Task.FromResult<IActionResult>(this.View(model));
     }
 
     [HttpPost]
@@ -729,6 +628,131 @@ public class TodoTasksController : Controller
             }
 
             return this.RedirectToAction("Index", "TodoLists");
+            throw;
+        }
+    }
+
+    private async Task<IActionResult> AddCommentInternal(AddCommentViewModel model)
+    {
+        try
+        {
+            var userId = UserHelper.GetCurrentUserId(this.User);
+            if (userId == null)
+            {
+                return this.RedirectToAction("Login", "Account");
+            }
+
+            var commentModel = new CommentModel(0, model.Text, model.TaskId, userId.Value);
+            var createdComment = await this.todoTaskService.AddTaskCommentAsync(commentModel);
+
+            TodoTasksLog.LogCommentAddedToTask(this.logger, createdComment.Id, model.TaskId, userId.Value);
+
+            this.TempData["SuccessMessage"] = "Comment added successfully";
+            return this.Redirect(model.ReturnUrl.ToString());
+        }
+        catch (Exception ex)
+        {
+            TodoTasksLog.LogErrorAddingComment(this.logger, model.TaskId, ex);
+            this.ModelState.AddModelError(string.Empty, "An error occurred while adding the comment.");
+            throw;
+        }
+    }
+
+    private async Task<IActionResult> EditCommentInternal(EditCommentViewModel model)
+    {
+        try
+        {
+            var userId = UserHelper.GetCurrentUserId(this.User);
+            if (userId == null)
+            {
+                return this.RedirectToAction("Login", "Account");
+            }
+
+            var commentModel = new CommentModel(model.CommentId, model.Text, model.TaskId, userId.Value);
+            var updatedComment = await this.todoTaskService.UpdateTaskCommentAsync(userId.Value, commentModel);
+
+            TodoTasksLog.LogCommentUpdated(this.logger, updatedComment.Id, userId.Value);
+
+            this.TempData["SuccessMessage"] = "Comment updated successfully";
+            return this.Redirect(model.ReturnUrl.ToString());
+        }
+        catch (Exception ex)
+        {
+            TodoTasksLog.LogErrorUpdatingComment(this.logger, model.CommentId, ex);
+            this.ModelState.AddModelError(string.Empty, "An error occurred while updating the comment.");
+            throw;
+        }
+    }
+
+    private async Task<IActionResult> CreateInternal(CreateTodoTaskViewModel model)
+    {
+        try
+        {
+            var userId = UserHelper.GetCurrentUserId(this.User);
+            if (userId == null)
+            {
+                return this.RedirectToAction("Login", "Account");
+            }
+
+            var taskModel = new TodoTaskModel(0)
+            {
+                Title = model.Title,
+                Description = model.Description ?? string.Empty,
+                CreationDate = null,
+                DueDate = model.DueDate,
+                StatusId = (int)model.Status,
+                OwnerUserId = userId.Value,
+                ListId = model.ListId,
+            };
+
+            _ = await this.todoTaskService.AddAsync(taskModel);
+
+            TodoTasksLog.LogTaskCreatedSuccessfully(this.logger, model.ListId, userId.Value);
+
+            return this.Redirect(model.ReturnUrl.ToString());
+        }
+        catch (Exception ex)
+        {
+            TodoTasksLog.LogErrorCreatingTask(this.logger, model.ListId, ex);
+            this.ModelState.AddModelError(string.Empty, "An error occurred while creating the task.");
+            return this.View(model);
+            throw;
+        }
+    }
+
+    private async Task<IActionResult> EditInternal(EditTodoTaskViewModel model)
+    {
+        try
+        {
+            var userId = UserHelper.GetCurrentUserId(this.User);
+            if (userId == null)
+            {
+                return this.RedirectToAction("Login", "Account");
+            }
+
+            var taskModel = new TodoTaskModel(model.TaskId)
+            {
+                Title = model.Title,
+                Description = model.Description ?? string.Empty,
+                CreationDate = null,
+                DueDate = model.DueDate,
+                StatusId = (int)model.Status,
+                OwnerUserId = userId.Value,
+                ListId = model.ListId,
+            };
+
+            _ = await this.todoTaskService.UpdateAsync(userId.Value, taskModel);
+
+            TodoTasksLog.LogTaskUpdatedSuccessfully(this.logger, model.TaskId, userId.Value);
+
+            // Use the returned task model if needed to display updated data
+            return this.Redirect(model.ReturnUrl.ToString());
+        }
+        catch (Exception ex)
+        {
+            TodoTasksLog.LogErrorUpdatingTask(this.logger, model.TaskId, ex);
+            this.ModelState.AddModelError(string.Empty, "An error occurred while updating the task.");
+            return this.View(model);
             throw;
         }
     }

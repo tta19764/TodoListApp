@@ -19,8 +19,10 @@
 						<input type="hidden" asp-for="ReturnUrl" />
 
 						<div class="mb-3">
-							<label class="form-label fw-bold">Select a Tag</label>
-							<select asp-for="SelectedTagId" class="form-select" required>
+							<label class="form-label fw-bold" for="AddTagTag">
+								Select a Tag
+							</label>
+							<select id="AddTagTag" asp-for="SelectedTagId" class="form-select" required>
 								<option value="">-- Select a tag --</option>
 								@foreach (var tag in Model.AvailableTags)
 								{

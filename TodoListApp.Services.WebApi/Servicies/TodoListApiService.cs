@@ -41,51 +41,11 @@ public class TodoListApiService : ITodoListService
     /// <exception cref="HttpRequestException">Thrown when the API request fails.</exception>
     /// <exception cref="InvalidOperationException">Thrown when the API returns a null or invalid response.</exception>
     /// <exception cref="JsonException">Thrown when the API response cannot be deserialized.</exception>
-    public async Task<TodoListModel> AddAsync(TodoListModel model)
+    public Task<TodoListModel> AddAsync(TodoListModel model)
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        try
-        {
-            var dto = new CreateTodoListDto(
-                model.Title,
-                model.OwnerId,
-                model.Description);
-
-            using var response = await this.httpClient.PutAsJsonAsync(this.httpClient.BaseAddress, dto);
-
-            if (response.IsSuccessStatusCode)
-            {
-                var result = await response.Content.ReadFromJsonAsync<TodoListDto>();
-                if (result != null)
-                {
-                    TodoListLog.LogTodoListCreated(this.logger, result.Id);
-                    return MapToModel.MapToTodoListModel(result);
-                }
-
-                TodoListLog.LogNullResponse(this.logger, "create");
-                throw new InvalidOperationException("Failed to create todo list - null response");
-            }
-
-            var errorContent = await response.Content.ReadAsStringAsync();
-            TodoListLog.LogTodoListFailed(this.logger, "create", 0, (int)response.StatusCode, errorContent);
-            throw new HttpRequestException($"Failed to create todo list: {response.StatusCode}");
-        }
-        catch (HttpRequestException ex)
-        {
-            TodoListLog.LogHttpRequestError(this.logger, ex);
-            throw;
-        }
-        catch (JsonException ex)
-        {
-            TodoListLog.LogJsonParsingError(this.logger, ex);
-            throw;
-        }
-        catch (Exception ex)
-        {
-            TodoListLog.LogUnexpectedError(this.logger, ex);
-            throw;
-        }
+        return this.AddInternailAsync(model);
     }
 
     /// <summary>
@@ -440,62 +400,11 @@ public class TodoListApiService : ITodoListService
     /// <exception cref="HttpRequestException">Thrown when the update request fails.</exception>
     /// <exception cref="InvalidOperationException">Thrown when the list is not found or response is null.</exception>
     /// <exception cref="JsonException">Thrown when the response cannot be deserialized.</exception>
-    public async Task<TodoListModel> UpdateAsync(int userId, TodoListModel model)
+    public Task<TodoListModel> UpdateAsync(int userId, TodoListModel model)
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        try
-        {
-            var dto = new UpdateTodoListDto(
-                model.Id,
-                model.Title,
-                model.Description,
-                model.OwnerId);
-
-            using var response = await this.httpClient.PostAsJsonAsync(this.httpClient.BaseAddress, dto);
-
-            if (response.IsSuccessStatusCode)
-            {
-                var result = await response.Content.ReadFromJsonAsync<TodoListDto>();
-                if (result != null)
-                {
-                    TodoListLog.LogTodoListUpdated(this.logger, model.Id);
-                    return MapToModel.MapToTodoListModel(result);
-                }
-
-                TodoListLog.LogNullResponse(this.logger, "update");
-                throw new InvalidOperationException($"Failed to update todo list {model.Id} - null response");
-            }
-
-            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
-            {
-                TodoListLog.LogTodoListNotFound(this.logger, model.Id);
-                throw new InvalidOperationException($"Todo list with ID {model.Id} was not found");
-            }
-
-            var errorContent = await response.Content.ReadAsStringAsync();
-            TodoListLog.LogTodoListFailed(this.logger, "update", model.Id, (int)response.StatusCode, errorContent);
-            throw new HttpRequestException($"Failed to update todo list: {response.StatusCode}");
-        }
-        catch (HttpRequestException ex)
-        {
-            TodoListLog.LogHttpRequestError(this.logger, ex);
-            throw;
-        }
-        catch (JsonException ex)
-        {
-            TodoListLog.LogJsonParsingError(this.logger, ex);
-            throw;
-        }
-        catch (InvalidOperationException)
-        {
-            throw;
-        }
-        catch (Exception ex)
-        {
-            TodoListLog.LogUnexpectedError(this.logger, ex);
-            throw;
-        }
+        return this.UpdateInteranlAsync(model);
     }
 
     /// <summary>
@@ -609,6 +518,111 @@ public class TodoListApiService : ITodoListService
         catch (HttpRequestException ex)
         {
             TodoListLog.LogHttpRequestError(this.logger, ex);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            TodoListLog.LogUnexpectedError(this.logger, ex);
+            throw;
+        }
+    }
+
+    private async Task<TodoListModel> AddInternailAsync(TodoListModel model)
+    {
+        try
+        {
+            var dto = new CreateTodoListDto()
+            {
+                Title = model.Title,
+                OwnerId = model.OwnerId,
+                Description = model.Description,
+            };
+
+            using var response = await this.httpClient.PutAsJsonAsync(this.httpClient.BaseAddress, dto);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<TodoListDto>();
+                if (result != null)
+                {
+                    TodoListLog.LogTodoListCreated(this.logger, result.Id);
+                    return MapToModel.MapToTodoListModel(result);
+                }
+
+                TodoListLog.LogNullResponse(this.logger, "create");
+                throw new InvalidOperationException("Failed to create todo list - null response");
+            }
+
+            var errorContent = await response.Content.ReadAsStringAsync();
+            TodoListLog.LogTodoListFailed(this.logger, "create", 0, (int)response.StatusCode, errorContent);
+            throw new HttpRequestException($"Failed to create todo list: {response.StatusCode}");
+        }
+        catch (HttpRequestException ex)
+        {
+            TodoListLog.LogHttpRequestError(this.logger, ex);
+            throw;
+        }
+        catch (JsonException ex)
+        {
+            TodoListLog.LogJsonParsingError(this.logger, ex);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            TodoListLog.LogUnexpectedError(this.logger, ex);
+            throw;
+        }
+    }
+
+    private async Task<TodoListModel> UpdateInteranlAsync(TodoListModel model)
+    {
+        try
+        {
+            var dto = new UpdateTodoListDto()
+            {
+                Id = model.Id,
+                Title = model.Title,
+                Description = model.Description,
+                OwnerId = model.OwnerId,
+            };
+
+            using var response = await this.httpClient.PostAsJsonAsync(this.httpClient.BaseAddress, dto);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<TodoListDto>();
+                if (result != null)
+                {
+                    TodoListLog.LogTodoListUpdated(this.logger, model.Id);
+                    return MapToModel.MapToTodoListModel(result);
+                }
+
+                TodoListLog.LogNullResponse(this.logger, "update");
+                throw new InvalidOperationException($"Failed to update todo list {model.Id} - null response");
+            }
+
+            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                TodoListLog.LogTodoListNotFound(this.logger, model.Id);
+                throw new InvalidOperationException($"Todo list with ID {model.Id} was not found");
+            }
+
+            var errorContent = await response.Content.ReadAsStringAsync();
+            TodoListLog.LogTodoListFailed(this.logger, "update", model.Id, (int)response.StatusCode, errorContent);
+            throw new HttpRequestException($"Failed to update todo list: {response.StatusCode}");
+        }
+        catch (HttpRequestException ex)
+        {
+            TodoListLog.LogHttpRequestError(this.logger, ex);
+            throw;
+        }
+        catch (JsonException ex)
+        {
+            TodoListLog.LogJsonParsingError(this.logger, ex);
+            throw;
+        }
+        catch (InvalidOperationException)
+        {
             throw;
         }
         catch (Exception ex)

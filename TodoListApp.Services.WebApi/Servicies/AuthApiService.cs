@@ -36,7 +36,7 @@ public class AuthApiService : IAuthService
     /// <exception cref="ArgumentNullException">If request is null.</exception>
     /// <exception cref="ArgumentException">If any of the user info is null.</exception>
     /// <exception cref="TimeoutException">If the request timed out.</exception>
-    public async Task<TokenResponseDto?> LoginAsync(UserDto request, CancellationToken cancellationToken = default)
+    public Task<TokenResponseDto?> LoginAsync(UserDto request, CancellationToken cancellationToken = default)
     {
         if (request == null)
         {
@@ -50,6 +50,56 @@ public class AuthApiService : IAuthService
             throw new ArgumentException("Username cannot be null or empty.", nameof(request));
         }
 
+        return this.LoginInternalAsync(request, cancellationToken);
+    }
+
+    /// <summary>
+    /// Logs out a user by invalidating their JWT tokens.
+    /// </summary>
+    /// <param name="logoutRequestDto">The data transfer object containing the access token and user ID.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>True if logout was successful; otherwise, false.</returns>
+    /// <exception cref="ArgumentNullException">If the data tranfer object is null.</exception>
+    /// <exception cref="TimeoutException">The request times out.</exception>
+    public Task<bool> LogoutAsync(LogoutRequestDto logoutRequestDto, CancellationToken cancellationToken = default)
+    {
+        if (logoutRequestDto == null)
+        {
+            JwtLog.LogNullLogoutRequest(this.logger);
+            throw new ArgumentNullException(nameof(logoutRequestDto));
+        }
+
+        return this.LogoutInternalAsync(logoutRequestDto, cancellationToken);
+    }
+
+    /// <summary>
+    /// Refreshes JWT tokens using a valid refresh token.
+    /// </summary>
+    /// <param name="request">The data transfer object containing the user Id and refresh token.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A <see cref="TokenResponseDto"/> containing new access and refresh tokens if successful; otherwise, null.</returns>
+    /// <exception cref="ArgumentNullException">If data transfer onject is null.</exception>
+    /// <exception cref="ArgumentException">If any properties of the data transfer object is null.</exception>
+    /// <exception cref="TimeoutException">If request times out.</exception>
+    public Task<TokenResponseDto?> RefreshTokensAsync(RefreshTokenRequestDto request, CancellationToken cancellationToken = default)
+    {
+        if (request == null)
+        {
+            JwtLog.LogNullRefreshTokenRequest(this.logger);
+            throw new ArgumentNullException(nameof(request));
+        }
+
+        if (string.IsNullOrWhiteSpace(request.UserId))
+        {
+            JwtLog.LogNullRefreshTokenRequest(this.logger);
+            throw new ArgumentException("UserId cannot be null or empty.", nameof(request));
+        }
+
+        return this.RefreshTokensInteranlAsync(request, cancellationToken);
+    }
+
+    private async Task<TokenResponseDto?> LoginInternalAsync(UserDto request, CancellationToken cancellationToken = default)
+    {
         try
         {
             using var response = await this.httpClient.PostAsJsonAsync("login", request, cancellationToken);
@@ -99,22 +149,8 @@ public class AuthApiService : IAuthService
         }
     }
 
-    /// <summary>
-    /// Logs out a user by invalidating their JWT tokens.
-    /// </summary>
-    /// <param name="logoutRequestDto">The data transfer object containing the access token and user ID.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>True if logout was successful; otherwise, false.</returns>
-    /// <exception cref="ArgumentNullException">If the data tranfer object is null.</exception>
-    /// <exception cref="TimeoutException">The request times out.</exception>
-    public async Task<bool> LogoutAsync(LogoutRequestDto logoutRequestDto, CancellationToken cancellationToken = default)
+    private async Task<bool> LogoutInternalAsync(LogoutRequestDto logoutRequestDto, CancellationToken cancellationToken = default)
     {
-        if (logoutRequestDto == null)
-        {
-            JwtLog.LogNullLogoutRequest(this.logger);
-            throw new ArgumentNullException(nameof(logoutRequestDto));
-        }
-
         try
         {
             using var response = await this.httpClient.PostAsJsonAsync("logout", logoutRequestDto, cancellationToken);
@@ -151,29 +187,8 @@ public class AuthApiService : IAuthService
         }
     }
 
-    /// <summary>
-    /// Refreshes JWT tokens using a valid refresh token.
-    /// </summary>
-    /// <param name="request">The data transfer object containing the user Id and refresh token.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A <see cref="TokenResponseDto"/> containing new access and refresh tokens if successful; otherwise, null.</returns>
-    /// <exception cref="ArgumentNullException">If data transfer onject is null.</exception>
-    /// <exception cref="ArgumentException">If any properties of the data transfer object is null.</exception>
-    /// <exception cref="TimeoutException">If request times out.</exception>
-    public async Task<TokenResponseDto?> RefreshTokensAsync(RefreshTokenRequestDto request, CancellationToken cancellationToken = default)
+    private async Task<TokenResponseDto?> RefreshTokensInteranlAsync(RefreshTokenRequestDto request, CancellationToken cancellationToken = default)
     {
-        if (request == null)
-        {
-            JwtLog.LogNullRefreshTokenRequest(this.logger);
-            throw new ArgumentNullException(nameof(request));
-        }
-
-        if (string.IsNullOrWhiteSpace(request.UserId))
-        {
-            JwtLog.LogNullRefreshTokenRequest(this.logger);
-            throw new ArgumentException("UserId cannot be null or empty.", nameof(request));
-        }
-
         try
         {
             using var response = await this.httpClient.PostAsJsonAsync("refresh-token", request, cancellationToken);

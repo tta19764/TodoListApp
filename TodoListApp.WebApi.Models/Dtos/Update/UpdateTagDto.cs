@@ -13,17 +13,6 @@ public record UpdateTagDto
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="UpdateTagDto"/> class.
-    /// </summary>
-    /// <param name="id">The tag uniaue identifier.</param>
-    /// <param name="title">The tag title.</param>
-    public UpdateTagDto(int id, string title)
-    {
-        this.Id = id;
-        this.Title = title;
-    }
-
-    /// <summary>
     /// Gets or initializes the unique identifier of the tag.
     /// </summary>
     public int Id { get; init; }

@@ -45,19 +45,20 @@ public static class EntityToModelConverter
             }
         }
 
-        var model = new TodoTaskModel(
-            entity.Id,
-            entity.Title,
-            entity.Description,
-            entity.CreationDate,
-            entity.DueDate,
-            entity.StatusId,
-            entity.OwnerUserId,
-            entity.ListId,
-            new UserModel(entity.OwnerUserId, entity.OwnerUser.FirstName, entity.OwnerUser.LastName),
-            new StatusModel(entity.StatusId, entity.Status.StatusTitle),
-            new ReadOnlyCollection<TagModel>(taskTags),
-            new ReadOnlyCollection<CommentModel>(taskComments));
+        var model = new TodoTaskModel(entity.Id)
+        {
+            Title = entity.Title,
+            Description = entity.Description,
+            CreationDate = entity.CreationDate,
+            DueDate = entity.DueDate,
+            StatusId = entity.StatusId,
+            OwnerUserId = entity.OwnerUserId,
+            ListId = entity.ListId,
+            OwnerUser = new UserModel(entity.OwnerUserId, entity.OwnerUser.FirstName, entity.OwnerUser.LastName),
+            Status = new StatusModel(entity.StatusId, entity.Status.StatusTitle),
+            UsersTags = new ReadOnlyCollection<TagModel>(taskTags),
+            UserComments = new ReadOnlyCollection<CommentModel>(taskComments),
+        };
 
         return model;
     }

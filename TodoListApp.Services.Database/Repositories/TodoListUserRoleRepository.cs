@@ -33,14 +33,11 @@ public class TodoListUserRoleRepository : AbstractRepository, ITodoListUserRoleR
     /// <exception cref="ArgumentNullException">
     /// Thrown if <paramref name="entity"/> is <c>null</c>.
     /// </exception>
-    public async Task<TodoListUserRole> AddAsync(TodoListUserRole entity)
+    public Task<TodoListUserRole> AddAsync(TodoListUserRole entity)
     {
         ArgumentNullException.ThrowIfNull(entity);
 
-        _ = await this.dbSet.AddAsync(entity);
-        _ = await this.Context.SaveChangesAsync();
-
-        return entity;
+        return this.AddInternalAsync(entity);
     }
 
     /// <summary>
@@ -53,20 +50,11 @@ public class TodoListUserRoleRepository : AbstractRepository, ITodoListUserRoleR
     /// <exception cref="ArgumentNullException">
     /// Thrown if <paramref name="entity"/> is <c>null</c>.
     /// </exception>
-    public async Task<bool> DeleteAsync(TodoListUserRole entity)
+    public Task<bool> DeleteAsync(TodoListUserRole entity)
     {
         ArgumentNullException.ThrowIfNull(entity);
 
-        var existing = await this.dbSet.FindAsync(entity.Id);
-        if (existing is null)
-        {
-            return false;
-        }
-
-        _ = this.dbSet.Remove(existing);
-        _ = await this.Context.SaveChangesAsync();
-
-        return true;
+        return this.DeleteInternalAsync(entity);
     }
 
     /// <summary>
@@ -102,6 +90,7 @@ public class TodoListUserRoleRepository : AbstractRepository, ITodoListUserRoleR
             .Include(tlu => tlu.ListUser)
             .Include(tlu => tlu.List)
             .Include(tlu => tlu.ListRole)
+            .AsSplitQuery()
             .ToListAsync();
     }
 
@@ -113,7 +102,7 @@ public class TodoListUserRoleRepository : AbstractRepository, ITodoListUserRoleR
     /// <returns>
     /// A task representing the asynchronous operation. The task result contains <see cref="IReadOnlyList{TodoListUserRole}"/>.
     /// </returns>
-    public async Task<IReadOnlyList<TodoListUserRole>> GetAllAsync(int pageNumber, int rowCount)
+    public Task<IReadOnlyList<TodoListUserRole>> GetAllAsync(int pageNumber, int rowCount)
     {
         if (pageNumber < 1)
         {
@@ -125,11 +114,7 @@ public class TodoListUserRoleRepository : AbstractRepository, ITodoListUserRoleR
             throw new ArgumentException("Row count must be greater than 0.");
         }
 
-        return await this.dbSet
-            .Include(tlu => tlu.ListUser)
-            .Include(tlu => tlu.List)
-            .Include(tlu => tlu.ListRole)
-            .ToListAsync();
+        return this.GetAllInternalAsync(pageNumber, rowCount);
     }
 
     /// <summary>
@@ -146,6 +131,7 @@ public class TodoListUserRoleRepository : AbstractRepository, ITodoListUserRoleR
             .Include(tlu => tlu.ListUser)
             .Include(tlu => tlu.List)
             .Include(tlu => tlu.ListRole)
+            .AsSingleQuery()
             .FirstOrDefaultAsync(t => t.Id == id);
     }
 
@@ -154,10 +140,49 @@ public class TodoListUserRoleRepository : AbstractRepository, ITodoListUserRoleR
     /// </summary>
     /// <param name="entity">The <see cref="TodoListUserRole"/> entity to update.</param>
     /// <returns>Updated <see cref="TodoListUserRole"/> entity.</returns>
-    public async Task<TodoListUserRole?> UpdateAsync(TodoListUserRole entity)
+    public Task<TodoListUserRole?> UpdateAsync(TodoListUserRole entity)
     {
         ArgumentNullException.ThrowIfNull(entity);
 
+        return this.UpdateInternalAsync(entity);
+    }
+
+    private async Task<TodoListUserRole> AddInternalAsync(TodoListUserRole entity)
+    {
+        _ = await this.dbSet.AddAsync(entity);
+        _ = await this.Context.SaveChangesAsync();
+
+        return entity;
+    }
+
+    private async Task<bool> DeleteInternalAsync(TodoListUserRole entity)
+    {
+        var existing = await this.dbSet.FindAsync(entity.Id);
+        if (existing is null)
+        {
+            return false;
+        }
+
+        _ = this.dbSet.Remove(existing);
+        _ = await this.Context.SaveChangesAsync();
+
+        return true;
+    }
+
+    private async Task<IReadOnlyList<TodoListUserRole>> GetAllInternalAsync(int pageNumber, int rowCount)
+    {
+        return await this.dbSet
+            .Include(tlu => tlu.ListUser)
+            .Include(tlu => tlu.List)
+            .Include(tlu => tlu.ListRole)
+            .AsSplitQuery()
+            .Skip((pageNumber - 1) * rowCount)
+            .Take(rowCount)
+            .ToListAsync();
+    }
+
+    private async Task<TodoListUserRole?> UpdateInternalAsync(TodoListUserRole entity)
+    {
         var existing = await this.dbSet.FindAsync(entity.Id);
         if (existing is null)
         {

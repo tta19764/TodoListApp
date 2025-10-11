@@ -33,14 +33,11 @@ public class TaskTagRepository : AbstractRepository, ITaskTagRepository
     /// <exception cref="ArgumentNullException">
     /// Thrown if <paramref name="entity"/> is <c>null</c>.
     /// </exception>
-    public async Task<TaskTags> AddAsync(TaskTags entity)
+    public Task<TaskTags> AddAsync(TaskTags entity)
     {
         ArgumentNullException.ThrowIfNull(entity);
 
-        _ = await this.dbSet.AddAsync(entity);
-        _ = await this.Context.SaveChangesAsync();
-
-        return entity;
+        return this.AddInternalAsync(entity);
     }
 
     /// <summary>
@@ -53,20 +50,11 @@ public class TaskTagRepository : AbstractRepository, ITaskTagRepository
     /// <exception cref="ArgumentNullException">
     /// Thrown if <paramref name="entity"/> is <c>null</c>.
     /// </exception>
-    public async Task<bool> DeleteAsync(TaskTags entity)
+    public Task<bool> DeleteAsync(TaskTags entity)
     {
         ArgumentNullException.ThrowIfNull(entity);
 
-        var existing = await this.dbSet.FindAsync(entity.Id);
-        if (existing is null)
-        {
-            return false;
-        }
-
-        _ = this.dbSet.Remove(existing);
-        _ = await this.Context.SaveChangesAsync();
-
-        return true;
+        return this.DeleteInternalAsync(entity);
     }
 
     /// <summary>
@@ -112,7 +100,7 @@ public class TaskTagRepository : AbstractRepository, ITaskTagRepository
     /// <returns>
     /// A task representing the asynchronous operation. The task result contains <see cref="IReadOnlyList{TaskTags}"/>.
     /// </returns>
-    public async Task<IReadOnlyList<TaskTags>> GetAllAsync(int pageNumber, int rowCount)
+    public Task<IReadOnlyList<TaskTags>> GetAllAsync(int pageNumber, int rowCount)
     {
         if (pageNumber < 1)
         {
@@ -124,10 +112,7 @@ public class TaskTagRepository : AbstractRepository, ITaskTagRepository
             throw new ArgumentException("Row count must be greater than 0.");
         }
 
-        return await this.dbSet
-            .Include(tt => tt.Task)
-            .Include(tt => tt.Tag)
-            .ToListAsync();
+        return this.GetAllInternalAsync(pageNumber, rowCount);
     }
 
     /// <summary>
@@ -151,10 +136,47 @@ public class TaskTagRepository : AbstractRepository, ITaskTagRepository
     /// </summary>
     /// <param name="entity">The <see cref="TaskTags"/> entity to update.</param>
     /// <returns>Updated <see cref="TaskTags"/> entity.</returns>
-    public async Task<TaskTags?> UpdateAsync(TaskTags entity)
+    public Task<TaskTags?> UpdateAsync(TaskTags entity)
     {
         ArgumentNullException.ThrowIfNull(entity);
 
+        return this.UpdateInternalAsync(entity);
+    }
+
+    private async Task<TaskTags> AddInternalAsync(TaskTags entity)
+    {
+        _ = await this.dbSet.AddAsync(entity);
+        _ = await this.Context.SaveChangesAsync();
+
+        return entity;
+    }
+
+    private async Task<bool> DeleteInternalAsync(TaskTags entity)
+    {
+        var existing = await this.dbSet.FindAsync(entity.Id);
+        if (existing is null)
+        {
+            return false;
+        }
+
+        _ = this.dbSet.Remove(existing);
+        _ = await this.Context.SaveChangesAsync();
+
+        return true;
+    }
+
+    private async Task<IReadOnlyList<TaskTags>> GetAllInternalAsync(int pageNumber, int rowCount)
+    {
+        return await this.dbSet
+            .Include(tt => tt.Task)
+            .Include(tt => tt.Tag)
+            .Skip((pageNumber - 1) * rowCount)
+            .Take(rowCount)
+            .ToListAsync();
+    }
+
+    private async Task<TaskTags?> UpdateInternalAsync(TaskTags entity)
+    {
         var existing = await this.dbSet.FindAsync(entity.Id);
         if (existing is null)
         {

@@ -16,18 +16,19 @@ internal static class MapToModel
     /// <returns>The mapped task model.</returns>
     public static TodoTaskModel MapToTodoTaskModel(TodoTaskDto dto)
     {
-        return new TodoTaskModel(
-            id: dto.Id,
-            title: dto.Title,
-            description: dto.Description ?? string.Empty,
-            creationDate: dto.CreationDate,
-            dueDate: dto.DueDate,
-            statusId: 0,
-            ownerUserId: dto.AssigneeId,
-            listId: dto.ListId,
-            owner: new UserModel(dto.AssigneeId, dto.AssigneeFirstName, dto.AssigneeLastName),
-            tags: new ReadOnlyCollection<TagModel>(dto.Tags.Select(t => new TagModel(t.Id, t.Title)).ToList()),
-            status: new StatusModel(0, dto.Status));
+        return new TodoTaskModel(dto.Id)
+        {
+            Title = dto.Title,
+            Description = dto.Description ?? string.Empty,
+            CreationDate = dto.CreationDate,
+            DueDate = dto.DueDate,
+            StatusId = 0,
+            OwnerUserId = dto.AssigneeId,
+            ListId = dto.ListId,
+            OwnerUser = new UserModel(dto.AssigneeId, dto.AssigneeFirstName, dto.AssigneeLastName),
+            UsersTags = new ReadOnlyCollection<TagModel>(dto.Tags.Select(t => new TagModel(t.Id, t.Title)).ToList()),
+            Status = new StatusModel(0, dto.Status),
+        };
     }
 
     /// <summary>

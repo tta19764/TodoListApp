@@ -35,26 +35,11 @@ public class TodoTaskService : ITodoTaskService
     /// <returns>The added to-do task model.</returns>
     /// <exception cref="ArgumentNullException">If the model is null.</exception>
     /// <exception cref="EntityWithIdExistsException">If a task with the same ID already exists.</exception>
-    public async Task<TodoTaskModel> AddAsync(TodoTaskModel model)
+    public Task<TodoTaskModel> AddAsync(TodoTaskModel model)
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        TodoTask? existing = await this.repository.GetByIdAsync(model.Id);
-        if (existing is not null)
-        {
-            throw new EntityWithIdExistsException(nameof(TodoTask), model.Id);
-        }
-
-        try
-        {
-            model.CreationDate = null;
-            TodoTask newTask = await this.repository.AddAsync(ModelToEntityConverter.ToTaskEntity(model));
-            return EntityToModelConverter.ToTodoTaskModel(newTask);
-        }
-        catch (DbUpdateException ex)
-        {
-            throw new UnableToCreateException(nameof(TodoList), ex, model.Id);
-        }
+        return this.AddInternalAsync(model);
     }
 
     /// <summary>
@@ -157,33 +142,11 @@ public class TodoTaskService : ITodoTaskService
     /// <exception cref="EntityNotFoundException">If there is no task with the specified ID in the context.</exception>
     /// <exception cref="UnauthorizedAccessException">If the user has no rights to edit the task.</exception>
     /// <exception cref="UnableToUpdateException">If the service is unable to update the task.</exception>
-    public async Task<TodoTaskModel> UpdateAsync(int userId, TodoTaskModel model)
+    public Task<TodoTaskModel> UpdateAsync(int userId, TodoTaskModel model)
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        TodoTask? existing = await this.repository.GetByIdAsync(model.Id);
-        if (existing is null)
-        {
-            throw new EntityNotFoundException(nameof(existing), model.Id);
-        }
-        else if (existing.TodoList.OwnerId != userId &&
-            !existing.TodoList.TodoListUserRoles.Any(lur => lur.UserId == userId && lur.ListRole.RoleName == "Editor"))
-        {
-            throw new UnauthorizedAccessException("You do not have permission to update this task.");
-        }
-
-        try
-        {
-            model.CreationDate = existing.CreationDate;
-            TodoTask? updated = await this.repository.UpdateAsync(ModelToEntityConverter.ToTaskEntity(model));
-            return updated is null ?
-                throw new UnableToUpdateException(nameof(existing), model.Id) :
-                EntityToModelConverter.ToTodoTaskModel(updated);
-        }
-        catch (DbUpdateException ex)
-        {
-            throw new UnableToUpdateException(nameof(existing), model.Id, ex);
-        }
+        return this.UpdateInternalAsync(userId, model);
     }
 
     /// <summary>
@@ -299,7 +262,7 @@ public class TodoTaskService : ITodoTaskService
     /// <returns>The total number of comments for the given task.</returns>
     public async Task<int> GetTaskCommentsCountAsync(int taskId, int userId)
     {
-        return (await this.GetByIdAsync(userId, taskId)).UserComments.Count;
+        return (await this.GetByIdAsync(userId, taskId)).UserComments.Count();
     }
 
     /// <summary>
@@ -356,32 +319,11 @@ public class TodoTaskService : ITodoTaskService
     /// <exception cref="EntityNotFoundException">Thrown when the specified task does not exist.</exception>
     /// <exception cref="UnauthorizedAccessException">Thrown when the user lacks permission to add a comment.</exception>
     /// <exception cref="UnableToCreateException">Thrown when the comment could not be created.</exception>
-    public async Task<CommentModel> AddTaskCommentAsync(CommentModel commentModel)
+    public Task<CommentModel> AddTaskCommentAsync(CommentModel commentModel)
     {
         ArgumentNullException.ThrowIfNull(commentModel);
 
-        TodoTask? existing = await this.repository.GetByIdAsync(commentModel.TaskId);
-        if (existing is null)
-        {
-            throw new EntityNotFoundException(nameof(existing), commentModel.TaskId);
-        }
-        else if (existing.TodoList.OwnerId != commentModel.UserId &&
-            !existing.TodoList.TodoListUserRoles.Any(lur => lur.UserId == commentModel.UserId && lur.ListRole.RoleName == "Editor"))
-        {
-            throw new UnauthorizedAccessException("You do not have permission to update this task.");
-        }
-
-        try
-        {
-            Comment? created = await this.commentRepository.AddAsync(ModelToEntityConverter.ToCommentEntity(commentModel));
-            return created is null ?
-                throw new UnableToCreateException(nameof(Comment)) :
-                EntityToModelConverter.ToCommentModel(created);
-        }
-        catch (DbUpdateException ex)
-        {
-            throw new UnableToCreateException(nameof(Comment), ex, commentModel.Id);
-        }
+        return this.AddTaskCommentInternalAsync(commentModel);
     }
 
     /// <summary>
@@ -393,36 +335,11 @@ public class TodoTaskService : ITodoTaskService
     /// <exception cref="EntityNotFoundException">Thrown when the comment or task does not exist.</exception>
     /// <exception cref="UnauthorizedAccessException">Thrown when the user lacks permission to update the comment.</exception>
     /// <exception cref="UnableToUpdateException">Thrown when the update fails.</exception>
-    public async Task<CommentModel> UpdateTaskCommentAsync(int userId, CommentModel commentModel)
+    public Task<CommentModel> UpdateTaskCommentAsync(int userId, CommentModel commentModel)
     {
         ArgumentNullException.ThrowIfNull(commentModel);
-        Comment? existingComment = await this.commentRepository.GetByIdAsync(commentModel.Id);
-        if (existingComment is null)
-        {
-            throw new EntityNotFoundException(nameof(existingComment), commentModel.Id);
-        }
 
-        TodoTask? existing = await this.repository.GetByIdAsync(existingComment.TaskId);
-        if (existing is null)
-        {
-            throw new EntityNotFoundException(nameof(existing), commentModel.TaskId);
-        }
-        else if (existing.TodoList.OwnerId != userId && userId != existingComment.UserId)
-        {
-            throw new UnauthorizedAccessException("You do not have permission to update this comment.");
-        }
-
-        try
-        {
-            Comment? updated = await this.commentRepository.UpdateAsync(ModelToEntityConverter.ToCommentEntity(commentModel));
-            return updated is null ?
-                throw new UnableToUpdateException(nameof(commentModel), commentModel.Id) :
-                EntityToModelConverter.ToCommentModel(updated);
-        }
-        catch (DbUpdateException ex)
-        {
-            throw new UnableToUpdateException(nameof(existing), commentModel.Id, ex);
-        }
+        return this.UpdateTaskCommentInternalAsync(userId, commentModel);
     }
 
     /// <summary>
@@ -463,6 +380,110 @@ public class TodoTaskService : ITodoTaskService
         catch (DbUpdateException ex)
         {
             throw new UnableToDeleteException(nameof(existing), commentId, ex);
+        }
+    }
+
+    private async Task<TodoTaskModel> AddInternalAsync(TodoTaskModel model)
+    {
+        TodoTask? existing = await this.repository.GetByIdAsync(model.Id);
+        if (existing is not null)
+        {
+            throw new EntityWithIdExistsException(nameof(TodoTask), model.Id);
+        }
+
+        try
+        {
+            model.CreationDate = null;
+            TodoTask newTask = await this.repository.AddAsync(ModelToEntityConverter.ToTaskEntity(model));
+            return EntityToModelConverter.ToTodoTaskModel(newTask);
+        }
+        catch (DbUpdateException ex)
+        {
+            throw new UnableToCreateException(nameof(TodoList), ex, model.Id);
+        }
+    }
+
+    private async Task<TodoTaskModel> UpdateInternalAsync(int userId, TodoTaskModel model)
+    {
+        TodoTask? existing = await this.repository.GetByIdAsync(model.Id);
+        if (existing is null)
+        {
+            throw new EntityNotFoundException(nameof(existing), model.Id);
+        }
+        else if (existing.TodoList.OwnerId != userId &&
+            !existing.TodoList.TodoListUserRoles.Any(lur => lur.UserId == userId && lur.ListRole.RoleName == "Editor"))
+        {
+            throw new UnauthorizedAccessException("You do not have permission to update this task.");
+        }
+
+        try
+        {
+            model.CreationDate = existing.CreationDate;
+            TodoTask? updated = await this.repository.UpdateAsync(ModelToEntityConverter.ToTaskEntity(model));
+            return updated is null ?
+                throw new UnableToUpdateException(nameof(existing), model.Id) :
+                EntityToModelConverter.ToTodoTaskModel(updated);
+        }
+        catch (DbUpdateException ex)
+        {
+            throw new UnableToUpdateException(nameof(existing), model.Id, ex);
+        }
+    }
+
+    private async Task<CommentModel> AddTaskCommentInternalAsync(CommentModel commentModel)
+    {
+        TodoTask? existing = await this.repository.GetByIdAsync(commentModel.TaskId);
+        if (existing is null)
+        {
+            throw new EntityNotFoundException(nameof(existing), commentModel.TaskId);
+        }
+        else if (existing.TodoList.OwnerId != commentModel.UserId &&
+            !existing.TodoList.TodoListUserRoles.Any(lur => lur.UserId == commentModel.UserId && lur.ListRole.RoleName == "Editor"))
+        {
+            throw new UnauthorizedAccessException("You do not have permission to update this task.");
+        }
+
+        try
+        {
+            Comment? created = await this.commentRepository.AddAsync(ModelToEntityConverter.ToCommentEntity(commentModel));
+            return created is null ?
+                throw new UnableToCreateException(nameof(Comment)) :
+                EntityToModelConverter.ToCommentModel(created);
+        }
+        catch (DbUpdateException ex)
+        {
+            throw new UnableToCreateException(nameof(Comment), ex, commentModel.Id);
+        }
+    }
+
+    private async Task<CommentModel> UpdateTaskCommentInternalAsync(int userId, CommentModel commentModel)
+    {
+        Comment? existingComment = await this.commentRepository.GetByIdAsync(commentModel.Id);
+        if (existingComment is null)
+        {
+            throw new EntityNotFoundException(nameof(existingComment), commentModel.Id);
+        }
+
+        TodoTask? existing = await this.repository.GetByIdAsync(existingComment.TaskId);
+        if (existing is null)
+        {
+            throw new EntityNotFoundException(nameof(existing), commentModel.TaskId);
+        }
+        else if (existing.TodoList.OwnerId != userId && userId != existingComment.UserId)
+        {
+            throw new UnauthorizedAccessException("You do not have permission to update this comment.");
+        }
+
+        try
+        {
+            Comment? updated = await this.commentRepository.UpdateAsync(ModelToEntityConverter.ToCommentEntity(commentModel));
+            return updated is null ?
+                throw new UnableToUpdateException(nameof(commentModel), commentModel.Id) :
+                EntityToModelConverter.ToCommentModel(updated);
+        }
+        catch (DbUpdateException ex)
+        {
+            throw new UnableToUpdateException(nameof(existing), commentModel.Id, ex);
         }
     }
 }
