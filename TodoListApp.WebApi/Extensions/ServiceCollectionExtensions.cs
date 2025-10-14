@@ -28,7 +28,7 @@ internal static class ServiceCollectionExtensions
         _ = services.AddDbContext<TodoListDbContext>(options =>
         {
             _ = options.UseSqlServer(
-                configuration.GetConnectionString("TodoListAppConnection"),
+                configuration.GetConnectionString("DefaultConnection"),
                 b => b.MigrationsAssembly("TodoListApp.WebApi"));
         });
 
