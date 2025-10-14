@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace TodoListApp.WebApp.Models.Comment;
 
 /// <summary>
@@ -18,6 +20,8 @@ public class AddCommentViewModel
     /// <summary>
     /// Gets or sets the comment text.
     /// </summary>
+    [Required(ErrorMessage = "Comment text is required")]
+    [StringLength(500, MinimumLength = 1, ErrorMessage = "Comment text must be between 1 and 500 characters")]
     public string Text { get; set; } = string.Empty;
 
     /// <summary>

@@ -1,0 +1,115 @@
+/* Add this to your CSS file (e.g., site.css or custom.css) */
+
+/* Truncate task titles in list view */
+.task-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+    display: block;
+}
+
+/* Truncate task descriptions in list view - show max 2 lines */
+.task-item .text-muted {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.5em;
+    max-height: 3em; /* 2 lines * 1.5em line-height */
+}
+
+/* Truncate list descriptions in sidebar - 2 lines */
+.todo-list-item small.text-muted.d-block {
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.4em;
+    max-height: 2.8em; /* 2 lines * 1.4em line-height */
+    word-break: break-word;
+}
+
+/* Truncate list titles in sidebar */
+.todo-list-item h6 {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+    word-break: break-word;
+}
+
+/* Truncate selected list title in header - allow multi-line with max 2 lines */
+.card-header .selected-list-title {
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3em;
+    max-height: 2.6em; /* 2 lines * 1.3em line-height */
+    word-break: break-word;
+}
+
+/* Truncate selected list description in header - allow multi-line with max 2 lines */
+.card-header .selected-list-description {
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3em;
+    max-height: 2.6em; /* 2 lines * 1.3em line-height */
+    word-break: break-word;
+}
+
+/* Ensure flex containers don't overflow */
+.task-clickable {
+    min-width: 0; /* Allow flex items to shrink below content size */
+}
+
+.task-item .card-body {
+    overflow: hidden;
+}
+
+/* Optional: Add hover effect to show full text as tooltip */
+.task-title[title],
+.todo-list-item h6[title] {
+    cursor: help;
+}
+/* Add this to your CSS file (site.css or text_truncation.css) */
+
+/* Fix for long titles on Details page - allow wrapping */
+.container .col-lg-8 h2 {
+    word-wrap: break-word;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
+    max-width: 100%;
+}
+
+/* Alternative: More specific selector if the above conflicts */
+.task-details-title {
+    word-wrap: break-word;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
+    max-width: 100%;
+    line-height: 1.3;
+}
+
+.comment-item p {
+    word-wrap: break-word;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
+    max-width: 100%;
+}
+
+/* Ensure comment container doesn't overflow */
+.comment-item .flex-grow-1 {
+    min-width: 0;
+    overflow: hidden;
+}

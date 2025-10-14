@@ -21,14 +21,14 @@
 				<div class="d-flex align-items-start gap-2">
 					@if (isOverdue)
 					{
-						<i class="bi bi-exclamation-triangle-fill text-danger mt-1"></i>
+						<i class="bi bi-exclamation-triangle-fill text-danger mt-1 flex-shrink-0"></i>
 					}
-					<div class="flex-grow-1">
+					<div class="flex-grow-1" style="min-width: 0;">
 						<div class="d-flex flex-wrap align-items-center mb-2 gap-2">
-							<h6 class="task-title mb-0 me-2">@Model.Title</h6>
+							<h6 class="task-title mb-0 me-2" title="@Model.Title">@Model.Title</h6>
 							@if (Model.Tags != null && Model.Tags.Any())
 							{
-								<div class="d-flex flex-wrap gap-1 tag-container">
+								<div class="d-flex flex-wrap gap-1 tag-container flex-shrink-0">
 									@foreach (var tag in Model.Tags)
 									{
 										<span class="badge bg-info">@tag</span>
@@ -38,7 +38,7 @@
 						</div>
 						@if (!string.IsNullOrEmpty(Model.Description))
 						{
-							<p class="text-muted mb-2">@Model.Description</p>
+							<p class="text-muted mb-2" title="@Model.Description">@Model.Description</p>
 						}
 						else
 						{
