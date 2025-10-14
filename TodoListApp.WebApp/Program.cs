@@ -1,7 +1,7 @@
 using TodoListApp.WebApp.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
-
+builder.Logging.AddAzureWebAppDiagnostics();
 // Add services to the container.
 builder.Services.AddTodoListAppServices(builder.Configuration);
 
