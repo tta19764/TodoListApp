@@ -176,6 +176,7 @@ public class TodoListUserRoleRepository : AbstractRepository, ITodoListUserRoleR
             .Include(tlu => tlu.List)
             .Include(tlu => tlu.ListRole)
             .AsSplitQuery()
+            .OrderBy(t => t.Id)
             .Skip((pageNumber - 1) * rowCount)
             .Take(rowCount)
             .ToListAsync();

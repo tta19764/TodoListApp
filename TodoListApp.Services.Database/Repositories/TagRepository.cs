@@ -166,6 +166,7 @@ public class TagRepository : AbstractRepository, ITagRepository
     {
         return await this.dbSet
             .Include(t => t.TaskTags)
+            .OrderBy(t => t.Id)
             .Skip((pageNumber - 1) * rowCount)
             .Take(rowCount)
             .ToListAsync();
