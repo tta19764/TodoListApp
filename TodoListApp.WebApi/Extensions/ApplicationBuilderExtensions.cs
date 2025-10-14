@@ -17,12 +17,10 @@ internal static class ApplicationBuilderExtensions
     public static WebApplication UseTodoListAppMiddleware(this WebApplication app)
     {
         // Configure the HTTP request pipeline.
-        if (app.Environment.IsDevelopment())
-        {
-            _ = app.UseSwagger();
-            _ = app.UseSwaggerUI();
-        }
-        else
+        _ = app.UseSwagger();
+        _ = app.UseSwaggerUI();
+
+        if (!app.Environment.IsDevelopment())
         {
             _ = app.UseExceptionHandler(errorApp =>
             {
