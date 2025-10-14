@@ -1,16 +1,16 @@
-name: Build and deploy .NET Core application to Web App TodoListAppWebApi20251014120738 with API Management Service TodoListAppWebApis-TodoListAppWebApi
+name: Build and deploy .NET Core application to Web App TodoListAppWebApi20251014231524 with API Management Service TodoListAppWebApis-TodoListAppWebApi
 on:
   push:
     branches:
     - site-host
 env:
-  AZURE_WEBAPP_NAME: TodoListAppWebApi20251014120738
+  AZURE_WEBAPP_NAME: TodoListAppWebApi20251014231524
   AZURE_WEBAPP_PACKAGE_PATH: TodoListApp.WebApi\publish
   AZURE_APIM_RESOURCE_PATH: /todo
   AZURE_APIM_RESOURCEGROUP: WebApps
   AZURE_APIM_SERVICENAME: TodoListAppWebApis
   AZURE_APIM_API_ID: TodoListAppWebApi
-  AZURE_APIM_APPSERVICEURL: https://todolistappwebapi20251014120738.azurewebsites.net
+  AZURE_APIM_APPSERVICEURL: https://todolistappwebapi20251014231524.azurewebsites.net
   SWASHBUCLE_ASPNET_CORE_CLI_PACKAGE_VERSION: 9.0.6
   SWASHBUCKLE_DOTNET_CORE_VERSION: 9.0.x
   API_IMPORT_SPECIFICATION_PATH: TodoListApp.WebApi\publish\swagger.json
@@ -73,3 +73,4 @@ jobs:
     - name: logout
       run: >
         az logout
+
