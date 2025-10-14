@@ -361,7 +361,6 @@ public class TodoListRepository : AbstractRepository, ITodoListRepository
         .Include(tl => tl.TodoListUserRoles)
             .ThenInclude(tlur => tlur.ListRole)
             .AsSplitQuery()
-            .OrderBy(tl => tl.Id)
             .Skip((pageNumber - 1) * rowCount)
             .Take(rowCount)
             .ToListAsync();
