@@ -11,8 +11,8 @@ env:
   AZURE_APIM_SERVICENAME: TodoListAppWebApis
   AZURE_APIM_API_ID: TodoListAppWebApi
   AZURE_APIM_APPSERVICEURL: https://todolistappwebapi20251014120738.azurewebsites.net
-  SWASHBUCLE_ASPNET_CORE_CLI_PACKAGE_VERSION: 5.6.3
-  SWASHBUCKLE_DOTNET_CORE_VERSION: 3.1.x
+  SWASHBUCLE_ASPNET_CORE_CLI_PACKAGE_VERSION: 9.0.6
+  SWASHBUCKLE_DOTNET_CORE_VERSION: 9.0.x
   API_IMPORT_SPECIFICATION_PATH: TodoListApp.WebApi\publish\swagger.json
   API_IMPORT_DLL: TodoListApp.WebApi\bin\Release\net9.0\TodoListApp.WebApi.dll
   API_IMPORT_VERSION: v1
@@ -45,7 +45,7 @@ jobs:
       run: dotnet tool install --global Swashbuckle.AspNetCore.Cli --version ${{ env.SWASHBUCLE_ASPNET_CORE_CLI_PACKAGE_VERSION }}
       working-directory: ${{ env.WORKING_DIRECTORY }}
     - name: Generate Open API Specification Document
-      run: swagger tofile --startup TodoListApp.WebApi.Program --output "${{ env.API_IMPORT_SPECIFICATION_PATH }}" "${{ env.API_IMPORT_DLL }}" "${{ env.API_IMPORT_VERSION }}"
+      run: swagger tofile --no-startup --output "${{ env.API_IMPORT_SPECIFICATION_PATH }}" "${{ env.API_IMPORT_DLL }}" "${{ env.API_IMPORT_VERSION }}"
     - name: Publish Artifacts
       uses: actions/upload-artifact@v4
       with:
