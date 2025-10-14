@@ -11,8 +11,8 @@ env:
   AZURE_APIM_SERVICENAME: TodoListAppWebApis
   AZURE_APIM_API_ID: TodoListAppWebApi
   AZURE_APIM_APPSERVICEURL: https://todolistappwebapi20251014120738.azurewebsites.net
-  SWASHBUCLE_ASPNET_CORE_CLI_PACKAGE_VERSION: 5.6.3
-  SWASHBUCKLE_DOTNET_CORE_VERSION: 3.1.x
+  SWASHBUCLE_ASPNET_CORE_CLI_PACKAGE_VERSION: 9.0.6
+  SWASHBUCKLE_DOTNET_CORE_VERSION: 9.0.x
   API_IMPORT_SPECIFICATION_PATH: TodoListApp.WebApi\publish\swagger.json
   API_IMPORT_DLL: TodoListApp.WebApi\bin\Release\net9.0\TodoListApp.WebApi.dll
   API_IMPORT_VERSION: v1
@@ -24,7 +24,6 @@ jobs:
     runs-on: windows-latest
 
     steps:
-<<<<<<< HEAD:.github/workflows/TodoListAppWebApi20251014120738.yml
     - uses: actions/checkout@v4
     - name: Setup .NET SDK
       uses: actions/setup-dotnet@v4
@@ -46,45 +45,16 @@ jobs:
       run: dotnet tool install --global Swashbuckle.AspNetCore.Cli --version ${{ env.SWASHBUCLE_ASPNET_CORE_CLI_PACKAGE_VERSION }}
       working-directory: ${{ env.WORKING_DIRECTORY }}
     - name: Generate Open API Specification Document
-      run: swagger tofile --output "${{ env.API_IMPORT_SPECIFICATION_PATH }}" "${{ env.API_IMPORT_DLL }}" "${{ env.API_IMPORT_VERSION }}"
+      run: |
+        dotnet run --project ${{ env.WORKING_DIRECTORY }} --configuration ${{ env.CONFIGURATION }} --urls=http://localhost:5000 & 
+        sleep 10
+        curl http://localhost:5000/swagger/v1/swagger.json -o "${{ env.API_IMPORT_SPECIFICATION_PATH }}"
     - name: Publish Artifacts
       uses: actions/upload-artifact@v4
       with:
         name: webapp
         path: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
-=======
-      - uses: actions/checkout@v4
 
-      - name: Setup .NET 6 SDK
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
-
-      - name: Restore dependencies
-        run: dotnet restore ${{ env.WORKING_DIRECTORY }}
-
-      - name: Build
-        run: dotnet build ${{ env.WORKING_DIRECTORY }} --configuration ${{ env.CONFIGURATION }} --no-restore
-
-      - name: Test
-        run: dotnet test ${{ env.WORKING_DIRECTORY }} --no-build --verbosity normal
-
-      - name: Publish
-        run: dotnet publish ${{ env.WORKING_DIRECTORY }} --configuration ${{ env.CONFIGURATION }} --no-build --output ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
-
-      - name: Restore .NET local tools
-        run: dotnet tool restore
-        working-directory: ${{ env.WORKING_DIRECTORY }}
-        
-      - name: Generate Open API Specification Document 
-        run: dotnet swagger tofile --output "${{ env.API_IMPORT_SPECIFICATION_PATH }}" "${{ env.API_IMPORT_DLL }}" "${{ env.API_IMPORT_VERSION }}"
-      
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: webapp
-          path: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
->>>>>>> 50ad1a7a7161a80b6c67365bbbbc342174f6fb7a:.github/workflows/TodoListAppWebApi20251013144556.yml
   deploy:
     runs-on: windows-latest
     needs: build
@@ -97,7 +67,7 @@ jobs:
     - name: Azure Login
       uses: azure/login@v2
       with:
-        creds: ${{ secrets.TodoListAppWebApis_SPN }}
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
     - name: Deploy to Azure WebApp
       uses: azure/webapps-deploy@v2
       with:
