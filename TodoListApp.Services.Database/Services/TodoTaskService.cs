@@ -183,6 +183,7 @@ public class TodoTaskService : ITodoTaskService
             int row = rowCount > 0 ? (int)rowCount : 1;
 
             filteredTasks = filteredTasks
+                .OrderBy(x => x.Id)
                 .Skip((page - 1) * row)
                 .Take(row)
                 .ToList();
@@ -283,6 +284,7 @@ public class TodoTaskService : ITodoTaskService
             int page = pageNumber > 0 ? (int)pageNumber : 1;
             int row = rowCount > 0 ? (int)rowCount : 1;
             return commetns
+                .OrderBy(x => x.Id)
                 .Skip((page - 1) * row)
                 .Take(row)
                 .ToList();

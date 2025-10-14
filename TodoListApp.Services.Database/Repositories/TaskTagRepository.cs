@@ -170,6 +170,7 @@ public class TaskTagRepository : AbstractRepository, ITaskTagRepository
         return await this.dbSet
             .Include(tt => tt.Task)
             .Include(tt => tt.Tag)
+            .OrderBy(t => t.Id)
             .Skip((pageNumber - 1) * rowCount)
             .Take(rowCount)
             .ToListAsync();

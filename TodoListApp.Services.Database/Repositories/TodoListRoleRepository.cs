@@ -164,6 +164,7 @@ public class TodoListRoleRepository : AbstractRepository, ITodoListRoleRepositor
     private async Task<IReadOnlyList<TodoListRole>> GetAllInternalAsync(int pageNumber, int rowCount)
     {
         return await this.dbSet
+            .OrderBy(t => t.Id)
             .Skip((pageNumber - 1) * rowCount)
             .Take(rowCount)
             .ToListAsync();

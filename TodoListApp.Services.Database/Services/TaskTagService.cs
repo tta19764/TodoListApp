@@ -65,6 +65,7 @@ public class TaskTagService : ITaskTagService
             int page = pageNumber > 0 ? (int)pageNumber : 1;
             int row = rowCount > 0 ? (int)rowCount : 1;
             tagsQuery = tagsQuery
+                .OrderBy(x => x.Id)
                 .Skip((page - 1) * row)
                 .Take(row)
                 .AsEnumerable();

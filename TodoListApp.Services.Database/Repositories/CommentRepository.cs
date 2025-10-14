@@ -174,6 +174,7 @@ public class CommentRepository : AbstractRepository, ICommentRepository
         return await this.dbSet
             .Include(c => c.Author)
             .Include(c => c.Task)
+            .OrderBy(t => t.Id)
             .Skip((pageNumber - 1) * rowCount)
             .Take(rowCount)
             .ToListAsync();

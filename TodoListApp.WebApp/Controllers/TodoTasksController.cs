@@ -230,7 +230,7 @@ public class TodoTasksController : Controller
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        if (!this.ModelState.IsValid)
+        if (this.ModelState.IsValid)
         {
             return this.AddCommentInternal(model);
         }

@@ -164,6 +164,7 @@ public class StatusRepository : AbstractRepository, IStatusRepository
     private async Task<IReadOnlyList<Status>> GetAllInternalAsync(int pageNumber, int rowCount)
     {
         return await this.dbSet
+            .OrderBy(t => t.Id)
             .Skip((pageNumber - 1) * rowCount)
             .Take(rowCount)
             .ToListAsync();

@@ -417,6 +417,7 @@ public class TodoTaskRepository : AbstractRepository, ITodoTaskRepository
             .Include(t => t.TaskTags)
                 .ThenInclude(tt => tt.Tag)
             .AsSplitQuery()
+            .OrderBy(t => t.Id)
             .Skip((pageNumber - 1) * rowCount)
             .Take(rowCount)
             .ToListAsync();
@@ -432,6 +433,7 @@ public class TodoTaskRepository : AbstractRepository, ITodoTaskRepository
             .Include(t => t.TaskTags)
                 .ThenInclude(tt => tt.Tag)
             .AsSplitQuery()
+            .OrderBy(t => t.Id)
             .Skip((pageNumber - 1) * rowCount)
             .Take(rowCount)
             .ToListAsync();
@@ -447,6 +449,7 @@ public class TodoTaskRepository : AbstractRepository, ITodoTaskRepository
             .Include(t => t.TaskTags)
                 .ThenInclude(tt => tt.Tag)
             .AsSplitQuery()
+            .OrderBy(t => t.Id)
             .Skip((pageNumber - 1) * rowCount)
             .Take(rowCount)
             .ToListAsync();
@@ -462,6 +465,7 @@ public class TodoTaskRepository : AbstractRepository, ITodoTaskRepository
             .Include(t => t.TaskTags)
                 .ThenInclude(tt => tt.Tag)
             .AsSplitQuery()
+            .OrderBy(t => t.Id)
             .Skip((pageNumber - 1) * rowCount)
             .Take(rowCount)
             .ToListAsync();

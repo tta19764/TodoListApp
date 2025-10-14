@@ -174,7 +174,7 @@ public class TodoListsController : Controller
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        if (!this.ModelState.IsValid)
+        if (this.ModelState.IsValid)
         {
             return this.CreateInternal(model);
         }
@@ -234,7 +234,7 @@ public class TodoListsController : Controller
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        if (!this.ModelState.IsValid)
+        if (this.ModelState.IsValid)
         {
             return this.EditInternal(model);
         }

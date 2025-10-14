@@ -316,6 +316,7 @@ public class TodoListRepository : AbstractRepository, ITodoListRepository
         .Include(tl => tl.TodoListUserRoles)
             .ThenInclude(tlur => tlur.ListRole)
             .AsSplitQuery()
+            .OrderBy(t => t.Id)
             .Skip((pageNumber - 1) * rowCount)
             .Take(rowCount)
             .ToListAsync();
@@ -331,6 +332,7 @@ public class TodoListRepository : AbstractRepository, ITodoListRepository
         .Include(tl => tl.TodoListUserRoles)
             .ThenInclude(tlur => tlur.ListRole)
             .AsSplitQuery()
+            .OrderBy(t => t.Id)
             .Skip((pageNumber - 1) * rowCount)
             .Take(rowCount)
             .ToListAsync();
@@ -346,6 +348,7 @@ public class TodoListRepository : AbstractRepository, ITodoListRepository
         .Include(tl => tl.TodoListUserRoles)
             .ThenInclude(tlur => tlur.ListRole)
             .AsSplitQuery()
+            .OrderBy(t => t.Id)
             .Skip((pageNumber - 1) * rowCount)
             .Take(rowCount)
             .ToListAsync();

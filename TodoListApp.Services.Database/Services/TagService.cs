@@ -160,6 +160,7 @@ public class TagService : ITagService
             int page = pageNumber > 0 ? (int)pageNumber : 1;
             int row = rowCount > 0 ? (int)rowCount : 1;
             availableTags = availableTags
+                .OrderBy(x => x.Id)
                 .Skip((page - 1) * row)
                 .Take(row);
         }
