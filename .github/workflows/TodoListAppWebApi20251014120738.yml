@@ -22,7 +22,9 @@ env:
 jobs:
   build:
     runs-on: windows-latest
+
     steps:
+<<<<<<< HEAD:.github/workflows/TodoListAppWebApi20251014120738.yml
     - uses: actions/checkout@v4
     - name: Setup .NET SDK
       uses: actions/setup-dotnet@v4
@@ -50,6 +52,39 @@ jobs:
       with:
         name: webapp
         path: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+=======
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 6 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore ${{ env.WORKING_DIRECTORY }}
+
+      - name: Build
+        run: dotnet build ${{ env.WORKING_DIRECTORY }} --configuration ${{ env.CONFIGURATION }} --no-restore
+
+      - name: Test
+        run: dotnet test ${{ env.WORKING_DIRECTORY }} --no-build --verbosity normal
+
+      - name: Publish
+        run: dotnet publish ${{ env.WORKING_DIRECTORY }} --configuration ${{ env.CONFIGURATION }} --no-build --output ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+
+      - name: Restore .NET local tools
+        run: dotnet tool restore
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        
+      - name: Generate Open API Specification Document 
+        run: dotnet swagger tofile --output "${{ env.API_IMPORT_SPECIFICATION_PATH }}" "${{ env.API_IMPORT_DLL }}" "${{ env.API_IMPORT_VERSION }}"
+      
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: webapp
+          path: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+>>>>>>> 50ad1a7a7161a80b6c67365bbbbc342174f6fb7a:.github/workflows/TodoListAppWebApi20251013144556.yml
   deploy:
     runs-on: windows-latest
     needs: build
