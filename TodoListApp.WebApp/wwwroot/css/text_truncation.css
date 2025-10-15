@@ -70,10 +70,6 @@
     min-width: 0; /* Allow flex items to shrink below content size */
 }
 
-.task-item .card-body {
-    overflow: hidden;
-}
-
 /* Optional: Add hover effect to show full text as tooltip */
 .task-title[title],
 .todo-list-item h6[title] {
