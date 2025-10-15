@@ -8,6 +8,11 @@ namespace TodoListApp.WebApp.Models.Task;
 public class TodoTasksListViewModel
 {
     /// <summary>
+    /// Gets or sets the unique identifier of the to-do list.
+    /// </summary>
+    public int ListId { get; set; }
+
+    /// <summary>
     /// Gets or sets the collection of to-do tasks.
     /// </summary>
     public IEnumerable<TodoTaskViewModel> Tasks { get; set; } = Enumerable.Empty<TodoTaskViewModel>();

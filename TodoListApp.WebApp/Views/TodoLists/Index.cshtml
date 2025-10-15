@@ -11,7 +11,7 @@
 		<div class="col-md-4 col-lg-3">
 			<div class="card shadow-sm">
 				<div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-					<h5 class="mb-0">My Lists</h5>
+					<h5 class="mb-0">Lists</h5>
 					<a asp-controller="TodoLists" asp-action="Create" class="btn btn-light btn-sm">
 						<i class="bi bi-plus-lg"></i> New
 					</a>
@@ -33,14 +33,14 @@
 								   asp-route-taskRowCount="@Model.TaskRowCount"
 								   class="list-group-item list-group-item-action todo-list-item @(Model.SelectedListId == list.ListId ? "active" : "")">
 									<div class="d-flex w-100 justify-content-between align-items-start">
-										<div class="flex-grow-1">
-											<h6 class="mb-1">@list.Title</h6>
+										<div class="flex-grow-1" style="min-width: 0;">
+											<h6 class="mb-1" title="@list.Title">@list.Title</h6>
 											@if (!string.IsNullOrEmpty(list.Description))
 											{
-												<small class="text-muted">@list.Description</small>
+												<small class="text-muted d-block" title="@list.Description">@list.Description</small>
 											}
 										</div>
-										<span class="badge bg-secondary rounded-pill">@list.PendingTasks</span>
+										<span class="badge bg-secondary rounded-pill flex-shrink-0 ms-2">@list.PendingTasks</span>
 									</div>
 									<div class="mt-2">
 										<small class="text-muted">
@@ -166,13 +166,13 @@
 		<div class="col-md-8 col-lg-9">
 			<div class="card shadow-sm">
 				<div class="card-header bg-white d-flex justify-content-between align-items-center">
-					<div>
+					<div class="flex-grow-1" style="min-width: 0; max-width: 70%;">
 						@if (Model.SelectedListId.HasValue && Model.SelectedList != null)
 						{
-							<h5 class="mb-0">@Model.SelectedList.Title</h5>
+							<h5 class="mb-0" title="@Model.SelectedList.Title">@Model.SelectedList.Title</h5>
 							@if (!string.IsNullOrEmpty(Model.SelectedList.Description))
 							{
-								<small class="text-muted">@Model.SelectedList.Description</small>
+								<small class="text-muted" title="@Model.SelectedList.Description">@Model.SelectedList.Description</small>
 							}
 						}
 						else
@@ -191,7 +191,7 @@
 									   asp-route-listId="@Model.SelectedListId"
 									   asp-route-returnUrl="@(new Uri(Context.Request.GetEncodedUrl(), UriKind.Absolute))"
 									   class="btn btn-success btn-sm me-2">
-										<i class="bi bi-plus-lg"></i> New Task
+										<i class="bi bi-plus-lg"></i>New Task
 									</a>
 
 									<div class="dropdown">
@@ -321,7 +321,7 @@
 							</li>
 						</ul>
 						<div id="tasksContainer">
-							<partial name="_TasksList" model="new TodoTasksListViewModel { Tasks = Model.Tasks, Role = Model.SelectedList == null ? ListRole.None : Model.SelectedList.UserRole }" />
+							<partial name="_TasksList" model="new TodoTasksListViewModel { Tasks = Model.Tasks, Role = Model.SelectedList == null ? ListRole.None : Model.SelectedList.UserRole, ListId = Model.SelectedListId.Value }" />
 						</div>
 					}
 					else

@@ -3,23 +3,31 @@
 @using TodoListApp.Services.WebApi.Enums
 @model TodoTasksListViewModel
 
-@if (Model != null && Model.Tasks.Any())
+@if (Model != null && Model.ListId != 0)
 {
-	@foreach (var task in Model.Tasks)
+	if (Model.Tasks.Any())
 	{
-		<partial name="_TaskCardPartial" model="task" />
+		@foreach (var task in Model.Tasks)
+		{
+			<partial name="_TaskCardPartial" model="task" />
+		}
 	}
-}
-else
-{
-	<div class="text-center py-5">
-		<i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
-		<p class="text-muted mt-3">No tasks found</p>
-		<a asp-controller="TodoTasks"
-		   asp-action="Create"
-		   asp-route-listId="@ViewContext.RouteData.Values["listId"]"
-		   class="btn btn-primary btn-sm">
-			Create First Task
-		</a>
-	</div>
+	else
+	{
+		<div class="text-center py-5">
+			<i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+			<p class="text-muted mt-3">No tasks found</p>
+			@{
+				if (Model.Role == ListRole.Owner || Model.Role == ListRole.Editor)
+				{
+					<a asp-controller="TodoTasks"
+					   asp-action="Create"
+					   asp-route-listId="@Model.ListId"
+					   class="btn btn-primary btn-sm">
+						Create First Task
+					</a>
+				}
+			}
+		</div>
+	}
 }

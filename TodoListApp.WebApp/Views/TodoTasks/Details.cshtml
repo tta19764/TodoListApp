@@ -25,7 +25,10 @@
 					   class="btn btn-outline-primary btn-sm mb-2">
 						<i class="bi bi-list-task"></i> Go to List
 					</a>
-					<h2 class="mb-0 @(isCompleted ? "text-decoration-line-through" : "")">@Model.Title</h2>
+					<h2 class="mb-0 task-details-title @(isCompleted ? "text-decoration-line-through" : "")"
+						title="@Model.Title">
+						@Model.Title
+					</h2>
 				</div>
 			</div>
 
@@ -45,7 +48,7 @@
 						</span>
 						@if (isOverdue)
 						{
-									<span class="badge bg-danger p-2">Overdue</span>
+							<span class="badge bg-danger p-2">Overdue</span>
 						}
 					</div>
 
@@ -54,11 +57,11 @@
 						<h5 class="text-muted mb-2">Description</h5>
 						@if (!string.IsNullOrEmpty(Model.Description))
 						{
-									<p class="mb-0">@Model.Description</p>
+							<p class="mb-0">@Model.Description</p>
 						}
 						else
 						{
-									<p class="text-muted mb-0"><em>No description provided</em></p>
+							<p class="text-muted mb-0"><em>No description provided</em></p>
 						}
 					</div>
 
@@ -112,55 +115,55 @@
 			<!-- Quick Actions -->
 			@if (canEdit)
 			{
-					<div class="card shadow-sm mb-4">
-						<div class="card-header bg-white">
-							<h5 class="mb-0">Actions</h5>
-						</div>
-						<div class="card-body">
-							<div class="d-flex flex-wrap gap-2">
-								<a asp-controller="Tags"
-								   asp-action="AddTag"
-								   asp-route-taskId="@Model.TaskId"
-								   asp-route-returnUrl="@(new Uri(Context.Request.GetEncodedUrl(), UriKind.Absolute))"
-								   class="btn btn-outline-success">
-									<i class="bi bi-tag"></i> Add Tag
-								</a>
+				<div class="card shadow-sm mb-4">
+					<div class="card-header bg-white">
+						<h5 class="mb-0">Actions</h5>
+					</div>
+					<div class="card-body">
+						<div class="d-flex flex-wrap gap-2">
+							<a asp-controller="Tags"
+							   asp-action="AddTag"
+							   asp-route-taskId="@Model.TaskId"
+							   asp-route-returnUrl="@(new Uri(Context.Request.GetEncodedUrl(), UriKind.Absolute))"
+							   class="btn btn-outline-success">
+								<i class="bi bi-tag"></i> Add Tag
+							</a>
 
-								<a asp-controller="TodoTasks"
-								   asp-action="AddComment"
-								   asp-route-taskId="@Model.TaskId"
-								   asp-route-returnUrl="@(new Uri(Context.Request.GetEncodedUrl(), UriKind.Absolute))"
-								   class="btn btn-outline-primary">
-									<i class="bi bi-chat-left-text"></i> Add Comment
-								</a>
+							<a asp-controller="TodoTasks"
+							   asp-action="AddComment"
+							   asp-route-taskId="@Model.TaskId"
+							   asp-route-returnUrl="@(new Uri(Context.Request.GetEncodedUrl(), UriKind.Absolute))"
+							   class="btn btn-outline-primary">
+								<i class="bi bi-chat-left-text"></i> Add Comment
+							</a>
 
-								<a asp-controller="TodoTasks"
-								   asp-action="Edit"
-								   asp-route-id="@Model.TaskId"
-								   asp-route-returnUrl="@(new Uri(Context.Request.GetEncodedUrl(), UriKind.Absolute))"
+							<a asp-controller="TodoTasks"
+							   asp-action="Edit"
+							   asp-route-id="@Model.TaskId"
+							   asp-route-returnUrl="@(new Uri(Context.Request.GetEncodedUrl(), UriKind.Absolute))"
 							   class="btn btn-outline-warning">
-									<i class="bi bi-pencil"></i> Edit
-								</a>
-							</div>
+								<i class="bi bi-pencil"></i> Edit
+							</a>
 						</div>
 					</div>
+				</div>
 			}
 
 			<!-- Tags Section -->
 			@if (Model.Tags != null && Model.Tags.Any())
 			{
-					<div class="card shadow-sm mb-4">
-						<div class="card-header bg-white d-flex justify-content-between align-items-center">
-							<h5 class="mb-0">
-								<i class="bi bi-tags"></i> Tags
-							</h5>
+				<div class="card shadow-sm mb-4">
+					<div class="card-header bg-white d-flex justify-content-between align-items-center">
+						<h5 class="mb-0">
+							<i class="bi bi-tags"></i> Tags
+						</h5>
 						@if (canEdit)
 						{
 							<small class="text-muted">Click the × to remove a tag</small>
 						}
-						</div>
-						<div class="card-body">
-							<div class="d-flex flex-wrap gap-2">
+					</div>
+					<div class="card-body">
+						<div class="d-flex flex-wrap gap-2">
 							@foreach (var tag in Model.Tags)
 							{
 								<div class="tag-item-wrapper d-inline-flex align-items-center me-2 mb-2">
@@ -175,49 +178,49 @@
 
 									@if (canEdit)
 									{
-									<form asp-controller="Tags"
-										  asp-action="RemoveTag"
-										  asp-route-taskId="@Model.TaskId"
-										  asp-route-tagId="@tag.Id"
-										  asp-route-returnUrl="@(new Uri(Context.Request.GetEncodedUrl(), UriKind.Absolute))"
-										  method="post"
-										  class="remove-tag-form"
-										  onsubmit="return confirm('Are you sure you want to remove this tag?');">
+										<form asp-controller="Tags"
+											  asp-action="RemoveTag"
+											  asp-route-taskId="@Model.TaskId"
+											  asp-route-tagId="@tag.Id"
+											  asp-route-returnUrl="@(new Uri(Context.Request.GetEncodedUrl(), UriKind.Absolute))"
+											  method="post"
+											  class="remove-tag-form"
+											  onsubmit="return confirm('Are you sure you want to remove this tag?');">
 											@Html.AntiForgeryToken()
-										<button type="submit" class="remove-tag-btn" title="Remove tag">
-											<i class="bi bi-x-lg"></i>
-										</button>
-									</form>
+											<button type="submit" class="remove-tag-btn" title="Remove tag">
+												<i class="bi bi-x-lg"></i>
+											</button>
+										</form>
 									}
 								</div>
 							}
-							</div>
 						</div>
 					</div>
+				</div>
 			}
 			else
 			{
-					<div class="card shadow-sm mb-4">
-						<div class="card-header bg-white">
-							<h5 class="mb-0">
-								<i class="bi bi-tags"></i> Tags
-							</h5>
-						</div>
-						<div class="card-body text-center py-4">
-							<i class="bi bi-tags text-muted" style="font-size: 2rem;"></i>
-							<p class="text-muted mt-2 mb-0">No tags added to this task yet</p>
+				<div class="card shadow-sm mb-4">
+					<div class="card-header bg-white">
+						<h5 class="mb-0">
+							<i class="bi bi-tags"></i> Tags
+						</h5>
+					</div>
+					<div class="card-body text-center py-4">
+						<i class="bi bi-tags text-muted" style="font-size: 2rem;"></i>
+						<p class="text-muted mt-2 mb-0">No tags added to this task yet</p>
 						@if (canEdit)
 						{
-									<a asp-controller="Tags"
-									   asp-action="AddTag"
-									   asp-route-taskId="@Model.TaskId"
-									   asp-route-returnUrl="@(new Uri(Context.Request.GetEncodedUrl(), UriKind.Absolute))"
-									   class="btn btn-sm btn-outline-success mt-2">
-										<i class="bi bi-plus-lg"></i> Add Tag
-									</a>
+							<a asp-controller="Tags"
+							   asp-action="AddTag"
+							   asp-route-taskId="@Model.TaskId"
+							   asp-route-returnUrl="@(new Uri(Context.Request.GetEncodedUrl(), UriKind.Absolute))"
+							   class="btn btn-sm btn-outline-success mt-2">
+								<i class="bi bi-plus-lg"></i> Add Tag
+							</a>
 						}
-						</div>
 					</div>
+				</div>
 			}
 
 
