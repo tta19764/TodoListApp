@@ -17,6 +17,7 @@ public class TodoTaskService : ITodoTaskService
 {
     private readonly TodoTaskRepository repository;
     private readonly CommentRepository commentRepository;
+    private readonly TodoListRepository listRepository;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="TodoTaskService"/> class.
@@ -26,6 +27,7 @@ public class TodoTaskService : ITodoTaskService
     {
         this.repository = new TodoTaskRepository(context);
         this.commentRepository = new CommentRepository(context);
+        this.listRepository = new TodoListRepository(context);
     }
 
     /// <summary>
@@ -389,6 +391,17 @@ public class TodoTaskService : ITodoTaskService
         if (existing is not null)
         {
             throw new EntityWithIdExistsException(nameof(TodoTask), model.Id);
+        }
+
+        TodoList? todoList = await this.listRepository.GetByIdAsync(model.ListId);
+        if (todoList is null)
+        {
+            throw new EntityNotFoundException(nameof(TodoList), model.ListId);
+        }
+        else if (todoList.OwnerId != model.OwnerUserId &&
+            !todoList.TodoListUserRoles.Any(lur => lur.UserId == model.OwnerUserId && lur.ListRole.RoleName == "Editor"))
+        {
+            throw new UnauthorizedAccessException("You do not have permission to add tasks to this list.");
         }
 
         try
